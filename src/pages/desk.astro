@@ -15,7 +15,7 @@
  */
 import Base from '../layouts/Base.astro';
 import { site } from '../lib/site';
-import { tickets, intakeCategories, cannedReplies, tickerItems } from '../lib/desk';
+import { tickets, intakeCategories, cannedReplies } from '../lib/desk';
 
 const description =
   'The help desk. Every project started as a request like these — describe the problem, it leaves as software. Raise a ticket.';
@@ -42,19 +42,6 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
 
 <Base title="Help Desk" description={description} bare>
   <div class="desk" id="desk-top">
-    <!-- announcement ticker — the one piece of chrome no ticketing tool ships -->
-    <div class="ticker" aria-hidden="true">
-      <div class="ticker-track">
-        {[0, 1].map(() => (
-          <span class="ticker-run">
-            {tickerItems.map((t) => (
-              <span class="ticker-item">{t}</span>
-            ))}
-          </span>
-        ))}
-      </div>
-    </div>
-
     <!-- top app bar -->
     <header class="topbar">
       <span class="waffle" aria-hidden="true">▦</span>
@@ -429,20 +416,6 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
   .sr-only {
     position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
     overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
-  }
-
-  /* ---- ticker ---- */
-  .ticker {
-    overflow: hidden; background: var(--dk-ink); color: #fff;
-    font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em;
-  }
-  .ticker-track { display: flex; width: max-content; animation: tick 45s linear infinite; }
-  .ticker-run { display: inline-flex; }
-  .ticker-item { padding: 0.4rem 0; }
-  .ticker-item::after { content: '///'; color: var(--dk-yellow); margin: 0 1.25rem; }
-  @keyframes tick { to { transform: translateX(-50%); } }
-  @media (prefers-reduced-motion: reduce) {
-    .ticker-track { animation: none; }
   }
 
   /* ---- top bar ---- */
