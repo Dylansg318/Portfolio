@@ -32,6 +32,14 @@ const initials = (name: string) =>
     .join('')
     .toUpperCase();
 
+/** Resolution points that name another ticket ("DSG-001 — …") become links. */
+type ResPoint = { key?: string; rest?: string; text?: string };
+const resPoints = (points: readonly string[]): ResPoint[] =>
+  points.map((p) => {
+    const m = p.match(/^DSG-(\d{3}) — (.*)$/);
+    return m ? { key: m[1], rest: m[2] } : { text: p };
+  });
+
 const prioGlyph: Record<string, { g: string; cls: string }> = {
   Highest: { g: '⇈', cls: 'p-highest' },
   High: { g: '↑', cls: 'p-high' },
@@ -51,15 +59,15 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
       <nav class="topnav" aria-label="Desk">
         <button type="button" data-nav="queue">Queues</button>
         <button type="button" data-nav="reports">Reports</button>
-        <button type="button" data-nav="people">People</button>
+        <button type="button" data-nav="people">About</button>
+        <a href="/resume">Résumé</a>
       </nav>
       <button type="button" class="create-btn" data-nav="new">Create</button>
       <label class="search">
         <span class="sr-only">Search tickets</span>
         <input id="desk-search" type="search" placeholder="Search" autocomplete="off" />
       </label>
-      <span class="bell" title="Unread notifications. All of them are orders.">🔔<i>9+</i></span>
-      <a class="avatar av-self" href="/about" title="The agent">DS</a>
+      <a class="avatar av-self" href="/about" title="About Dylan">DS</a>
     </header>
 
     <div class="shell">
@@ -80,11 +88,12 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
           <button type="button" data-nav="kb" class="side-item" data-side="kb">▤ Knowledge base</button>
           <button type="button" data-nav="reports" class="side-item" data-side="reports">▥ Reports</button>
           <p class="side-h">Channels &amp; people</p>
-          <button type="button" data-nav="people" class="side-item" data-side="people">☺ The agent</button>
+          <button type="button" data-nav="people" class="side-item" data-side="people">☺ About me</button>
+          <a class="side-item" href="/resume">⎙ Résumé</a>
           <a class="side-item side-exit" href="/">⏻ Exit help desk mode</a>
         </nav>
         <p class="side-fine">
-          Any resemblance to enterprise software is aspirational. Drop #008.
+          The same portfolio, read as the requests that produced it.
         </p>
       </aside>
 
@@ -99,16 +108,15 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
             <span class="head-tools" aria-hidden="true">☆ ⋯</span>
           </div>
 
-          <div class="bulkbar" id="bulkbar" hidden>
-            <span id="bulkcount">0 selected</span>
-            <span class="bulk-note">Bulk actions require a support contract.</span>
-          </div>
+          <p class="queue-note">
+            First visit? <a href="#DSG-008" data-nav="DSG-008">DSG-008</a> is a 60-second
+            orientation — or go straight to the <a href="/resume">résumé</a>.
+          </p>
 
           <div class="tablewrap">
             <table class="queue">
               <thead>
                 <tr>
-                  <th class="c-check"><span class="sr-only">Select</span></th>
                   <th class="c-type">Request type</th>
                   <th class="c-key">Key</th>
                   <th class="c-sum">Summary</th>
@@ -123,7 +131,6 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
               <tbody>
                 {tickets.map((t, i) => (
                   <tr class="qrow" data-open={`DSG-${t.num}`} tabindex="0">
-                    <td class="c-check"><input type="checkbox" aria-label={`Select DSG-${t.num}`} /></td>
                     <td class="c-type"><span class="type-ico" aria-hidden="true">{t.type.icon}</span> {t.type.label}</td>
                     <td class="c-key">DSG-{t.num}</td>
                     <td class="c-sum"><a href={`#DSG-${t.num}`} data-nav={`DSG-${t.num}`}>{t.subject}</a></td>
@@ -140,14 +147,13 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
                   </tr>
                 ))}
                 <tr class="qrow-empty" id="queue-empty" hidden>
-                  <td colspan="10">0 tickets match. Suspicious. <button type="button" class="linkish" id="clear-search">Clear search</button></td>
+                  <td colspan="9">No tickets match your search. <button type="button" class="linkish" id="clear-search">Clear search</button></td>
                 </tr>
               </tbody>
             </table>
           </div>
           <p class="table-fine">
-            8 of 8 tickets · resolved ones stay in the queue because they are the résumé ·
-            <kbd>j</kbd>/<kbd>k</kbd> to move, <kbd>↵</kbd> to open
+            {tickets.length} tickets · <kbd>j</kbd>/<kbd>k</kbd> to move, <kbd>↵</kbd> to open
           </p>
         </section>
 
@@ -163,9 +169,10 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
               <div class="issue-main">
                 <h1 class="issue-title">{t.subject}</h1>
                 <div class="issue-actions">
-                  <button type="button" class="chip vote-btn">👍 Vote <i class="vote-n">{12 - i}</i></button>
-                  <button type="button" class="chip watch-btn">👁 Watching <i class="watch-n">{3 + i}</i></button>
-                  <span class="chip chip-quiet">⧉ Share (it's a portfolio, please do)</span>
+                  {t.resolution.slug && (
+                    <a class="chip" href={`/projects/${t.resolution.slug}`}>Open the full write-up ↗</a>
+                  )}
+                  <button type="button" class="chip" data-nav="queue">Back to queue</button>
                 </div>
 
                 <h2 class="issue-h">Description</h2>
@@ -177,7 +184,7 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
                   </div>
                 </div>
 
-                <h2 class="issue-h">Activity <span class="act-note">— the part enterprise tools hide behind “Show 47 older comments”</span></h2>
+                <h2 class="issue-h">Activity</h2>
                 <div class="thread">
                   {t.thread.slice(1).map((m, mi) => (
                     <div class={`comment ${m.from === 'agent' ? 'comment-agent' : ''}`} style={`--d:${mi}`}>
@@ -197,9 +204,15 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
                   <h2>Resolution</h2>
                   <p class="res-head">{t.resolution.headline}</p>
                   <ul>
-                    {t.resolution.points.map((p) => (
-                      <li>{p}</li>
-                    ))}
+                    {resPoints(t.resolution.points).map((p) =>
+                      p.key ? (
+                        <li>
+                          <a href={`#DSG-${p.key}`} data-nav={`DSG-${p.key}`}>DSG-{p.key}</a> — {p.rest}
+                        </li>
+                      ) : (
+                        <li>{p.text}</li>
+                      ),
+                    )}
                   </ul>
                   {t.resolution.slug && (
                     <a class="res-link" href={`/projects/${t.resolution.slug}`}>
@@ -246,8 +259,8 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
           </nav>
           <div class="page-head"><h1>What do you need built?</h1></div>
           <p class="lede">
-            Every ticket in this queue arrived exactly like this: someone described a problem in
-            their own words and it left as running software. Pick the closest shape.
+            Every project in this queue began as a request described in plain words. Pick the
+            closest category — a short note is enough to start.
           </p>
 
           <div class="intake">
@@ -260,9 +273,9 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
             </div>
 
             <div class="intake-reply" id="intake-reply" hidden>
-              <span class="avatar av-bot" aria-hidden="true">🤖</span>
+              <span class="avatar av-bot" aria-hidden="true">A</span>
               <div class="comment-body">
-                <p class="comment-meta"><strong>DESK BOT</strong> <span>auto-reply · just now</span></p>
+                <p class="comment-meta"><strong>AUTO-RESPONSE</strong> <span>just now</span></p>
                 <p class="comment-text" id="intake-reply-text"></p>
               </div>
             </div>
@@ -273,12 +286,12 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
                 <input type="text" id="intake-subject" name="subject" value={intakeCategories[0].subject} />
               </label>
               <label>
-                Describe it the way you'd say it out loud
-                <textarea id="intake-body" name="body" rows="5" placeholder="We have this spreadsheet, and every morning someone…"></textarea>
+                Describe the problem
+                <textarea id="intake-body" name="body" rows="5" placeholder="We have this process, and every morning someone…"></textarea>
               </label>
               <div class="intake-send">
-                <button type="submit" class="create-btn">Send to the agent</button>
-                <span class="intake-note">Opens your mail app → {site.email}. Real inbox, real reply.</span>
+                <button type="submit" class="create-btn">Send</button>
+                <span class="intake-note">Opens your email client → {site.email}.</span>
               </div>
             </form>
           </div>
@@ -289,8 +302,8 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
           <nav class="crumbs" aria-label="Breadcrumb">
             <a href="/">Portfolio</a> / <a href="#queue" data-nav="queue">Help Desk</a> / <span>Knowledge base</span>
           </nav>
-          <div class="page-head"><h1>Canned replies</h1></div>
-          <p class="lede">The rules the agent applies to every ticket. Stamped on request.</p>
+          <div class="page-head"><h1>Working principles</h1></div>
+          <p class="lede">The rules applied to every ticket in this queue.</p>
           <div class="kb-grid">
             {cannedReplies.map((r) => (
               <article class="kb-card">
@@ -327,30 +340,29 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
                 <span class="rep-met">{t.timeToRes.value}</span>
               </div>
             ))}
-            <p class="rep-fine">Customer satisfaction: 10/10 — measured at a phone store in 2022 and defended ever since.</p>
           </div>
         </section>
 
         <!-- ============================== PEOPLE =============================== -->
         <section class="panel" id="panel-people" data-panel="people" hidden>
           <nav class="crumbs" aria-label="Breadcrumb">
-            <a href="/">Portfolio</a> / <a href="#queue" data-nav="queue">Help Desk</a> / <span>People</span>
+            <a href="/">Portfolio</a> / <a href="#queue" data-nav="queue">Help Desk</a> / <span>About</span>
           </nav>
-          <div class="page-head"><h1>The agent</h1></div>
+          <div class="page-head"><h1>About</h1></div>
           <div class="agent-card">
             <span class="avatar av-self avatar-xl" aria-hidden="true">DS</span>
             <div>
               <h2>{site.name}</h2>
               <p class="agent-role">{site.role} · {site.location}</p>
               <p class="agent-bio">
-                Sole agent on this desk. Also built the desk, the queue, the tickets, and the
-                company software the tickets are about. {site.availability}.
+                The only agent on this desk — I also built the desk itself, along with the
+                company systems these tickets describe. {site.availability}.
               </p>
               <div class="agent-links">
                 <a class="chip" href={site.links.github} rel="me noopener">GitHub</a>
                 <a class="chip" href={site.resumeUrl}>Résumé</a>
                 <a class="chip" href={`mailto:${site.email}`}>{site.email}</a>
-                <a class="chip" href="/">The polished portfolio →</a>
+                <a class="chip" href="/">Standard site →</a>
               </div>
             </div>
           </div>
@@ -368,7 +380,7 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
 
     <footer class="desk-foot">
       <span>DSG SERVICE MANAGEMENT — the portfolio in help desk mode</span>
-      <span>TERMS: be nice · <a href="/">meadow mode</a> · <a href="/projects/portfolio-site">how this site works</a></span>
+      <span><a href="/">Standard site</a> · <a href="/resume">Résumé</a> · <a href="/projects/portfolio-site">How this site was built</a></span>
     </footer>
 
     <noscript>
@@ -376,7 +388,7 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
         /* No JS: the desk becomes a document — every panel visible, chrome
            that needs JS hidden, table rows link through their summary anchors. */
         .panel[hidden] { display: block !important; }
-        .search, .bell, .bulkbar { display: none !important; }
+        .search { display: none !important; }
       </style>
     </noscript>
   </div>
@@ -429,11 +441,13 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
   .wordmark { font-weight: 700; color: var(--dk-ink) !important; white-space: nowrap; }
   .wordmark .mark { color: var(--dk-blue); }
   .topnav { display: flex; gap: 0.25rem; }
-  .topnav button {
+  .topnav button,
+  .topnav a {
     padding: 0.35rem 0.6rem; border-radius: 4px; color: var(--dk-ink-mut);
     font-weight: 500; cursor: pointer;
   }
-  .topnav button:hover { background: var(--dk-bg-sub); color: var(--dk-blue); }
+  .topnav button:hover,
+  .topnav a:hover { background: var(--dk-bg-sub); color: var(--dk-blue); text-decoration: none; }
   .create-btn {
     background: var(--dk-blue); color: var(--dk-blue-ink); font-weight: 600;
     padding: 0.4rem 0.85rem; border-radius: 4px; cursor: pointer;
@@ -445,12 +459,6 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
     border-radius: 4px; background: var(--dk-bg); color: var(--dk-ink);
   }
   .search input:focus { outline: 2px solid var(--dk-blue); outline-offset: -1px; }
-  .bell { position: relative; cursor: help; }
-  .bell i {
-    position: absolute; top: -0.35rem; right: -0.6rem; font-style: normal;
-    background: #c9372c; color: #fff; font-size: 0.58rem; font-weight: 700;
-    border-radius: 999px; padding: 0.05rem 0.28rem;
-  }
 
   /* ---- avatars ---- */
   .avatar {
@@ -506,12 +514,11 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
   .lede { max-width: 44rem; color: var(--dk-ink-mut); line-height: 1.55; margin-bottom: 1.25rem; }
 
   /* ---- queue table ---- */
-  .bulkbar {
-    display: flex; gap: 1rem; align-items: center; margin-bottom: 0.6rem;
-    background: var(--dk-yellow); color: #1c1c1c; font-weight: 600;
-    padding: 0.45rem 0.75rem; border: 1.5px solid var(--dk-ink); border-radius: 4px;
+  .queue-note {
+    margin-bottom: 0.8rem; font-size: 0.8rem; color: var(--dk-ink-mut);
+    background: var(--dk-loz-info-bg); border: 1px solid var(--dk-line);
+    border-radius: 4px; padding: 0.5rem 0.75rem; max-width: max-content;
   }
-  .bulk-note { font-weight: 400; }
   .tablewrap { overflow-x: auto; border: 1px solid var(--dk-line); border-radius: 6px; }
   .queue { width: 100%; border-collapse: collapse; min-width: 62rem; }
   .queue th {
@@ -523,7 +530,6 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
     padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--dk-line);
     vertical-align: middle; white-space: nowrap;
   }
-  .queue input[type='checkbox'] { accent-color: var(--dk-blue); }
   .queue tbody tr:last-child td { border-bottom: 0; }
   .qrow { cursor: pointer; }
   .qrow:hover, .qrow:focus-visible { background: var(--dk-bg-sub); outline: none; }
@@ -577,9 +583,7 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
   }
   .chip:hover { background: var(--dk-bg-sub); text-decoration: none !important; }
   .chip i { font-style: normal; color: var(--dk-ink-mut); }
-  .chip-quiet { cursor: default; color: var(--dk-ink-mut); }
   .issue-h { font-size: 0.9rem; font-weight: 700; margin: 1.3rem 0 0.7rem; }
-  .act-note { font-weight: 400; color: var(--dk-ink-mut); font-size: 0.75rem; }
 
   .comment { display: flex; gap: 0.7rem; margin-bottom: 1rem; max-width: 46rem; }
   .comment-body { min-width: 0; }
@@ -658,13 +662,15 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
   .intake { max-width: 46rem; }
   .intake-cats { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.1rem; }
   .cat {
-    border: 1.5px solid var(--dk-ink); border-radius: 4px; padding: 0.45rem 0.7rem;
-    font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700;
-    letter-spacing: 0.03em; cursor: pointer; color: var(--dk-ink); background: var(--dk-bg);
-    box-shadow: 2.5px 2.5px 0 0 rgb(28 43 65 / 0.25);
+    border: 1px solid var(--dk-line); border-radius: 4px; padding: 0.45rem 0.8rem;
+    font-size: 0.8rem; font-weight: 500; cursor: pointer;
+    color: var(--dk-ink); background: var(--dk-bg);
   }
-  .cat:hover { transform: translate(-1px, -1px); box-shadow: 3.5px 3.5px 0 0 rgb(28 43 65 / 0.3); }
-  .cat[aria-pressed='true'] { background: var(--dk-yellow); }
+  .cat:hover { background: var(--dk-bg-sub); border-color: var(--dk-blue); }
+  .cat[aria-pressed='true'] {
+    background: var(--dk-loz-info-bg); border-color: var(--dk-blue);
+    color: var(--dk-loz-info-ink); font-weight: 600;
+  }
   .intake-reply { display: flex; gap: 0.7rem; margin-bottom: 1.1rem; }
   .intake-reply .comment-text {
     background: var(--dk-bg-sub); border: 1px solid var(--dk-line);
@@ -685,7 +691,7 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
   .kb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 1px; background: var(--dk-line); border: 1px solid var(--dk-line); }
   .kb-card { background: var(--dk-bg); padding: 1.1rem; }
   .kb-code { font-family: var(--font-mono); font-size: 0.65rem; color: var(--dk-ink-mut); }
-  .kb-card h2 { font-family: var(--font-mono); font-size: 0.82rem; margin: 0.4rem 0 0.5rem; letter-spacing: 0.02em; }
+  .kb-card h2 { font-size: 0.92rem; font-weight: 700; margin: 0.4rem 0 0.5rem; }
   .kb-card p:last-child { line-height: 1.6; color: var(--dk-ink-mut); font-size: 0.8rem; }
 
   /* ---- reports ---- */
@@ -701,7 +707,6 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
   .rep-bar { display: block; height: 0.8rem; background: var(--dk-bg-sub); border: 1px solid var(--dk-line); border-radius: 3px; overflow: hidden; }
   .rep-bar i { display: block; height: 100%; width: var(--w); background: var(--dk-blue); }
   .rep-met { font-size: 0.72rem; text-align: right; color: var(--dk-ink-mut); }
-  .rep-fine { margin-top: 0.9rem; font-size: 0.72rem; color: var(--dk-ink-mut); }
 
   /* ---- people ---- */
   .agent-card { display: flex; gap: 1.2rem; max-width: 46rem; align-items: flex-start; }
@@ -832,46 +837,6 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
       if (row) show(row.dataset.open!);
     }
   });
-
-  /* ---- bulk-select joke ---- */
-  const bulkbar = document.getElementById('bulkbar');
-  const bulkcount = document.getElementById('bulkcount');
-  document.addEventListener('change', (e) => {
-    if (!(e.target as HTMLElement).matches('.qrow input[type="checkbox"]')) return;
-    const n = document.querySelectorAll('.qrow input:checked').length;
-    if (bulkbar) bulkbar.hidden = n === 0;
-    if (bulkcount) bulkcount.textContent = `${n} selected`;
-  });
-
-  /* ---- DSG-008's SLA ticks up from page load: your ticket, still open ---- */
-  const liveSlas = [...document.querySelectorAll<HTMLElement>('[data-sla-live]')];
-  if (liveSlas.length > 0) {
-    const t0 = Date.now();
-    setInterval(() => {
-      const s = Math.floor((Date.now() - t0) / 1000);
-      const label = `-${Math.floor(s / 60)}m ${String(s % 60).padStart(2, '0')}s`;
-      liveSlas.forEach((el) => {
-        el.firstChild!.textContent = `${label} `;
-      });
-    }, 1000);
-  }
-
-  /* ---- vote / watch counters ---- */
-  document.querySelectorAll<HTMLButtonElement>('.vote-btn').forEach((b) =>
-    b.addEventListener('click', () => {
-      const n = b.querySelector('.vote-n')!;
-      n.textContent = String(Number(n.textContent) + 1);
-      b.disabled = true;
-      b.style.borderColor = 'var(--dk-blue)';
-    }),
-  );
-  document.querySelectorAll<HTMLButtonElement>('.watch-btn').forEach((b) =>
-    b.addEventListener('click', () => {
-      const n = b.querySelector('.watch-n')!;
-      n.textContent = `${Number(n.textContent) + 1} (hi!)`;
-      b.disabled = true;
-    }),
-  );
 
   /* ---- raise a request ---- */
   const cats = [...document.querySelectorAll<HTMLButtonElement>('.cat')];
