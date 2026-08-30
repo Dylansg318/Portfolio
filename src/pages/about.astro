@@ -70,27 +70,6 @@ const path = [
             ))}
           </ol>
         </section>
-
-        <!-- Now / outside -->
-        <section class="grid gap-4 sm:grid-cols-2">
-          <div class="tile reveal p-6">
-            <p class="eyebrow">Right now</p>
-            <p class="mt-3 text-sm leading-relaxed text-ink-muted">
-              Running a fleet of AI coding sessions against one codebase without them
-              corrupting each other — the hooks and rules that make the dangerous
-              operations impossible rather than discouraged.{' '}
-              <a class="text-accent hover:underline" href="/projects/agent-fleet">The write-up →</a>
-            </p>
-          </div>
-          <div class="tile reveal p-6" style="--reveal-delay: 70ms">
-            <p class="eyebrow">Off the clock</p>
-            <p class="mt-3 text-sm leading-relaxed text-ink-muted">
-              Bass and contrabass clarinet through school, four years of marching band.
-              Filipino-American — I understand Tagalog better than I speak it. Games with
-              friends, 3D printing, and a restaurant I haven't tried yet.
-            </p>
-          </div>
-        </section>
       </div>
 
       <aside class="space-y-6">
@@ -134,6 +113,30 @@ const path = [
         </div>
       </aside>
     </div>
+
+    <!-- Full width, deliberately: in the left column these two were squeezed
+         into a third of the page with the sidebar already finished above them,
+         which left a dead rectangle on the right. Spanning the container also
+         lets the two columns above end level with each other. -->
+    <section class="mt-12 grid gap-4 md:grid-cols-2">
+      <div class="tile reveal p-6">
+        <p class="eyebrow">Right now</p>
+        <p class="mt-3 leading-relaxed text-ink-muted">
+          Running a fleet of AI coding sessions against one codebase without them
+          corrupting each other — the hooks and rules that make the dangerous operations
+          impossible rather than discouraged.{' '}
+          <a class="text-accent hover:underline" href="/projects/agent-fleet">The write-up →</a>
+        </p>
+      </div>
+      <div class="tile reveal p-6" style="--reveal-delay: 70ms">
+        <p class="eyebrow">Off the clock</p>
+        <p class="mt-3 leading-relaxed text-ink-muted">
+          Cooking, playing music, and eating my way through restaurants I haven't tried
+          yet. Usually somewhere in the middle of picking up a new hobby or talking myself
+          into another side project.
+        </p>
+      </div>
+    </section>
 
     <!-- Skills. The one long list that earns its length — it is scanned, not read. -->
     <section class="mt-20 pb-8">
