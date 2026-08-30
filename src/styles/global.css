@@ -15,6 +15,10 @@
    Contrast rule baked into the assignments below: the ramp FLIPS at step 8.
    Steps 1-7 are light enough to carry black text; steps 8-10 need white.
    Never put white text on meadow-1..7 or black text on meadow-8..10.
+
+   scripts/check-contrast.mjs parses the two blocks below and fails `npm run
+   check` if any text/background pair drops under WCAG AA. Keep the hex values
+   in these two blocks; decorative gradients live further down.
 --------------------------------------------------------------------------- */
 :root {
   /* the raw ramp — available as bg-meadow-lime, text-meadow-yale, etc. */
@@ -64,7 +68,15 @@
   /* motion — one place, so reduced-motion can zero all of it */
   --dur-fast: 120ms;
   --dur: 200ms;
+  --dur-slow: 600ms;
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ambient glows behind the hero and section headers — decorative only */
+  --glow-a: rgba(82, 182, 154, 0.28);
+  --glow-b: rgba(26, 117, 159, 0.22);
+  --glow-c: rgba(217, 237, 146, 0.35);
+  --grid-line: rgba(24, 78, 119, 0.07);
 }
 
 [data-theme='dark'] {
@@ -96,6 +108,11 @@
   --ok: #76c893;
   --warn: #d9ed92;
   --danger: #ff9d9d;
+
+  --glow-a: rgba(118, 200, 147, 0.22);
+  --glow-b: rgba(22, 138, 173, 0.28);
+  --glow-c: rgba(181, 228, 140, 0.16);
+  --grid-line: rgba(181, 228, 140, 0.06);
 }
 
 /* `inline` makes the utilities resolve to var(--x) at runtime rather than
@@ -139,6 +156,7 @@
 
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
+  --font-display: var(--font-display);
 
   /* one content measure, used by every page shell */
   --container-reading: 46rem;
@@ -157,6 +175,15 @@
     font-family: var(--font-sans);
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
+  }
+
+  /* Display type for headlines only. Body copy stays in the sans so long
+     write-ups read comfortably. */
+  h1,
+  h2,
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
   }
 
   /* Visible, consistent focus. Never remove this without a replacement —
@@ -181,10 +208,166 @@
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
     }
+    .reveal { opacity: 1 !important; transform: none !important; }
   }
 }
 
 @layer components {
+  /* ---- ambient backdrop: two soft glows + a faint grid, CSS only ---------- */
+  .ambient {
+    position: relative;
+    isolation: isolate;
+  }
+  .ambient::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(60rem 30rem at 12% -10%, var(--glow-a), transparent 60%),
+      radial-gradient(45rem 26rem at 88% 10%, var(--glow-b), transparent 60%),
+      radial-gradient(30rem 20rem at 60% 100%, var(--glow-c), transparent 65%);
+  }
+  .ambient::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 2.5rem 2.5rem;
+    mask-image: radial-gradient(70rem 40rem at 50% 0%, black 30%, transparent 80%);
+  }
+
+  /* ---- gradient headline ink ------------------------------------------- */
+  .text-gradient {
+    background: linear-gradient(100deg, var(--meadow-light), var(--meadow-mist) 55%, var(--meadow-bondi));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  :root:not([data-theme='dark']) .text-gradient {
+    background: linear-gradient(100deg, var(--meadow-cerulean), var(--meadow-teal) 55%, var(--meadow-yale));
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+
+  /* ---- reveal on scroll: opacity + 12px rise, driven by one observer.
+     The hidden state is gated on html.js (set by the inline theme script),
+     so with JavaScript off every element is simply visible. ---- */
+  .reveal {
+    transition:
+      opacity var(--dur-slow) var(--ease-out),
+      transform var(--dur-slow) var(--ease-out);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+  .js .reveal:not(.is-in) {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  /* ---- bento tile: the shared card surface with a lift on hover --------- */
+  .tile {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1.25rem;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    transition:
+      border-color var(--dur) var(--ease),
+      transform var(--dur) var(--ease),
+      box-shadow var(--dur) var(--ease);
+  }
+  .tile::before {
+    /* a top-edge highlight that only shows on hover */
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0;
+    transition: opacity var(--dur) var(--ease);
+  }
+  .tile:hover {
+    border-color: var(--border-strong);
+    transform: translateY(-2px);
+    box-shadow: 0 18px 40px -24px rgba(7, 28, 39, 0.55);
+  }
+  .tile:hover::before {
+    opacity: 1;
+  }
+
+  /* ---- buttons ---------------------------------------------------------- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 0.75rem;
+    padding: 0.7rem 1.15rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    line-height: 1;
+    transition:
+      background-color var(--dur) var(--ease),
+      border-color var(--dur) var(--ease),
+      color var(--dur) var(--ease),
+      transform var(--dur-fast) var(--ease);
+  }
+  .btn:active {
+    transform: translateY(1px);
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+  .btn-primary:hover {
+    background: var(--accent-hover);
+  }
+  .btn-ghost {
+    border: 1px solid var(--border);
+    color: var(--ink);
+    background: transparent;
+  }
+  .btn-ghost:hover {
+    border-color: var(--border-strong);
+    background: var(--surface);
+  }
+
+  /* ---- eyebrow label ---------------------------------------------------- */
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .eyebrow::before {
+    content: '';
+    width: 1.5rem;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  /* ---- animated marquee of the stack, pauses on hover / reduced motion -- */
+  .marquee {
+    display: flex;
+    gap: 2.5rem;
+    width: max-content;
+    animation: marquee 38s linear infinite;
+  }
+  .marquee-wrap:hover .marquee {
+    animation-play-state: paused;
+  }
+  @keyframes marquee {
+    to { transform: translateX(-50%); }
+  }
+
   /* Long-form MDX styling. Without this, project write-ups render as an
      undifferentiated wall of text: Tailwind's preflight strips heading and list
      styling, and MDX-generated HTML has no classes to hook. */
@@ -204,6 +387,11 @@
     --tw-prose-code: var(--ink);
     --tw-prose-th-borders: var(--border-strong);
     --tw-prose-td-borders: var(--border);
+  }
+
+  .prose-portfolio :where(h2) {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
   }
 
   /* Expressive Code ships its own complete code-block styling. Hand it back
@@ -236,5 +424,13 @@
 
   .prose-portfolio :where(a):hover {
     color: var(--accent-hover);
+  }
+
+  /* ---- print: the résumé page is meant to be printed --------------------- */
+  @media print {
+    header, footer, .no-print { display: none !important; }
+    body { background: #fff; color: #000; }
+    a { color: inherit; text-decoration: none; }
+    .print-page { padding: 0 !important; max-width: none !important; }
   }
 }

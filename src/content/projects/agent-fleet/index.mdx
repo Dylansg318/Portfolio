@@ -1,0 +1,108 @@
+---
+title: Running a dozen AI coding sessions on one repo
+blurb: How I use AI coding agents at scale without vibe-coding — auto-loading rules, hooks that block the dangerous operations, and review triggered by consequence.
+date: 2026-08-10
+featured: 70
+status: live
+role: sole engineer
+stack: [Claude Code, Node.js, Git hooks, GitHub Actions, Jest, Markdown]
+
+problem: >-
+  One engineer, an ERP-sized scope. AI coding agents made that possible, but running
+  several at once against one repository has very specific failure modes: one session
+  sweeps another's staged files into its commit, a broad test run melts the shared
+  machine, a plausible-looking number ships because nobody checked it, and every new
+  session starts with no memory of the rules the last one learned the hard way.
+
+unique: >-
+  Guardrails as code, not advice. Hooks run before every tool call and block the
+  operations that can't be undone — broad git adds, skipping the pre-commit gate,
+  full-tree test runs. A coordination layer registers every live session and locks the
+  shared git index while another session is mid-commit. Rule files auto-load when a
+  session touches a matching path. And second-model review is triggered by consequence,
+  not diff size: a 20-line ledger change gets reviewed, a 500-line UI change ships on
+  sight.
+
+learned:
+  - A gate that can't fail hasn't passed. Early reviews were rubber stamps; the fix was to make the reviewer a different model with a different vantage point, and to treat "looks fine" as a failed review.
+  - The model is not the risk. The process is. Every incident in the ledger came from a missing constraint, not a bad suggestion — and every one became a hook or a rule the same day.
+  - Documentation is the multiplier. The 40-plus operating docs are what let a fresh session be useful in its first minute instead of its first hour, and they are what make my own decisions legible to me six months later.
+
+aiNote: >-
+  This one is about the AI. Honest framing: agents write most of the code in the ERP.
+  I write the rules, decide the architecture, pick what gets reviewed, and verify the
+  result — queries, curl, screenshots — before anything is called done. What follows
+  is the system that makes that division of labour safe rather than reckless.
+
+metrics:
+  - { label: commits in 6 months, value: "14K" }
+  - { label: parallel sessions, value: "10+" }
+  - { label: operating docs, value: "40+" }
+  - { label: models cross-reviewing, value: "2" }
+---
+
+## Vibe coding versus engineering
+
+The difference isn't whether a model wrote the code. It's whether anyone can say why the
+code is the way it is, what was checked before it shipped, and what would have stopped it if
+it were wrong. Vibe coding is accepting output. Engineering is owning it.
+
+Everything below exists to make ownership possible at a speed one person couldn't otherwise
+sustain.
+
+## Rules that load themselves
+
+The repo carries a top-level rules file every session reads, plus path-scoped rules that
+auto-load when a session opens a matching file: touch channel code and the "master is
+sacred" rule appears; open a deploy workflow and the pipeline's gotchas appear. Area docs —
+inventory, shipping, finance, jobs — hold the invariants and the incident ledger for that
+area.
+
+The point is that a session doesn't have to *remember* to read the rules. The rules find it.
+
+## Hooks that say no
+
+Advice gets ignored under time pressure, by humans and agents alike. So the operations that
+have caused incidents are blocked, not discouraged:
+
+- `git add -A`, `git commit -a`, `--no-verify` — blocked by a pre-tool hook. Staging by
+  explicit path is the only path, because the git index is shared and a broad add sweeps
+  another session's work into your commit.
+- Broad Jest runs — blocked. Scoped suites only. The full lanes run in CI on every push,
+  where they can't take down the machine ten sessions share.
+- A commit in a checkout where another session is mid-commit — blocked until they finish.
+
+Each block prints the reason and the sanctioned alternative. A subagent that never read the
+rules is stopped the same way, which is the whole point.
+
+## Knowing who else is here
+
+A coordination layer registers every session at start, tells it who else is live, and whether
+any of them share the same checkout. Sessions can broadcast a finding to the others. By
+default a session works in its own git worktree, branched fresh from the integration branch,
+so parallel work never touches the same index at all.
+
+<Takeaway>
+  The failure ledger for this system is public inside the repo — every incident, its cost,
+  and the constraint it produced. Reading it is how a new session, or a new engineer,
+  learns why the rules are shaped the way they are.
+</Takeaway>
+
+## Review by consequence
+
+Not every change deserves a second opinion, and reviewing everything trains everyone to skim.
+The rule: a second-model review is triggered by what a mistake would *cost*, not by how many
+lines changed. Money, books, bulk writes to production data, writes to a vendor's API,
+migrations, permissions, and anything that can be *silently* wrong — reviewed before
+executing, by a different model than the one that wrote it. UI, copy, layout, read-only
+reports — ship on sight; a wrong pixel is not a wrong ledger.
+
+## Verify before you assert
+
+The last rule is the one I'd keep if I could only keep one. Nothing is "done", "fixed" or
+"passing" without the verification output behind it. Run the query. Curl the endpoint.
+Screenshot the page. "It's probably fine" after five minutes of reasoning is worth less than
+one command that shows what it really is — and it's how confidently-wrong work ships.
+
+That rule applies to me as much as to the agents. It's the part of the job that hasn't
+changed.

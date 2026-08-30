@@ -34,6 +34,15 @@ const projectSchema = ({ image }: SchemaContext) =>
     learned: z.array(z.string()).min(1),
     // -----------------------------------------------------------------
 
+    /**
+     * Where AI tooling fit in — and, just as important, where it didn't.
+     * Rendered in the same place on every project. Hiring managers in 2026
+     * assume AI was used; what they screen for is whether the author can say
+     * what they decided, verified and threw away. Optional, but every real
+     * write-up here fills it in.
+     */
+    aiNote: z.string().optional(),
+
     stack: z.array(z.string()).min(1),
     /** e.g. "solo", "led 3 devs", "contributor" */
     role: z.string().optional(),

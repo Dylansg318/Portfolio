@@ -54,6 +54,16 @@ export default defineConfig({
       fallbacks: ['system-ui', 'sans-serif'],
     },
     {
+      // Display face for headlines only — body copy stays in Inter.
+      provider: fontProviders.fontsource(),
+      name: 'Bricolage Grotesque',
+      cssVariable: '--font-display',
+      weights: [600, 700, 800],
+      styles: ['normal'],
+      subsets: ['latin'],
+      fallbacks: ['Inter', 'system-ui', 'sans-serif'],
+    },
+    {
       provider: fontProviders.fontsource(),
       name: 'JetBrains Mono',
       cssVariable: '--font-mono',

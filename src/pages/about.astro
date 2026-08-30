@@ -1,81 +1,174 @@
 ---
 import Base from '../layouts/Base.astro';
+import SectionHeading from '../components/ui/SectionHeading.astro';
 import { site } from '../lib/site';
 ---
 <Base title="About" description={`About ${site.name} — ${site.tagline}`}>
-  <div class="mx-auto max-w-(--container-reading) px-4 py-16 sm:px-6">
-    <h1 class="text-4xl font-bold tracking-tight text-ink sm:text-5xl">About</h1>
-    <p class="mt-3 text-ink-muted">{site.location}</p>
-
-    <!-- Plain prose, deliberately. Recruiters and their screening tools both
-         need to parse this, and specifics land harder than adjectives. -->
-    <div class="prose-portfolio mt-8">
-      <p>
-        I'm the Operations Technology Manager at RMH3 Dental Supply. I build and run the
-        software the business depends on — order intake across five sales channels,
-        inventory sync, automated repricing, and the integrations that keep QuickBooks
-        and the warehouse in agreement. The catalog is north of 20,000 SKUs, and daily
-        orders went from about 200 to 400 while I've been there.
-      </p>
-      <p>
-        Almost everything I've built started as something a person was doing by hand.
-        Repricing was a spreadsheet someone updated every morning. The inventory sync
-        exists because two systems disagreed and somebody had to reconcile them at the
-        end of every day. Those are the problems I like — the ones where the fix has to
-        survive contact with people actually using it, and where being subtly wrong is
-        worse than being obviously broken.
-      </p>
-      <p>
-        Before this I trained as a Software Developer in Test at CYDEO, which is where
-        the testing habits came from: Selenium, Cucumber, REST Assured, and a strong
-        preference for automating anything I'd otherwise have to check twice. I studied
-        Computer Science at George Mason University.
-      </p>
-      <p>
-        The projects here are the ones worth explaining. Each one says what the problem
-        actually was, what was non-obvious about the approach, and what came out of it.
+  <section class="ambient">
+    <div class="mx-auto max-w-(--container-wide) px-4 pb-12 pt-16 sm:px-6 sm:pt-24">
+      <p class="eyebrow reveal">About</p>
+      <h1 class="reveal mt-4 max-w-3xl text-4xl font-extrabold tracking-tight text-ink sm:text-6xl" style="--reveal-delay: 60ms">
+        I like the problems where the fix has to{' '}
+        <span class="text-gradient">survive the people using it.</span>
+      </h1>
+      <p class="reveal mt-6 max-w-(--container-reading) text-lg leading-relaxed text-ink-muted" style="--reveal-delay: 120ms">
+        {site.location}. Software engineer at a dental supply distributor, where I built
+        the system the business runs on. Before that: a testing bootcamp, a CS degree, and
+        a few years running a phone store and a restaurant floor — which turned out to be
+        good training for building tools people have to use all day.
       </p>
     </div>
+  </section>
 
-    <h2 class="mt-12 text-sm font-semibold uppercase tracking-wider text-ink-faint">
-      What I work with
-    </h2>
-    <dl class="mt-4 grid gap-4 sm:grid-cols-2">
-      {[
-        { k: 'Languages', v: 'Java, Python, JavaScript/TypeScript, SQL' },
-        { k: 'Backend & data', v: 'Flask, REST APIs, PostgreSQL, Oracle, MySQL, JDBC' },
-        { k: 'Testing', v: 'Selenium, Cucumber, REST Assured, JUnit, TestNG, PyTest, Postman' },
-        { k: 'Ops', v: 'Git, CI/CD, Jenkins, GitHub Actions, Jira' },
-      ].map((row) => (
-        <div class="rounded-xl border border-border bg-surface p-4">
-          <dt class="text-xs font-semibold uppercase tracking-wide text-ink-faint">{row.k}</dt>
-          <dd class="mt-1 text-[0.95rem] leading-relaxed text-ink">{row.v}</dd>
+  <div class="mx-auto max-w-(--container-wide) px-4 sm:px-6">
+    <div class="grid gap-12 lg:grid-cols-[1.4fr_1fr]">
+      <!-- Plain prose, deliberately. Recruiters and their screening tools both
+           need to parse this, and specifics land harder than adjectives. -->
+      <div class="prose-portfolio reveal">
+        <h2>The short version</h2>
+        <p>
+          I'm the Operations Technology Manager at RMH3 Dental Supply in Chantilly, VA. In
+          practice that means I'm the engineer: I designed, built and run <a href="/projects/mhlhub">MHLHUB</a>,
+          the internal ERP that replaced SellerCloud, a pile of spreadsheets, and a Gmail
+          inbox somebody triaged by hand. It takes orders from six sales channels, keeps
+          a 32,000-product catalog in agreement across all of them, reprices every minute,
+          buys shipping labels, handles returns, and keeps the books in step with
+          QuickBooks. Daily orders roughly doubled while I've been there — from about 270 a
+          day to about 520 — without adding people to operations.
+        </p>
+        <p>
+          Almost everything I've built started as something a person was doing by hand.
+          Repricing was a spreadsheet someone updated every morning. The inventory sync
+          exists because two systems disagreed and somebody had to reconcile them at the
+          end of every day. Those are the problems I like — the ones where being subtly
+          wrong is worse than being obviously broken, and where the design has to hold up
+          when a warehouse picker or a customer-service rep is using it at 4pm on a Friday.
+        </p>
+
+        <h2>How I got here</h2>
+        <p>
+          I grew up in Chantilly and studied Computer Science at George Mason. I paid for
+          it by working: first as an associate and then store manager at a T-Mobile
+          retailer, where I ran the whole store — staffing, cash, inventory — and beat
+          the targets by 30% for months at a time; then as head server at a Korean BBQ
+          restaurant in Fairfax while I finished school. Neither job was about software,
+          but both were about systems that break when they meet real people, and both
+          taught me to care whether the person on the other side of the counter actually
+          got what they came for.
+        </p>
+        <p>
+          In 2024 I did CYDEO's Software Developer in Test program — Selenium, Cucumber
+          and Gherkin, REST Assured, JDBC, Jenkins — which is where the testing habits come
+          from. I still reach for a test before I trust a fix, and I'd rather automate
+          anything I'd otherwise have to check twice. In 2025 RMH3 Dental brought me on to
+          fix their pricing spreadsheet. The spreadsheet became a scraper, the scraper
+          became a service, and the service became the ERP.
+        </p>
+
+        <h2>What I'm into right now</h2>
+        <p>
+          Running a fleet of AI coding sessions against one codebase without them
+          corrupting each other — the hooks, the coordination layer, the rules files that
+          make the dangerous operations impossible rather than discouraged. It changed how
+          much one engineer can own, and I wrote it up as <a href="/projects/agent-fleet">its own project</a>.
+        </p>
+        <p>
+          Outside work: I played bass and contrabass clarinet through school — marching
+          band for four years — and still think in sections and cues more than I'd admit.
+          I'm Filipino-American; I understand Tagalog better than I speak it. I like video
+          games with friends, 3D printing, and finding a restaurant I haven't been to yet.
+        </p>
+      </div>
+
+      <aside class="space-y-6">
+        <div class="tile reveal p-6" style="--reveal-delay: 80ms">
+          <p class="eyebrow">Facts</p>
+          <dl class="mt-4 space-y-3 text-sm">
+            <div class="flex justify-between gap-4"><dt class="text-ink-faint">Based in</dt><dd class="text-right text-ink">{site.location}</dd></div>
+            <div class="flex justify-between gap-4"><dt class="text-ink-faint">Timezone</dt><dd class="text-right text-ink">{site.timezone}</dd></div>
+            <div class="flex justify-between gap-4"><dt class="text-ink-faint">Open to</dt><dd class="text-right text-ink">Backend · full-stack · remote or NoVA</dd></div>
+            <div class="flex justify-between gap-4"><dt class="text-ink-faint">Email</dt><dd class="text-right"><a class="text-accent hover:underline" href={`mailto:${site.email}`}>{site.email}</a></dd></div>
+          </dl>
+          <div class="mt-5 flex flex-wrap gap-2">
+            <a href="/contact" class="btn btn-primary text-sm">Get in touch</a>
+            <a href={site.resumeUrl} class="btn btn-ghost text-sm">Résumé</a>
+          </div>
         </div>
-      ))}
-    </dl>
 
-    <div class="mt-10 flex flex-wrap gap-3">
-      {site.resumeUrl && (
-        <a
-          href={site.resumeUrl}
-          class="rounded-lg border border-border px-4 py-2 text-sm font-medium text-ink transition-colors hover:border-border-strong"
-        >
-          Résumé (PDF)
-        </a>
-      )}
-      <a
-        href="/contact"
-        class="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink transition-colors hover:bg-accent-hover"
-      >
-        Get in touch
-      </a>
-      <a
-        href={site.links.github}
-        rel="noopener"
-        class="rounded-lg border border-border px-4 py-2 text-sm font-medium text-ink transition-colors hover:border-border-strong"
-      >
-        GitHub
-      </a>
+        <div class="tile reveal p-6" style="--reveal-delay: 140ms">
+          <p class="eyebrow">Education</p>
+          <ul class="mt-4 space-y-4">
+            {site.education.map((e) => (
+              <li>
+                <p class="font-semibold text-ink">{e.title}</p>
+                <p class="text-sm text-ink-muted">{e.org} · {e.when}</p>
+                <p class="mt-1 text-sm leading-relaxed text-ink-faint">{e.detail}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div class="tile reveal p-6" style="--reveal-delay: 200ms">
+          <p class="eyebrow">Certifications</p>
+          <ul class="mt-4 space-y-2 text-sm">
+            {site.certifications.map((c) => (
+              <li>
+                <span class="text-ink">{c.name}</span>
+                <span class="text-ink-faint"> · {c.issuer} · {c.id}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </aside>
     </div>
+
+    <!-- Skills -->
+    <section class="mt-20">
+      <SectionHeading eyebrow="Toolkit" title="What I work with" lead="Ordered by how often I reach for it, not alphabetically." />
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {site.skills.map((row, i) => (
+          <div class="tile reveal p-5" style={`--reveal-delay: ${i * 50}ms`}>
+            <p class="text-xs font-semibold uppercase tracking-wide text-ink-faint">{row.group}</p>
+            <ul class="mt-3 flex flex-wrap gap-1.5">
+              {row.items.map((item) => (
+                <li class="rounded-md bg-surface-raised px-2 py-1 text-sm text-ink">{item}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- Timeline -->
+    <section class="mt-20">
+      <SectionHeading eyebrow="Timeline" title="Experience" link={{ href: '/resume', label: 'Full résumé' }} />
+      <ol class="relative space-y-10 border-l border-border pl-8">
+        {site.experience.map((job, i) => (
+          <li class="reveal relative" style={`--reveal-delay: ${i * 60}ms`}>
+            <span
+              class:list={[
+                'absolute -left-[2.4rem] top-1.5 size-3 rounded-full ring-4 ring-bg',
+                i === 0 ? 'bg-accent' : 'bg-border-strong',
+              ]}
+              aria-hidden="true"
+            ></span>
+            <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+              <h3 class="font-display text-lg font-semibold text-ink">
+                {job.title} <span class="font-sans font-normal text-ink-muted">· {job.org}, {job.place}</span>
+              </h3>
+              <p class="text-sm tabular-nums text-ink-faint">{job.start} – {job.end}</p>
+            </div>
+            <ul class="mt-3 max-w-(--container-reading) space-y-2 text-sm leading-relaxed text-ink-muted">
+              {job.bullets.map((b) => (
+                <li class="flex gap-3">
+                  <span class="mt-2 size-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true"></span>
+                  <span>{b}</span>
+                </li>
+              ))}
+            </ul>
+          </li>
+        ))}
+      </ol>
+    </section>
   </div>
 </Base>

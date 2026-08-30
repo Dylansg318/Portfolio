@@ -1,0 +1,110 @@
+---
+title: MHLHUB — the ERP that runs a dental supply company
+blurb: One system for orders, inventory, repricing, shipping, service and books across six sales channels — built from scratch, about 500 orders a day.
+date: 2026-08-30
+featured: 100
+status: live
+role: sole engineer · 13 daily users
+stack: [TypeScript, Node.js, Express, React, PostgreSQL, Railway, GitHub Actions, Docker]
+
+problem: >-
+  RMH3 Dental sells on Net32, eBay, Amazon, Shopify and Walmart, plus direct orders
+  by phone and email. The business ran on SellerCloud, a dozen spreadsheets, and a
+  shared Gmail inbox that someone triaged by hand. Every job needed a second tool to
+  finish, the systems disagreed about stock and money, and nobody could say which
+  one was right. Orders were growing and the people weren't.
+
+unique: >-
+  I stopped treating it as "a dashboard over the data" and built it as the place the
+  work actually happens: the order is picked in the page, the return is decided in
+  the page, the bill is matched in the page. Everything is organised around seven
+  daily loops the business runs on — intake, inventory, repricing, service, returns,
+  financials, intelligence — and every job, page and background producer has to
+  trace to one of them. Rules that had cost real money became rules in code.
+
+learned:
+  - The most expensive bugs were never crashes. They were plausible numbers — a 30-day revenue figure overstated by 60% because a query windowed on the date we recorded the order instead of the date it happened. I now design the guardrail before the feature.
+  - A background job that reports success while doing nothing is worse than one that fails. Every scheduled job here checkpoints, logs what it touched, and trips a breaker if it keeps failing, because "it ran" is not the same as "it worked".
+  - Writing the operating rules down — 40-plus pages of them — was the single highest-leverage thing I did. It is what let the work scale beyond one pair of hands without the rules leaking out of people's heads.
+
+aiNote: >-
+  Built with AI coding agents doing most of the typing and me doing the deciding:
+  the schema, the loop model, the invariants, what gets a second-model review and
+  what ships on sight. The interesting engineering was making that safe — hooks,
+  a coordination layer, and rule files that auto-load per area. That is its own
+  write-up on this site.
+
+metrics:
+  - { label: orders / day, value: "~520" }
+  - { label: products, value: "32K" }
+  - { label: scheduled jobs, value: "180" }
+  - { label: database tables, value: "636" }
+---
+
+## What the business needed
+
+A dental supply distributor lives on thin margins and high volume. When I started, about
+270 orders a day came in across five marketplaces and a phone line, and each one passed
+through three or four tools on its way to a box. Inventory was in one place, prices in
+another, the books in a third, and when they disagreed — which was daily — someone
+reconciled by hand at the end of the shift.
+
+The brief was small: fix the pricing spreadsheet. The real job turned out to be everything
+around it.
+
+## How it's shaped
+
+MHLHUB is a single TypeScript codebase — an Express API, a React client, one PostgreSQL
+database — deployed as a container on Railway through GitHub Actions. That part is
+ordinary on purpose. The interesting decisions are in how it's organised.
+
+**Seven loops, not a feature list.** Every screen and every one of the 180 scheduled jobs
+belongs to one of seven daily loops: order intake → fulfilment, inventory and procurement,
+repricing, customer service, returns, financials, and intelligence. If a proposed feature
+doesn't slot into a loop, that's a signal to stop and ask what it's for. It keeps the
+system from growing sideways.
+
+**Seams, not pages.** Before building something new, the question is whether an existing
+seam covers it — the job scheduler, the signals feed, the document-ingestion queue, the
+audit log. "A page that lists things the user then does something about" almost always
+wants to be a signal producer, not a page.
+
+**Jobs that survive a redeploy.** Every long-running job checkpoints. When Railway swaps
+the container mid-run, the next run resumes from the last checkpoint instead of starting
+over — or worse, silently skipping the tail.
+
+## The rules that stopped the bleeding
+
+The rules that matter most are the ones that cost money before they existed. A few:
+
+- **The product master is sacred.** Marketplace syncs write to a listings table and never
+  to the catalog. Before this rule, a bad feed could rename 20,000 products overnight.
+- **Business date, not record date.** Revenue, velocity and ship-time metrics window on when
+  the order happened, never on when it landed in our database. Backfills insert months after
+  the sale; a plain filter once overstated a month of revenue by 60%.
+- **A cart on Net32 is two orders.** Net32 splits one checkout across our two storefronts
+  and gives both the same order number. Finance, inventory and customer service treat them
+  as separate; only the shipper may box them together. Every query on that order number
+  must also say which storefront, or refuse.
+- **Humans see the channel's order number, never ours.** An alert that says "order 1323434"
+  is unactionable — nobody can type that into eBay. Every human-facing surface names the
+  marketplace's id and the storefront.
+
+<Takeaway>
+  None of these are clever. Each exists because its absence produced a specific, expensive
+  mistake, and each is enforced in code — a query helper, a hook, a schema constraint — not
+  in a wiki nobody reads.
+</Takeaway>
+
+## What it runs today
+
+Order intake from six channels with per-channel identity rules. Inventory with lots and
+expiry, reservations, cycle counts, and a push of stock levels back to every marketplace.
+A repricing engine that runs every minute. Rate shopping and label purchase across USPS,
+UPS and FedEx, with thermal printing on the warehouse floor and proof of delivery pulled
+from carrier polls. A customer-service desk over Gmail and eBay messages, with returns and
+refund splits. Invoicing, AR and AP, and a two-way QuickBooks Desktop integration. A
+signals feed that surfaces what a human should look at today.
+
+About 520 orders a day go through it now — roughly double where it started — with the same
+operations team.

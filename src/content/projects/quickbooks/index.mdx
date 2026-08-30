@@ -1,0 +1,97 @@
+---
+title: Keeping the books and the app in agreement
+blurb: A two-way QuickBooks Desktop integration over the Web Connector, plus a claims ledger so a finance discrepancy is refuted once, not rediscovered monthly.
+date: 2026-07-30
+featured: 60
+status: live
+role: sole engineer
+stack: [QuickBooks Desktop, QBWC / SOAP, TypeScript, PostgreSQL]
+
+problem: >-
+  QuickBooks is the real books; the app is where the work happens. Invoices, bills,
+  payments and credits had to exist in both, agree, and stay linked — through a Desktop
+  product whose only integration surface is a SOAP web connector that polls you. And
+  the same false discrepancy kept being "found": accounts receivable reported at $18M
+  against a real $2M, because a legacy ledger was being summed that was never a balance.
+
+unique: >-
+  Two things. Every transaction pushed to QuickBooks gets a row in a link table, so "is
+  this in QB?" is a lookup, not a guess — and a document that is voided in the app is
+  voided in QB rather than deleted, so the trail survives. Second, a finance claims
+  ledger: every discrepancy anyone has ever reported, with its canonical query, and
+  whether it was refuted, confirmed or is still open, with evidence. New investigations
+  start from the ledger's filters instead of rediscovering the traps.
+
+learned:
+  - Bad filters fail open. A status check written as `<> 'void'` matched every row because the stored value was `'voided'`. The canonical WHERE clauses now live in one place and every report reads from it.
+  - Voided journal entries are unbalanced on purpose, so a trial balance that forgets to exclude them goes red. That's a feature — it makes the missing filter visible instead of quietly wrong.
+  - For direct orders, QuickBooks is the only place money actually moves. The app records; it never pretends to collect. Being clear about which system is the bank stopped a whole category of double-counting.
+
+aiNote: >-
+  The QBWC protocol work — request/response shapes, session ticketing, the cases where
+  QuickBooks returns a success code and does nothing — was agent-drafted from
+  documentation I captured into the repo first. Every posting rule was reviewed by a
+  second model before it ran against the live company file, because a wrong journal
+  entry is expensive to find and worse to undo.
+
+metrics:
+  - { label: invoice linking, value: "Hourly" }
+  - { label: sync direction, value: "2-way" }
+  - { label: settled claims, value: "Ledgered" }
+---
+
+## Why Desktop, and why it's hard
+
+The business runs QuickBooks Desktop, not Online. Desktop's integration story is the Web
+Connector: a small Windows service that polls *your* SOAP endpoint on a schedule, asks
+"anything for me?", and carries your qbXML requests into the company file. You never call
+QuickBooks. It calls you, when it feels like it.
+
+That inverts every assumption a normal integration makes. You can't push a bill and check
+the result; you queue it, wait for the next poll, and reconcile afterwards. So the design
+became: stage everything, link everything, and make "did it land?" a question the database
+can answer.
+
+## The link table
+
+Every document the app sends — an invoice, a bill, a credit memo, a payment — gets a row
+recording what we sent, what QuickBooks assigned, and when. The link table is the only
+answer to "is this in QB?". Not a flag on the order, not a status field that drifts: a row
+that exists because the round-trip completed.
+
+Voids follow the same rule. An invoice voided in the app becomes a voided invoice in
+QuickBooks, never a deleted one. The number stays reserved, the trail stays readable, and
+the auditor stays happy.
+
+## The claims ledger
+
+Finance work has a specific pathology: the same discrepancy gets found over and over.
+Someone sums the wrong ledger and reports AR at $18 million. Three months later someone
+else does the same thing. The numbers are alarming enough that each time it costs a day.
+
+So there's a ledger of claims. Each entry is a discrepancy someone reported, the canonical
+query that tests it, and a verdict — **refuted**, **confirmed**, or **open** — with the
+evidence. New investigations start from the ledger's standing filters. If a finding matches
+a refuted claim, the finding reproduced the mistake, not the problem.
+
+<Takeaway>
+  Refute in place; never delete a claim. The refutations are the most valuable rows in the
+  table, because they are the traps written down.
+</Takeaway>
+
+## Which system is the bank
+
+For marketplace orders the marketplace collects the money and pays out on a schedule; the
+app reconciles payouts against orders. For direct orders — a dental office calling in — the
+only place money actually moves is QuickBooks. The app records the sale, links the invoice,
+and never pretends to have collected anything. Stating that boundary explicitly ended a
+whole family of double-counting bugs where the app and the books each thought the other
+had the payment.
+
+## What it reconciles now
+
+Marketplace invoices link to their QuickBooks counterparts hourly, self-rechecking; the
+accounts-payable side is a read-only mirror of QuickBooks bills so the app can show what
+we owe without ever being a second source of truth for it. Cost of goods, journal entries
+per leg of a return, and the reports that matter — P&L, balance sheet, trial balance — read
+from one set of canonical filters that the claims ledger keeps honest.

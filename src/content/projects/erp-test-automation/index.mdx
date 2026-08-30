@@ -1,0 +1,68 @@
+---
+title: Automating an ERP with Cucumber and Selenium
+blurb: Team BDD test suite for an Odoo-based ERP during the CYDEO SDET program — manual test plan first, then feature files, page objects and Jenkins.
+date: 2024-07-15
+featured: 30
+status: archived
+role: contributor · team of 10
+stack: [Java, Selenium, Cucumber, Gherkin, JUnit, Maven, Jenkins, Jira]
+
+problem: >-
+  An Odoo-style ERP with fourteen user stories — login, messaging channels, note cards,
+  calendar, contacts, point-of-sale orders, manufacturing, expenses, role-based module
+  access — and a regression pass that took a team a full day by hand. The project was
+  the capstone for a ten-person sprint team: plan it, automate it, run it in CI.
+
+unique: >-
+  We wrote the manual test plan before a line of automation. Acceptance criteria per user
+  story, executed by hand, bugs logged as we went: a missing word in the login error, an
+  idle-logout timer that never fired, an Import option absent from a menu. Only then did
+  the Gherkin get written — so the scenarios described behaviour we'd actually observed,
+  not behaviour we assumed.
+
+learned:
+  - Manual first is not the slow way. Every scenario we automated blind in the first sprint had to be rewritten; every one we automated after running it by hand passed on the first try.
+  - Page objects are a team contract. With ten people, the value wasn't reuse — it was that a locator changed in one place and nobody's step definitions broke.
+  - Green in CI is not the same as tested. A suite that always passes because a wait is too generous is worse than a red one; we learned to make waits explicit and fail fast.
+
+aiNote: >-
+  None. 2024, pre-agent — every locator, step definition and hook was typed by hand,
+  which is a good way to learn why page objects exist.
+
+links:
+  source: https://github.com/drwekilowa/B34_G11_Sprint_2CloudAuto
+---
+
+## The setup
+
+Ten people, two sprints, one ERP to cover. We split the user stories by module — I owned
+part of the file and folder functionality — and shared a single framework: a
+configuration-driven WebDriver factory, a hooks class for setup and teardown, browser
+utilities, and page objects per screen.
+
+## Manual before automated
+
+The instinct on a test-automation course is to start automating. We didn't. Each user story
+got acceptance criteria, and each criterion was executed by hand first. That surfaced real
+defects — the login error read "Wrong username password" with the "or" missing; the
+three-minute idle logout never fired; a Point-of-Sale action menu was missing its Import
+option — and it meant the feature files that followed described behaviour we had watched,
+not behaviour we hoped for.
+
+## The framework
+
+Cucumber scenarios in Gherkin, step definitions in Java, Selenium underneath. Page objects
+held the locators — XPath and CSS — so a UI change was one edit. A properties file chose
+the browser and the environment. Jenkins ran the suite on a schedule and on demand, with
+Cucumber's HTML report as the artefact.
+
+<Takeaway>
+  Testing habits are what I carried forward. I still write the manual check before the
+  automated one, and I still don't trust a green run I haven't seen fail.
+</Takeaway>
+
+## What it taught me
+
+This is where the discipline behind everything else on this site comes from: verify before
+you assert, make the check explicit, and treat a test that can't fail as a test that hasn't
+passed.
