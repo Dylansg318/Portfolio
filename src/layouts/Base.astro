@@ -24,7 +24,14 @@ const {
 } = Astro.props;
 
 const pageTitle = title ? `${title} — ${site.name}` : site.title;
-const canonical = new URL(Astro.url.pathname, Astro.site);
+// `build.format: 'file'` means Astro.url.pathname is the OUTPUT FILENAME
+// (/about.html), not the URL a visitor uses (/about). Canonical and og:url
+// must be the served address or search engines index a URL that is not the
+// one people land on.
+const canonicalPath = Astro.url.pathname
+  .replace(/index\.html$/, '')
+  .replace(/\.html$/, '');
+const canonical = new URL(canonicalPath || '/', Astro.site);
 const ogUrl = ogImage ? new URL(ogImage, Astro.site) : new URL('/og/default.png', Astro.site);
 ---
 

@@ -10,7 +10,7 @@ import tailwindcss from '@tailwindcss/vite';
 // `||` not `??` on purpose: CI sets SITE_URL to an EMPTY STRING when the repo
 // variable is unset, and '' is not nullish — so `??` kept it and the build died
 // with "Invalid URL".
-const SITE = process.env.SITE_URL || 'https://portfolio.dylansg.workers.dev';
+const SITE = process.env.SITE_URL || 'https://portfolio.dylansg0318.workers.dev';
 
 export default defineConfig({
   site: SITE,
