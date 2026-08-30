@@ -1,0 +1,926 @@
+---
+/**
+ * /desk — HELP DESK MODE.
+ *
+ * The whole portfolio re-served as a service-management tool: every project is
+ * a ticket in a queue, opening one shows the conversation that produced it,
+ * and the "Raise a request" form is a real contact path. The layout is a
+ * loving parody of enterprise ticketing software (own name, own mark — no
+ * vendor branding); the personality is MSCHF: the chrome is played straight
+ * and the content is not.
+ *
+ * One static page, panels switched client-side by hash (#queue, #DSG-004,
+ * #new, #kb, #reports, #people). Everything is server-rendered — without JS
+ * the panels stack and the desk reads top to bottom like a document.
+ */
+import Base from '../layouts/Base.astro';
+import { site } from '../lib/site';
+import { tickets, intakeCategories, cannedReplies, tickerItems } from '../lib/desk';
+
+const description =
+  'The help desk. Every project started as a request like these — describe the problem, it leaves as software. Raise a ticket.';
+
+/** Reporter avatar hue — deterministic per ticket so it doesn't shuffle. */
+const hue = (i: number) => ['av-a', 'av-b', 'av-c', 'av-d', 'av-e'][i % 5];
+const initials = (name: string) =>
+  name
+    .replace(/\(.*\)/, '')
+    .trim()
+    .split(/\s+/)
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+
+const prioGlyph: Record<string, { g: string; cls: string }> = {
+  Highest: { g: '⇈', cls: 'p-highest' },
+  High: { g: '↑', cls: 'p-high' },
+  Medium: { g: '＝', cls: 'p-med' },
+  Low: { g: '↓', cls: 'p-low' },
+};
+---
+
+<Base title="Help Desk" description={description} bare>
+  <div class="desk" id="desk-top">
+    <!-- announcement ticker — the one piece of chrome no ticketing tool ships -->
+    <div class="ticker" aria-hidden="true">
+      <div class="ticker-track">
+        {[0, 1].map(() => (
+          <span class="ticker-run">
+            {tickerItems.map((t) => (
+              <span class="ticker-item">{t}</span>
+            ))}
+          </span>
+        ))}
+      </div>
+    </div>
+
+    <!-- top app bar -->
+    <header class="topbar">
+      <span class="waffle" aria-hidden="true">▦</span>
+      <a class="wordmark" href="#queue" data-nav="queue">
+        <span class="mark" aria-hidden="true">◆</span> DSG Service Management
+      </a>
+      <nav class="topnav" aria-label="Desk">
+        <button type="button" data-nav="queue">Queues</button>
+        <button type="button" data-nav="reports">Reports</button>
+        <button type="button" data-nav="people">People</button>
+      </nav>
+      <button type="button" class="create-btn" data-nav="new">Create</button>
+      <label class="search">
+        <span class="sr-only">Search tickets</span>
+        <input id="desk-search" type="search" placeholder="Search" autocomplete="off" />
+      </label>
+      <span class="bell" title="Unread notifications. All of them are orders.">🔔<i>9+</i></span>
+      <a class="avatar av-self" href="/about" title="The agent">DS</a>
+    </header>
+
+    <div class="shell">
+      <!-- project sidebar -->
+      <aside class="side" aria-label="Service project">
+        <div class="proj">
+          <span class="proj-ico" aria-hidden="true">HD</span>
+          <span>
+            <strong>Help Desk</strong>
+            <small>Service project · Dylan San Gabriel</small>
+          </span>
+        </div>
+        <nav class="side-nav">
+          <p class="side-h">Service desk</p>
+          <button type="button" data-nav="queue" class="side-item" data-side="queue">☰ Queues</button>
+          <button type="button" data-nav="new" class="side-item" data-side="new">✎ Raise a request</button>
+          <p class="side-h">Knowledge &amp; insights</p>
+          <button type="button" data-nav="kb" class="side-item" data-side="kb">▤ Knowledge base</button>
+          <button type="button" data-nav="reports" class="side-item" data-side="reports">▥ Reports</button>
+          <p class="side-h">Channels &amp; people</p>
+          <button type="button" data-nav="people" class="side-item" data-side="people">☺ The agent</button>
+          <a class="side-item side-exit" href="/">⏻ Exit help desk mode</a>
+        </nav>
+        <p class="side-fine">
+          Any resemblance to enterprise software is aspirational. Drop #008.
+        </p>
+      </aside>
+
+      <!-- ============================== QUEUE ============================== -->
+      <main class="main">
+        <section class="panel" id="panel-queue" data-panel="queue">
+          <nav class="crumbs" aria-label="Breadcrumb">
+            <a href="/">Portfolio</a> / <span>Help Desk</span> / <span>All tickets</span>
+          </nav>
+          <div class="page-head">
+            <h1>All tickets</h1>
+            <span class="head-tools" aria-hidden="true">☆ ⋯</span>
+          </div>
+
+          <div class="bulkbar" id="bulkbar" hidden>
+            <span id="bulkcount">0 selected</span>
+            <span class="bulk-note">Bulk actions require a support contract.</span>
+          </div>
+
+          <div class="tablewrap">
+            <table class="queue">
+              <thead>
+                <tr>
+                  <th class="c-check"><span class="sr-only">Select</span></th>
+                  <th class="c-type">Request type</th>
+                  <th class="c-key">Key</th>
+                  <th class="c-sum">Summary</th>
+                  <th class="c-rep">Reporter</th>
+                  <th class="c-asn">Assignee</th>
+                  <th class="c-status">Status</th>
+                  <th class="c-created">Created</th>
+                  <th class="c-sla">Time to resolution</th>
+                  <th class="c-prio"><span title="Priority">P</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {tickets.map((t, i) => (
+                  <tr class="qrow" data-open={`DSG-${t.num}`} tabindex="0">
+                    <td class="c-check"><input type="checkbox" aria-label={`Select DSG-${t.num}`} /></td>
+                    <td class="c-type"><span class="type-ico" aria-hidden="true">{t.type.icon}</span> {t.type.label}</td>
+                    <td class="c-key">DSG-{t.num}</td>
+                    <td class="c-sum"><a href={`#DSG-${t.num}`} data-nav={`DSG-${t.num}`}>{t.subject}</a></td>
+                    <td class="c-rep"><span class={`avatar ${hue(i)}`} aria-hidden="true">{initials(t.requester)}</span> {t.requester}</td>
+                    <td class="c-asn"><span class="avatar av-self" aria-hidden="true">DS</span> Dylan S.</td>
+                    <td class="c-status"><span class={`loz loz-${t.status.tone}`}>{t.status.label}</span></td>
+                    <td class="c-created">{t.opened}</td>
+                    <td class="c-sla">
+                      <span class={`sla ${t.timeToRes.breached ? 'sla-bad' : 'sla-ok'}`} data-sla-live={t.timeToRes.breached ? '' : undefined}>
+                        {t.timeToRes.value} <i aria-hidden="true">◷</i>
+                      </span>
+                    </td>
+                    <td class="c-prio"><span class={`prio ${prioGlyph[t.priority].cls}`} title={t.priority}>{prioGlyph[t.priority].g}</span></td>
+                  </tr>
+                ))}
+                <tr class="qrow-empty" id="queue-empty" hidden>
+                  <td colspan="10">0 tickets match. Suspicious. <button type="button" class="linkish" id="clear-search">Clear search</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="table-fine">
+            8 of 8 tickets · resolved ones stay in the queue because they are the résumé ·
+            <kbd>j</kbd>/<kbd>k</kbd> to move, <kbd>↵</kbd> to open
+          </p>
+        </section>
+
+        <!-- ============================ ISSUE VIEWS ============================ -->
+        {tickets.map((t, i) => (
+          <section class="panel panel-issue" id={`panel-DSG-${t.num}`} data-panel={`DSG-${t.num}`} hidden>
+            <nav class="crumbs" aria-label="Breadcrumb">
+              <a href="/">Portfolio</a> / <a href="#queue" data-nav="queue">Help Desk</a> /
+              <span class="crumb-key">DSG-{t.num}</span>
+            </nav>
+
+            <div class="issue">
+              <div class="issue-main">
+                <h1 class="issue-title">{t.subject}</h1>
+                <div class="issue-actions">
+                  <button type="button" class="chip vote-btn">👍 Vote <i class="vote-n">{12 - i}</i></button>
+                  <button type="button" class="chip watch-btn">👁 Watching <i class="watch-n">{3 + i}</i></button>
+                  <span class="chip chip-quiet">⧉ Share (it's a portfolio, please do)</span>
+                </div>
+
+                <h2 class="issue-h">Description</h2>
+                <div class="comment">
+                  <span class={`avatar ${hue(i)}`} aria-hidden="true">{initials(t.requester)}</span>
+                  <div class="comment-body">
+                    <p class="comment-meta"><strong>{t.requester}</strong> <span>via {t.via.toLowerCase()} · {t.opened}</span></p>
+                    <p class="comment-text">{t.thread[0].text}</p>
+                  </div>
+                </div>
+
+                <h2 class="issue-h">Activity <span class="act-note">— the part enterprise tools hide behind “Show 47 older comments”</span></h2>
+                <div class="thread">
+                  {t.thread.slice(1).map((m, mi) => (
+                    <div class={`comment ${m.from === 'agent' ? 'comment-agent' : ''}`} style={`--d:${mi}`}>
+                      <span class={`avatar ${m.from === 'agent' ? 'av-self' : hue(i)}`} aria-hidden="true">
+                        {m.from === 'agent' ? 'DS' : initials(t.requester)}
+                      </span>
+                      <div class="comment-body">
+                        <p class="comment-meta"><strong>{m.name}</strong>{m.from === 'agent' && <span class="agent-tag">AGENT</span>}</p>
+                        <p class="comment-text">{m.text}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div class="resolution">
+                  <p class="res-stamp" aria-hidden="true">{t.status.label}</p>
+                  <h2>Resolution</h2>
+                  <p class="res-head">{t.resolution.headline}</p>
+                  <ul>
+                    {t.resolution.points.map((p) => (
+                      <li>{p}</li>
+                    ))}
+                  </ul>
+                  {t.resolution.slug && (
+                    <a class="res-link" href={`/projects/${t.resolution.slug}`}>
+                      {t.resolution.linkLabel ?? 'READ THE CASE FILE'} →
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              <aside class="issue-rail">
+                <div class="rail-box">
+                  <span class={`loz loz-${t.status.tone}`}>{t.status.label}</span>
+                  <dl>
+                    <dt>Assignee</dt>
+                    <dd><span class="avatar av-self" aria-hidden="true">DS</span> Dylan San Gabriel</dd>
+                    <dt>Reporter</dt>
+                    <dd><span class={`avatar ${hue(i)}`} aria-hidden="true">{initials(t.requester)}</span> {t.requester}</dd>
+                    <dt>Request type</dt>
+                    <dd>{t.type.icon} {t.type.label}</dd>
+                    <dt>Channel</dt>
+                    <dd>{t.via}</dd>
+                    <dt>Priority</dt>
+                    <dd><span class={`prio ${prioGlyph[t.priority].cls}`}>{prioGlyph[t.priority].g}</span> {t.priority}</dd>
+                    <dt>Labels</dt>
+                    <dd class="rail-labels">{t.labels.map((l) => <span class="label-chip">{l}</span>)}</dd>
+                    <dt>Time to resolution</dt>
+                    <dd>
+                      <span class={`sla ${t.timeToRes.breached ? 'sla-bad' : 'sla-ok'}`} data-sla-live={t.timeToRes.breached ? '' : undefined}>
+                        {t.timeToRes.value} <i aria-hidden="true">◷</i>
+                      </span>
+                    </dd>
+                  </dl>
+                </div>
+                <button type="button" class="back-btn" data-nav="queue">← Back to queue</button>
+              </aside>
+            </div>
+          </section>
+        ))}
+
+        <!-- ========================== RAISE A REQUEST ========================== -->
+        <section class="panel" id="panel-new" data-panel="new" hidden>
+          <nav class="crumbs" aria-label="Breadcrumb">
+            <a href="/">Portfolio</a> / <a href="#queue" data-nav="queue">Help Desk</a> / <span>Raise a request</span>
+          </nav>
+          <div class="page-head"><h1>What do you need built?</h1></div>
+          <p class="lede">
+            Every ticket in this queue arrived exactly like this: someone described a problem in
+            their own words and it left as running software. Pick the closest shape.
+          </p>
+
+          <div class="intake">
+            <div class="intake-cats" role="group" aria-label="Request type">
+              {intakeCategories.map((c, ci) => (
+                <button type="button" class="cat" data-cat={c.id} data-subject={c.subject} data-reply={c.autoReply} aria-pressed={ci === 0 ? 'true' : 'false'}>
+                  {c.label}
+                </button>
+              ))}
+            </div>
+
+            <div class="intake-reply" id="intake-reply" hidden>
+              <span class="avatar av-bot" aria-hidden="true">🤖</span>
+              <div class="comment-body">
+                <p class="comment-meta"><strong>DESK BOT</strong> <span>auto-reply · just now</span></p>
+                <p class="comment-text" id="intake-reply-text"></p>
+              </div>
+            </div>
+
+            <form class="intake-form" id="intake-form" data-email={site.email}>
+              <label>
+                Summary
+                <input type="text" id="intake-subject" name="subject" value={intakeCategories[0].subject} />
+              </label>
+              <label>
+                Describe it the way you'd say it out loud
+                <textarea id="intake-body" name="body" rows="5" placeholder="We have this spreadsheet, and every morning someone…"></textarea>
+              </label>
+              <div class="intake-send">
+                <button type="submit" class="create-btn">Send to the agent</button>
+                <span class="intake-note">Opens your mail app → {site.email}. Real inbox, real reply.</span>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- =========================== KNOWLEDGE BASE =========================== -->
+        <section class="panel" id="panel-kb" data-panel="kb" hidden>
+          <nav class="crumbs" aria-label="Breadcrumb">
+            <a href="/">Portfolio</a> / <a href="#queue" data-nav="queue">Help Desk</a> / <span>Knowledge base</span>
+          </nav>
+          <div class="page-head"><h1>Canned replies</h1></div>
+          <p class="lede">The rules the agent applies to every ticket. Stamped on request.</p>
+          <div class="kb-grid">
+            {cannedReplies.map((r) => (
+              <article class="kb-card">
+                <p class="kb-code">{r.code}</p>
+                <h2>{r.title}</h2>
+                <p>{r.body}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <!-- ============================== REPORTS ============================== -->
+        <section class="panel" id="panel-reports" data-panel="reports" hidden>
+          <nav class="crumbs" aria-label="Breadcrumb">
+            <a href="/">Portfolio</a> / <a href="#queue" data-nav="queue">Help Desk</a> / <span>Reports</span>
+          </nav>
+          <div class="page-head"><h1>Reports</h1></div>
+          <p class="lede">Real numbers, measured on the production database {site.statsAsOf}. The charts are decorative; the values are not.</p>
+          <div class="rep-grid">
+            {site.stats.map((s) => (
+              <div class="rep-tile">
+                <p class="rep-val">{s.value}</p>
+                <p class="rep-label">{s.label}</p>
+                <p class="rep-note">{s.note}</p>
+              </div>
+            ))}
+          </div>
+          <div class="rep-sla">
+            <h2>SLA performance</h2>
+            {tickets.filter((t) => !t.timeToRes.breached).map((t) => (
+              <div class="rep-row">
+                <span class="rep-key">DSG-{t.num}</span>
+                <span class="rep-bar"><i style={`--w:${88 - Number(t.num) * 4}%`}></i></span>
+                <span class="rep-met">{t.timeToRes.value}</span>
+              </div>
+            ))}
+            <p class="rep-fine">Customer satisfaction: 10/10 — measured at a phone store in 2022 and defended ever since.</p>
+          </div>
+        </section>
+
+        <!-- ============================== PEOPLE =============================== -->
+        <section class="panel" id="panel-people" data-panel="people" hidden>
+          <nav class="crumbs" aria-label="Breadcrumb">
+            <a href="/">Portfolio</a> / <a href="#queue" data-nav="queue">Help Desk</a> / <span>People</span>
+          </nav>
+          <div class="page-head"><h1>The agent</h1></div>
+          <div class="agent-card">
+            <span class="avatar av-self avatar-xl" aria-hidden="true">DS</span>
+            <div>
+              <h2>{site.name}</h2>
+              <p class="agent-role">{site.role} · {site.location}</p>
+              <p class="agent-bio">
+                Sole agent on this desk. Also built the desk, the queue, the tickets, and the
+                company software the tickets are about. {site.availability}.
+              </p>
+              <div class="agent-links">
+                <a class="chip" href={site.links.github} rel="me noopener">GitHub</a>
+                <a class="chip" href={site.resumeUrl}>Résumé</a>
+                <a class="chip" href={`mailto:${site.email}`}>{site.email}</a>
+                <a class="chip" href="/">The polished portfolio →</a>
+              </div>
+            </div>
+          </div>
+          <div class="agent-skills">
+            {site.skills.map((g) => (
+              <div class="skill-row">
+                <p class="skill-h">{g.group}</p>
+                <p class="skill-items">{g.items.join(' · ')}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <footer class="desk-foot">
+      <span>DSG SERVICE MANAGEMENT — the portfolio in help desk mode</span>
+      <span>TERMS: be nice · <a href="/">meadow mode</a> · <a href="/projects/portfolio-site">how this site works</a></span>
+    </footer>
+
+    <noscript>
+      <style is:inline>
+        /* No JS: the desk becomes a document — every panel visible, chrome
+           that needs JS hidden, table rows link through their summary anchors. */
+        .panel[hidden] { display: block !important; }
+        .search, .bell, .bulkbar { display: none !important; }
+      </style>
+    </noscript>
+  </div>
+</Base>
+
+<style>
+  /* =====================================================================
+     HELP DESK — one deliberate light look, independent of the site theme.
+     Palette is enterprise-ticketing-flavored without borrowing anyone's
+     brand values wholesale.
+     ===================================================================== */
+  .desk {
+    --dk-bg: #ffffff;
+    --dk-bg-sub: #f7f8f9;
+    --dk-line: #dcdfe4;
+    --dk-ink: #1c2b41;
+    --dk-ink-mut: #57657d;
+    --dk-blue: #0b4fc7;
+    --dk-blue-ink: #ffffff;
+    --dk-loz-ok-bg: #dcfff1; --dk-loz-ok-ink: #085c3f;
+    --dk-loz-info-bg: #e0eaff; --dk-loz-info-ink: #0a3b95;
+    --dk-loz-warn-bg: #fff3c4; --dk-loz-warn-ink: #533f04;
+    --dk-loz-hot-bg: #ffe5e0; --dk-loz-hot-ink: #8f1d0e;
+    --dk-yellow: #ffd400;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    background: var(--dk-bg);
+    color: var(--dk-ink);
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+  }
+  .desk a { color: var(--dk-blue); text-decoration: none; }
+  .desk a:hover { text-decoration: underline; }
+  .desk h1, .desk h2 { font-family: var(--font-sans); }
+
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+
+  /* ---- ticker ---- */
+  .ticker {
+    overflow: hidden; background: var(--dk-ink); color: #fff;
+    font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em;
+  }
+  .ticker-track { display: flex; width: max-content; animation: tick 45s linear infinite; }
+  .ticker-run { display: inline-flex; }
+  .ticker-item { padding: 0.4rem 0; }
+  .ticker-item::after { content: '///'; color: var(--dk-yellow); margin: 0 1.25rem; }
+  @keyframes tick { to { transform: translateX(-50%); } }
+  @media (prefers-reduced-motion: reduce) {
+    .ticker-track { animation: none; }
+  }
+
+  /* ---- top bar ---- */
+  .topbar {
+    display: flex; align-items: center; gap: 0.9rem;
+    padding: 0 1rem; height: 3.25rem;
+    border-bottom: 1px solid var(--dk-line); background: var(--dk-bg);
+    position: sticky; top: 0; z-index: 20;
+  }
+  .waffle { color: var(--dk-ink-mut); font-size: 1.05rem; }
+  .wordmark { font-weight: 700; color: var(--dk-ink) !important; white-space: nowrap; }
+  .wordmark .mark { color: var(--dk-blue); }
+  .topnav { display: flex; gap: 0.25rem; }
+  .topnav button {
+    padding: 0.35rem 0.6rem; border-radius: 4px; color: var(--dk-ink-mut);
+    font-weight: 500; cursor: pointer;
+  }
+  .topnav button:hover { background: var(--dk-bg-sub); color: var(--dk-blue); }
+  .create-btn {
+    background: var(--dk-blue); color: var(--dk-blue-ink); font-weight: 600;
+    padding: 0.4rem 0.85rem; border-radius: 4px; cursor: pointer;
+  }
+  .create-btn:hover { filter: brightness(1.12); }
+  .search { margin-left: auto; }
+  .search input {
+    width: 11rem; padding: 0.35rem 0.6rem; border: 1.5px solid var(--dk-line);
+    border-radius: 4px; background: var(--dk-bg); color: var(--dk-ink);
+  }
+  .search input:focus { outline: 2px solid var(--dk-blue); outline-offset: -1px; }
+  .bell { position: relative; cursor: help; }
+  .bell i {
+    position: absolute; top: -0.35rem; right: -0.6rem; font-style: normal;
+    background: #c9372c; color: #fff; font-size: 0.58rem; font-weight: 700;
+    border-radius: 999px; padding: 0.05rem 0.28rem;
+  }
+
+  /* ---- avatars ---- */
+  .avatar {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 1.5rem; height: 1.5rem; border-radius: 999px; flex: none;
+    font-size: 0.62rem; font-weight: 700; color: #fff; vertical-align: middle;
+  }
+  .avatar-xl { width: 4rem; height: 4rem; font-size: 1.5rem; }
+  .av-self { background: var(--dk-blue); }
+  .av-bot { background: var(--dk-ink); }
+  .av-a { background: #8f4700; }
+  .av-b { background: #5e4db2; }
+  .av-c { background: #206a83; }
+  .av-d { background: #943d73; }
+  .av-e { background: #216e4e; }
+
+  /* ---- shell ---- */
+  .shell { display: flex; flex: 1; min-height: 0; }
+  .side {
+    width: 15rem; flex: none; border-right: 1px solid var(--dk-line);
+    background: var(--dk-bg-sub); padding: 1rem 0.75rem;
+    display: flex; flex-direction: column; gap: 1rem;
+  }
+  .proj { display: flex; gap: 0.6rem; align-items: center; }
+  .proj-ico {
+    width: 2rem; height: 2rem; border-radius: 6px; background: #216e4e;
+    color: #fff; display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 0.7rem; flex: none;
+  }
+  .proj strong { display: block; font-size: 0.85rem; }
+  .proj small { color: var(--dk-ink-mut); font-size: 0.68rem; }
+  .side-nav { display: flex; flex-direction: column; gap: 0.1rem; }
+  .side-h {
+    font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--dk-ink-mut);
+    margin: 0.8rem 0.5rem 0.25rem;
+  }
+  .side-item {
+    text-align: left; padding: 0.4rem 0.5rem; border-radius: 4px;
+    color: var(--dk-ink); cursor: pointer; font-size: 0.82rem;
+  }
+  .side-item:hover { background: #eceef1; text-decoration: none; }
+  .side-item.is-active { background: #e0eaff; color: var(--dk-blue); font-weight: 600; }
+  .side-exit { color: var(--dk-ink-mut) !important; margin-top: 0.8rem; }
+  .side-fine { margin-top: auto; font-size: 0.65rem; color: var(--dk-ink-mut); line-height: 1.5; }
+
+  .main { flex: 1; min-width: 0; padding: 1.1rem 1.5rem 3rem; }
+  .crumbs { font-size: 0.75rem; color: var(--dk-ink-mut); margin-bottom: 0.5rem; }
+  .crumb-key { font-family: var(--font-mono); }
+  .page-head { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+  .page-head h1 { font-size: 1.35rem; font-weight: 700; }
+  .head-tools { color: var(--dk-ink-mut); letter-spacing: 0.2em; }
+  .lede { max-width: 44rem; color: var(--dk-ink-mut); line-height: 1.55; margin-bottom: 1.25rem; }
+
+  /* ---- queue table ---- */
+  .bulkbar {
+    display: flex; gap: 1rem; align-items: center; margin-bottom: 0.6rem;
+    background: var(--dk-yellow); color: #1c1c1c; font-weight: 600;
+    padding: 0.45rem 0.75rem; border: 1.5px solid var(--dk-ink); border-radius: 4px;
+  }
+  .bulk-note { font-weight: 400; }
+  .tablewrap { overflow-x: auto; border: 1px solid var(--dk-line); border-radius: 6px; }
+  .queue { width: 100%; border-collapse: collapse; min-width: 62rem; }
+  .queue th {
+    text-align: left; font-size: 0.68rem; font-weight: 600; color: var(--dk-ink-mut);
+    padding: 0.5rem 0.6rem; border-bottom: 2px solid var(--dk-line);
+    text-transform: none; white-space: nowrap;
+  }
+  .queue td {
+    padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--dk-line);
+    vertical-align: middle; white-space: nowrap;
+  }
+  .queue input[type='checkbox'] { accent-color: var(--dk-blue); }
+  .queue tbody tr:last-child td { border-bottom: 0; }
+  .qrow { cursor: pointer; }
+  .qrow:hover, .qrow:focus-visible { background: var(--dk-bg-sub); outline: none; }
+  .qrow.is-hi { background: #e0eaff; }
+  .c-sum a { font-weight: 500; }
+  .c-sum { max-width: 24rem; overflow: hidden; text-overflow: ellipsis; }
+  .c-type { color: var(--dk-ink-mut); font-size: 0.78rem; }
+  .type-ico { color: var(--dk-blue); margin-right: 0.15rem; }
+  .c-key { font-family: var(--font-mono); font-size: 0.75rem; color: var(--dk-ink-mut); }
+  .c-rep, .c-asn { font-size: 0.78rem; }
+  .c-rep .avatar, .c-asn .avatar { margin-right: 0.35rem; }
+  .c-created { color: var(--dk-ink-mut); font-size: 0.75rem; }
+  .qrow-empty td { padding: 1.4rem; text-align: center; color: var(--dk-ink-mut); }
+  .linkish { color: var(--dk-blue); cursor: pointer; }
+  .table-fine { margin-top: 0.6rem; font-size: 0.7rem; color: var(--dk-ink-mut); }
+  .table-fine kbd {
+    font-family: var(--font-mono); border: 1px solid var(--dk-line);
+    border-bottom-width: 2px; border-radius: 3px; padding: 0 0.3rem; font-size: 0.65rem;
+  }
+
+  /* ---- lozenges, chips, SLA, priority ---- */
+  .loz {
+    display: inline-block; padding: 0.14rem 0.4rem; border-radius: 3px;
+    font-size: 0.62rem; font-weight: 700; letter-spacing: 0.045em; white-space: nowrap;
+  }
+  .loz-ok { background: var(--dk-loz-ok-bg); color: var(--dk-loz-ok-ink); }
+  .loz-info { background: var(--dk-loz-info-bg); color: var(--dk-loz-info-ink); }
+  .loz-warn { background: var(--dk-loz-warn-bg); color: var(--dk-loz-warn-ink); }
+  .loz-hot { background: var(--dk-loz-hot-bg); color: var(--dk-loz-hot-ink); }
+  .sla {
+    display: inline-block; padding: 0.14rem 0.5rem; border-radius: 999px;
+    font-size: 0.68rem; font-weight: 600; white-space: nowrap;
+  }
+  .sla i { font-style: normal; }
+  .sla-ok { background: var(--dk-loz-ok-bg); color: var(--dk-loz-ok-ink); }
+  .sla-bad { background: #c9372c; color: #fff; }
+  .prio { font-weight: 800; }
+  .p-highest { color: #c9372c; }
+  .p-high { color: #e56910; }
+  .p-med { color: #b38600; }
+  .p-low { color: #1968b3; }
+
+  /* ---- issue view ---- */
+  .issue { display: grid; grid-template-columns: minmax(0, 1fr) 17rem; gap: 2rem; }
+  .issue-title { font-size: 1.3rem; font-weight: 700; line-height: 1.3; margin-bottom: 0.6rem; }
+  .issue-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.4rem; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    border: 1px solid var(--dk-line); border-radius: 4px; padding: 0.28rem 0.6rem;
+    font-size: 0.75rem; color: var(--dk-ink); background: var(--dk-bg); cursor: pointer;
+  }
+  .chip:hover { background: var(--dk-bg-sub); text-decoration: none !important; }
+  .chip i { font-style: normal; color: var(--dk-ink-mut); }
+  .chip-quiet { cursor: default; color: var(--dk-ink-mut); }
+  .issue-h { font-size: 0.9rem; font-weight: 700; margin: 1.3rem 0 0.7rem; }
+  .act-note { font-weight: 400; color: var(--dk-ink-mut); font-size: 0.75rem; }
+
+  .comment { display: flex; gap: 0.7rem; margin-bottom: 1rem; max-width: 46rem; }
+  .comment-body { min-width: 0; }
+  .comment-meta { font-size: 0.75rem; margin-bottom: 0.2rem; }
+  .comment-meta span { color: var(--dk-ink-mut); }
+  .agent-tag {
+    margin-left: 0.4rem; background: var(--dk-blue); color: #fff;
+    font-size: 0.55rem; font-weight: 800; letter-spacing: 0.08em;
+    padding: 0.1rem 0.3rem; border-radius: 3px; vertical-align: 1px;
+  }
+  .comment-text { line-height: 1.6; }
+  .comment-agent .comment-text {
+    background: var(--dk-bg-sub); border: 1px solid var(--dk-line);
+    border-radius: 6px; padding: 0.6rem 0.8rem;
+  }
+  /* staggered reveal when a ticket opens; gated for reduced motion */
+  @media (prefers-reduced-motion: no-preference) {
+    .panel-issue.is-live .thread .comment {
+      opacity: 0; transform: translateY(6px);
+      animation: cin 0.45s ease-out forwards;
+      animation-delay: calc(0.45s + var(--d) * 0.85s);
+    }
+    .panel-issue.is-live .resolution {
+      opacity: 0;
+      animation: cin 0.5s ease-out forwards;
+      animation-delay: calc(0.7s + var(--threads, 2) * 0.85s);
+    }
+    .panel-issue.is-live .res-stamp {
+      opacity: 0; transform: rotate(8deg) scale(2.4);
+      animation: stamp 0.35s cubic-bezier(0.2, 1.6, 0.4, 1) forwards;
+      animation-delay: calc(1.15s + var(--threads, 2) * 0.85s);
+    }
+  }
+  @keyframes cin { to { opacity: 1; transform: none; } }
+  @keyframes stamp { to { opacity: 1; transform: rotate(-3deg) scale(1); } }
+
+  .resolution {
+    position: relative; margin-top: 1.6rem; max-width: 46rem;
+    border: 1.5px solid var(--dk-loz-ok-ink); border-radius: 6px;
+    background: var(--dk-loz-ok-bg); padding: 1rem 1.2rem;
+  }
+  .resolution h2 { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dk-loz-ok-ink); }
+  .res-head { font-weight: 700; margin: 0.35rem 0 0.5rem; font-size: 1rem; }
+  .resolution ul { list-style: none; }
+  .resolution li { padding-left: 1.1rem; position: relative; line-height: 1.7; }
+  .resolution li::before { content: '✓'; position: absolute; left: 0; color: var(--dk-loz-ok-ink); font-weight: 700; }
+  .res-link {
+    display: inline-block; margin-top: 0.7rem; font-weight: 700;
+    font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.04em;
+  }
+  .res-stamp {
+    position: absolute; top: -0.9rem; right: 1rem; transform: rotate(-3deg);
+    border: 2.5px solid var(--dk-loz-ok-ink); color: var(--dk-loz-ok-ink);
+    background: var(--dk-bg); font-family: var(--font-mono); font-weight: 700;
+    font-size: 0.72rem; letter-spacing: 0.1em; padding: 0.2rem 0.5rem;
+  }
+
+  .issue-rail { min-width: 0; }
+  .rail-box { border: 1px solid var(--dk-line); border-radius: 6px; padding: 0.9rem; }
+  .rail-box dl { margin-top: 0.9rem; display: grid; grid-template-columns: 1fr; gap: 0.65rem; }
+  .rail-box dt { font-size: 0.65rem; font-weight: 700; color: var(--dk-ink-mut); text-transform: uppercase; letter-spacing: 0.06em; }
+  .rail-box dd { font-size: 0.8rem; margin-top: 0.15rem; }
+  .rail-box dd .avatar { margin-right: 0.3rem; }
+  .rail-labels { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+  .label-chip {
+    border: 1px solid var(--dk-line); border-radius: 3px; background: var(--dk-bg-sub);
+    font-family: var(--font-mono); font-size: 0.65rem; padding: 0.1rem 0.35rem;
+  }
+  .back-btn {
+    margin-top: 0.8rem; width: 100%; text-align: center; padding: 0.45rem;
+    border: 1px solid var(--dk-line); border-radius: 4px; cursor: pointer; color: var(--dk-ink);
+  }
+  .back-btn:hover { background: var(--dk-bg-sub); }
+
+  /* ---- raise a request ---- */
+  .intake { max-width: 46rem; }
+  .intake-cats { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.1rem; }
+  .cat {
+    border: 1.5px solid var(--dk-ink); border-radius: 4px; padding: 0.45rem 0.7rem;
+    font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700;
+    letter-spacing: 0.03em; cursor: pointer; color: var(--dk-ink); background: var(--dk-bg);
+    box-shadow: 2.5px 2.5px 0 0 rgb(28 43 65 / 0.25);
+  }
+  .cat:hover { transform: translate(-1px, -1px); box-shadow: 3.5px 3.5px 0 0 rgb(28 43 65 / 0.3); }
+  .cat[aria-pressed='true'] { background: var(--dk-yellow); }
+  .intake-reply { display: flex; gap: 0.7rem; margin-bottom: 1.1rem; }
+  .intake-reply .comment-text {
+    background: var(--dk-bg-sub); border: 1px solid var(--dk-line);
+    border-radius: 6px; padding: 0.6rem 0.8rem; line-height: 1.6;
+  }
+  .intake-form label { display: block; font-size: 0.72rem; font-weight: 700; color: var(--dk-ink-mut); margin-bottom: 0.9rem; }
+  .intake-form input, .intake-form textarea {
+    display: block; width: 100%; margin-top: 0.3rem;
+    border: 1.5px solid var(--dk-line); border-radius: 4px; padding: 0.5rem 0.65rem;
+    font-size: 0.85rem; font-weight: 400; color: var(--dk-ink); background: var(--dk-bg);
+    font-family: inherit;
+  }
+  .intake-form input:focus, .intake-form textarea:focus { outline: 2px solid var(--dk-blue); outline-offset: -1px; }
+  .intake-send { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
+  .intake-note { font-size: 0.72rem; color: var(--dk-ink-mut); }
+
+  /* ---- knowledge base ---- */
+  .kb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 1px; background: var(--dk-line); border: 1px solid var(--dk-line); }
+  .kb-card { background: var(--dk-bg); padding: 1.1rem; }
+  .kb-code { font-family: var(--font-mono); font-size: 0.65rem; color: var(--dk-ink-mut); }
+  .kb-card h2 { font-family: var(--font-mono); font-size: 0.82rem; margin: 0.4rem 0 0.5rem; letter-spacing: 0.02em; }
+  .kb-card p:last-child { line-height: 1.6; color: var(--dk-ink-mut); font-size: 0.8rem; }
+
+  /* ---- reports ---- */
+  .rep-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 1px; background: var(--dk-line); border: 1px solid var(--dk-line); max-width: 52rem; }
+  .rep-tile { background: var(--dk-bg); padding: 1rem 1.1rem; }
+  .rep-val { font-family: var(--font-mono); font-size: 1.7rem; font-weight: 700; }
+  .rep-label { font-size: 0.75rem; font-weight: 600; }
+  .rep-note { font-size: 0.68rem; color: var(--dk-ink-mut); margin-top: 0.15rem; }
+  .rep-sla { max-width: 52rem; margin-top: 1.6rem; }
+  .rep-sla h2 { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.7rem; }
+  .rep-row { display: grid; grid-template-columns: 5rem 1fr 9rem; gap: 0.8rem; align-items: center; margin-bottom: 0.45rem; }
+  .rep-key { font-family: var(--font-mono); font-size: 0.72rem; color: var(--dk-ink-mut); }
+  .rep-bar { display: block; height: 0.8rem; background: var(--dk-bg-sub); border: 1px solid var(--dk-line); border-radius: 3px; overflow: hidden; }
+  .rep-bar i { display: block; height: 100%; width: var(--w); background: var(--dk-blue); }
+  .rep-met { font-size: 0.72rem; text-align: right; color: var(--dk-ink-mut); }
+  .rep-fine { margin-top: 0.9rem; font-size: 0.72rem; color: var(--dk-ink-mut); }
+
+  /* ---- people ---- */
+  .agent-card { display: flex; gap: 1.2rem; max-width: 46rem; align-items: flex-start; }
+  .agent-card h2 { font-size: 1.15rem; font-weight: 700; }
+  .agent-role { color: var(--dk-ink-mut); font-size: 0.8rem; margin-bottom: 0.5rem; }
+  .agent-bio { line-height: 1.6; margin-bottom: 0.8rem; }
+  .agent-links { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .agent-skills { margin-top: 1.6rem; max-width: 46rem; border-top: 1px solid var(--dk-line); }
+  .skill-row { display: grid; grid-template-columns: 9rem 1fr; gap: 1rem; padding: 0.6rem 0; border-bottom: 1px solid var(--dk-line); }
+  .skill-h { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--dk-ink-mut); }
+  .skill-items { font-size: 0.8rem; line-height: 1.55; }
+
+  /* ---- footer ---- */
+  .desk-foot {
+    display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+    border-top: 1px solid var(--dk-line); padding: 0.7rem 1.5rem;
+    font-family: var(--font-mono); font-size: 0.65rem; color: var(--dk-ink-mut);
+  }
+
+  /* ---- small screens: sidebar becomes a chip row, table thins out ---- */
+  @media (max-width: 900px) {
+    .shell { flex-direction: column; }
+    .side { width: auto; border-right: 0; border-bottom: 1px solid var(--dk-line); padding: 0.6rem 0.75rem; }
+    .side-nav { flex-direction: row; overflow-x: auto; gap: 0.35rem; }
+    .side-h, .side-fine, .proj small { display: none; }
+    .side-item { white-space: nowrap; border: 1px solid var(--dk-line); }
+    .side-exit { margin-top: 0; }
+    .topnav { display: none; }
+    .search input { width: 7rem; }
+    .issue { grid-template-columns: 1fr; }
+    .main { padding: 1rem 0.9rem 3rem; }
+    .c-type, .c-created, .c-asn { display: none; }
+    .queue { min-width: 46rem; }
+  }
+</style>
+
+<script>
+  /* Panel router + desk behaviors. Everything here is enhancement — the HTML
+     already contains every panel. */
+  const panels = [...document.querySelectorAll<HTMLElement>('[data-panel]')];
+  const sideItems = [...document.querySelectorAll<HTMLElement>('[data-side]')];
+  const rows = [...document.querySelectorAll<HTMLTableRowElement>('.qrow')];
+
+  const issueFor = (id: string) => panels.find((p) => p.dataset.panel === id);
+
+  function show(id: string, push = true) {
+    const target = issueFor(id) ?? issueFor('queue')!;
+    const name = target.dataset.panel!;
+    panels.forEach((p) => {
+      const on = p === target;
+      p.hidden = !on;
+      p.classList.toggle('is-live', on && p.classList.contains('panel-issue'));
+    });
+    // stagger var for the resolution reveal
+    if (target.classList.contains('panel-issue')) {
+      const n = target.querySelectorAll('.thread .comment').length;
+      (target as HTMLElement).style.setProperty('--threads', String(n));
+    }
+    const sideKey = name.startsWith('DSG-') ? 'queue' : name;
+    sideItems.forEach((s) => s.classList.toggle('is-active', s.dataset.side === sideKey));
+    if (push && location.hash !== `#${name}`) history.pushState(null, '', `#${name}`);
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }
+
+  document.addEventListener('click', (e) => {
+    const nav = (e.target as HTMLElement).closest<HTMLElement>('[data-nav]');
+    if (nav) {
+      e.preventDefault();
+      show(nav.dataset.nav!);
+      return;
+    }
+    const row = (e.target as HTMLElement).closest<HTMLTableRowElement>('.qrow');
+    if (row && !(e.target as HTMLElement).closest('input')) {
+      show(row.dataset.open!);
+    }
+  });
+  window.addEventListener('hashchange', () => show(location.hash.slice(1) || 'queue', false));
+  show(location.hash.slice(1) || 'queue', false);
+
+  /* ---- queue search ---- */
+  const search = document.getElementById('desk-search') as HTMLInputElement | null;
+  const emptyRow = document.getElementById('queue-empty') as HTMLTableRowElement | null;
+  function applySearch() {
+    const q = (search?.value ?? '').trim().toLowerCase();
+    let visible = 0;
+    rows.forEach((r) => {
+      const hit = !q || r.textContent!.toLowerCase().includes(q);
+      r.hidden = !hit;
+      if (hit) visible++;
+    });
+    if (emptyRow) emptyRow.hidden = visible > 0;
+  }
+  search?.addEventListener('input', () => {
+    show('queue', false);
+    applySearch();
+  });
+  document.getElementById('clear-search')?.addEventListener('click', () => {
+    if (search) search.value = '';
+    applySearch();
+  });
+
+  /* ---- keyboard: j/k moves, enter opens, esc back ---- */
+  let hi = -1;
+  function highlight(n: number) {
+    const vis = rows.filter((r) => !r.hidden);
+    if (vis.length === 0) return;
+    hi = Math.max(0, Math.min(n, vis.length - 1));
+    rows.forEach((r) => r.classList.remove('is-hi'));
+    vis[hi].classList.add('is-hi');
+    vis[hi].scrollIntoView({ block: 'nearest' });
+  }
+  document.addEventListener('keydown', (e) => {
+    const inField = /^(INPUT|TEXTAREA)$/.test((e.target as HTMLElement).tagName);
+    if (e.key === 'Escape' && !inField) {
+      show('queue');
+      return;
+    }
+    if (inField) return;
+    const queueOpen = !issueFor('queue')!.hidden;
+    if (!queueOpen) return;
+    if (e.key === 'j') highlight(hi + 1);
+    else if (e.key === 'k') highlight(hi - 1);
+    else if (e.key === 'Enter') {
+      // a row focused by Tab wins; otherwise the j/k highlight
+      const focused = (e.target as HTMLElement).closest?.('.qrow') as HTMLTableRowElement | null;
+      const vis = rows.filter((r) => !r.hidden);
+      const row = focused ?? (hi >= 0 ? vis[hi] : undefined);
+      if (row) show(row.dataset.open!);
+    }
+  });
+
+  /* ---- bulk-select joke ---- */
+  const bulkbar = document.getElementById('bulkbar');
+  const bulkcount = document.getElementById('bulkcount');
+  document.addEventListener('change', (e) => {
+    if (!(e.target as HTMLElement).matches('.qrow input[type="checkbox"]')) return;
+    const n = document.querySelectorAll('.qrow input:checked').length;
+    if (bulkbar) bulkbar.hidden = n === 0;
+    if (bulkcount) bulkcount.textContent = `${n} selected`;
+  });
+
+  /* ---- DSG-008's SLA ticks up from page load: your ticket, still open ---- */
+  const liveSlas = [...document.querySelectorAll<HTMLElement>('[data-sla-live]')];
+  if (liveSlas.length > 0) {
+    const t0 = Date.now();
+    setInterval(() => {
+      const s = Math.floor((Date.now() - t0) / 1000);
+      const label = `-${Math.floor(s / 60)}m ${String(s % 60).padStart(2, '0')}s`;
+      liveSlas.forEach((el) => {
+        el.firstChild!.textContent = `${label} `;
+      });
+    }, 1000);
+  }
+
+  /* ---- vote / watch counters ---- */
+  document.querySelectorAll<HTMLButtonElement>('.vote-btn').forEach((b) =>
+    b.addEventListener('click', () => {
+      const n = b.querySelector('.vote-n')!;
+      n.textContent = String(Number(n.textContent) + 1);
+      b.disabled = true;
+      b.style.borderColor = 'var(--dk-blue)';
+    }),
+  );
+  document.querySelectorAll<HTMLButtonElement>('.watch-btn').forEach((b) =>
+    b.addEventListener('click', () => {
+      const n = b.querySelector('.watch-n')!;
+      n.textContent = `${Number(n.textContent) + 1} (hi!)`;
+      b.disabled = true;
+    }),
+  );
+
+  /* ---- raise a request ---- */
+  const cats = [...document.querySelectorAll<HTMLButtonElement>('.cat')];
+  const replyBox = document.getElementById('intake-reply');
+  const replyText = document.getElementById('intake-reply-text');
+  const subjectInput = document.getElementById('intake-subject') as HTMLInputElement | null;
+  cats.forEach((c) =>
+    c.addEventListener('click', () => {
+      cats.forEach((x) => x.setAttribute('aria-pressed', String(x === c)));
+      if (subjectInput) subjectInput.value = c.dataset.subject ?? '';
+      if (replyBox && replyText) {
+        replyBox.hidden = false;
+        replyText.textContent = c.dataset.reply ?? '';
+      }
+    }),
+  );
+  const intakeForm = document.getElementById('intake-form');
+  intakeForm?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = intakeForm.dataset.email ?? '';
+    const subject = subjectInput?.value || 'Ticket: something new';
+    const body = (document.getElementById('intake-body') as HTMLTextAreaElement | null)?.value ?? '';
+    location.href = `mailto:${email}?subject=${encodeURIComponent(`[HELP DESK] ${subject}`)}&body=${encodeURIComponent(body)}`;
+  });
+</script>

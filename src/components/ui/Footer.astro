@@ -58,47 +58,14 @@ const year = new Date().getFullYear();
       <p>© {year} {site.name}. Built with Astro, deployed on Cloudflare Workers.</p>
       <div class="flex flex-wrap items-center gap-3">
         <p>Numbers measured {site.statsAsOf}.</p>
-        <!-- Skin A/B: same site, two design languages. ?skin=slip links work too. -->
-        <div class="flex items-center gap-1 rounded-md border border-border p-0.5" role="group" aria-label="Site look">
-          <span class="px-1 text-[10px] uppercase tracking-wider">Look</span>
-          <button type="button" data-skin-btn="meadow" class="rounded px-1.5 py-0.5 transition-colors hover:text-ink">Meadow</button>
-          <button type="button" data-skin-btn="slip" class="rounded px-1.5 py-0.5 transition-colors hover:text-ink">Packing slip</button>
+        <!-- Mode switch: Meadow is this site; Help desk is the same portfolio
+             re-served as a service-management tool at /desk. -->
+        <div class="flex items-center gap-1 rounded-md border border-border p-0.5" role="group" aria-label="Site mode">
+          <span class="px-1 text-[10px] uppercase tracking-wider">Mode</span>
+          <span class="rounded bg-surface-raised px-1.5 py-0.5 font-semibold text-ink" aria-current="true">Meadow</span>
+          <a href="/desk" class="rounded px-1.5 py-0.5 transition-colors hover:text-ink">Help desk</a>
         </div>
       </div>
     </div>
   </div>
 </footer>
-
-<script>
-  const skinBtns = document.querySelectorAll<HTMLButtonElement>('[data-skin-btn]');
-
-  const paintSkin = () => {
-    const skin = document.documentElement.dataset.skin === 'slip' ? 'slip' : 'meadow';
-    skinBtns.forEach((b) => {
-      const on = b.dataset.skinBtn === skin;
-      b.classList.toggle('bg-surface-raised', on);
-      b.classList.toggle('text-ink', on);
-      b.classList.toggle('font-semibold', on);
-      b.setAttribute('aria-pressed', String(on));
-    });
-  };
-
-  skinBtns.forEach((b) =>
-    b.addEventListener('click', () => {
-      const skin = b.dataset.skinBtn === 'slip' ? 'slip' : 'meadow';
-      if (skin === 'slip') {
-        document.documentElement.dataset.skin = 'slip';
-      } else {
-        delete document.documentElement.dataset.skin;
-      }
-      try {
-        localStorage.setItem('skin', skin);
-      } catch {
-        /* storage blocked — still flips for this page view */
-      }
-      paintSkin();
-    }),
-  );
-
-  paintSkin();
-</script>
