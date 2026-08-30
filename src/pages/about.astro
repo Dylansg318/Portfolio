@@ -2,6 +2,26 @@
 import Base from '../layouts/Base.astro';
 import SectionHeading from '../components/ui/SectionHeading.astro';
 import { site } from '../lib/site';
+
+/** The path here, one line per stop. Deliberately short: the résumé carries
+ *  the detail, this page only has to make someone want to read it. */
+const path = [
+  {
+    when: '2020 – 24',
+    what: 'B.S. Computer Science, George Mason',
+    note: 'Paid for it managing a T-Mobile store, then running a restaurant floor.',
+  },
+  {
+    when: '2024',
+    what: 'CYDEO SDET bootcamp',
+    note: 'Where the testing habits came from. I still write the test before I trust the fix.',
+  },
+  {
+    when: '2025',
+    what: 'Hired to fix a pricing spreadsheet',
+    note: 'It became a scraper, then a service, then the ERP the company runs on.',
+  },
+];
 ---
 <Base title="About" description={`About ${site.name} — ${site.tagline}`}>
   <section class="ambient">
@@ -11,73 +31,66 @@ import { site } from '../lib/site';
         I like the problems where the fix has to{' '}
         <span class="text-gradient">survive the people using it.</span>
       </h1>
-      <p class="reveal mt-6 max-w-(--container-reading) text-lg leading-relaxed text-ink-muted" style="--reveal-delay: 120ms">
-        {site.location}. Software engineer at a dental supply distributor, where I built
-        the system the business runs on. Before that: a testing bootcamp, a CS degree, and
-        a few years running a phone store and a restaurant floor — which turned out to be
-        good training for building tools people have to use all day.
-      </p>
     </div>
   </section>
 
   <div class="mx-auto max-w-(--container-wide) px-4 sm:px-6">
     <div class="grid gap-12 lg:grid-cols-[1.4fr_1fr]">
-      <!-- Plain prose, deliberately. Recruiters and their screening tools both
-           need to parse this, and specifics land harder than adjectives. -->
-      <div class="prose-portfolio reveal">
-        <h2>The short version</h2>
-        <p>
-          I'm the Operations Technology Manager at RMH3 Dental Supply in Chantilly, VA. In
-          practice that means I'm the engineer: I designed, built and run <a href="/projects/mhlhub">MHLHUB</a>,
-          the internal ERP that replaced SellerCloud, a pile of spreadsheets, and a Gmail
-          inbox somebody triaged by hand. It takes orders from six sales channels, keeps
-          a 32,000-product catalog in agreement across all of them, reprices every minute,
-          buys shipping labels, handles returns, and keeps the books in step with
-          QuickBooks. Daily orders roughly doubled while I've been there — from about 270 a
-          day to about 520 — without adding people to operations.
-        </p>
-        <p>
-          Almost everything I've built started as something a person was doing by hand.
-          Repricing was a spreadsheet someone updated every morning. The inventory sync
-          exists because two systems disagreed and somebody had to reconcile them at the
-          end of every day. Those are the problems I like — the ones where being subtly
-          wrong is worse than being obviously broken, and where the design has to hold up
-          when a warehouse picker or a customer-service rep is using it at 4pm on a Friday.
-        </p>
+      <div class="space-y-12">
+        <!-- Short and specific. Recruiters and their screening tools both parse
+             this, and one concrete number beats three adjectives. -->
+        <section class="reveal">
+          <h2 class="font-display text-2xl font-bold text-ink">The short version</h2>
+          <p class="mt-4 max-w-(--container-reading) text-lg leading-relaxed text-ink-muted">
+            I'm the engineer at RMH3 Dental Supply. I designed, built and run{' '}
+            <a class="text-accent hover:underline" href="/projects/mhlhub">MHLHUB</a> — the
+            in-house ERP that replaced off-the-shelf software, a stack of spreadsheets and
+            an inbox somebody sorted by hand. Six sales channels, 32,000 products, orders
+            roughly doubled while I've been here without adding anyone to operations.
+          </p>
+          <p class="mt-4 max-w-(--container-reading) text-lg leading-relaxed text-ink-muted">
+            Almost everything I've built started as something a person was doing by hand.
+            Those are the problems I like — where being subtly wrong costs more than being
+            obviously broken.
+          </p>
+        </section>
 
-        <h2>How I got here</h2>
-        <p>
-          I grew up in Chantilly and studied Computer Science at George Mason. I paid for
-          it by working: first as an associate and then store manager at a T-Mobile
-          retailer, where I ran the whole store — staffing, cash, inventory — and beat
-          the targets by 30% for months at a time; then as head server at a Korean BBQ
-          restaurant in Fairfax while I finished school. Neither job was about software,
-          but both were about systems that break when they meet real people, and both
-          taught me to care whether the person on the other side of the counter actually
-          got what they came for.
-        </p>
-        <p>
-          In 2024 I did CYDEO's Software Developer in Test program — Selenium, Cucumber
-          and Gherkin, REST Assured, JDBC, Jenkins — which is where the testing habits come
-          from. I still reach for a test before I trust a fix, and I'd rather automate
-          anything I'd otherwise have to check twice. In 2025 RMH3 Dental brought me on to
-          fix their pricing spreadsheet. The spreadsheet became a scraper, the scraper
-          became a service, and the service became the ERP.
-        </p>
+        <!-- How I got here -->
+        <section>
+          <h2 class="reveal font-display text-2xl font-bold text-ink">How I got here</h2>
+          <ol class="mt-5 space-y-4">
+            {path.map((stop, i) => (
+              <li class="tile reveal flex flex-col gap-1 p-5 sm:flex-row sm:gap-6" style={`--reveal-delay: ${i * 70}ms`}>
+                <span class="shrink-0 pt-0.5 font-mono text-sm tabular-nums text-accent sm:w-24">{stop.when}</span>
+                <span>
+                  <span class="block font-semibold text-ink">{stop.what}</span>
+                  <span class="mt-1 block text-sm leading-relaxed text-ink-muted">{stop.note}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
+        </section>
 
-        <h2>What I'm into right now</h2>
-        <p>
-          Running a fleet of AI coding sessions against one codebase without them
-          corrupting each other — the hooks, the coordination layer, the rules files that
-          make the dangerous operations impossible rather than discouraged. It changed how
-          much one engineer can own, and I wrote it up as <a href="/projects/agent-fleet">its own project</a>.
-        </p>
-        <p>
-          Outside work: I played bass and contrabass clarinet through school — marching
-          band for four years — and still think in sections and cues more than I'd admit.
-          I'm Filipino-American; I understand Tagalog better than I speak it. I like video
-          games with friends, 3D printing, and finding a restaurant I haven't been to yet.
-        </p>
+        <!-- Now / outside -->
+        <section class="grid gap-4 sm:grid-cols-2">
+          <div class="tile reveal p-6">
+            <p class="eyebrow">Right now</p>
+            <p class="mt-3 text-sm leading-relaxed text-ink-muted">
+              Running a fleet of AI coding sessions against one codebase without them
+              corrupting each other — the hooks and rules that make the dangerous
+              operations impossible rather than discouraged.{' '}
+              <a class="text-accent hover:underline" href="/projects/agent-fleet">The write-up →</a>
+            </p>
+          </div>
+          <div class="tile reveal p-6" style="--reveal-delay: 70ms">
+            <p class="eyebrow">Off the clock</p>
+            <p class="mt-3 text-sm leading-relaxed text-ink-muted">
+              Bass and contrabass clarinet through school, four years of marching band.
+              Filipino-American — I understand Tagalog better than I speak it. Games with
+              friends, 3D printing, and a restaurant I haven't tried yet.
+            </p>
+          </div>
+        </section>
       </div>
 
       <aside class="space-y-6">
@@ -122,9 +135,14 @@ import { site } from '../lib/site';
       </aside>
     </div>
 
-    <!-- Skills -->
-    <section class="mt-20">
-      <SectionHeading eyebrow="Toolkit" title="What I work with" lead="Ordered by how often I reach for it, not alphabetically." />
+    <!-- Skills. The one long list that earns its length — it is scanned, not read. -->
+    <section class="mt-20 pb-8">
+      <SectionHeading
+        eyebrow="Toolkit"
+        title="What I work with"
+        lead="Ordered by how often I reach for it, not alphabetically."
+        link={{ href: '/resume', label: 'Full résumé' }}
+      />
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {site.skills.map((row, i) => (
           <div class="tile reveal p-5" style={`--reveal-delay: ${i * 50}ms`}>
@@ -137,38 +155,6 @@ import { site } from '../lib/site';
           </div>
         ))}
       </div>
-    </section>
-
-    <!-- Timeline -->
-    <section class="mt-20">
-      <SectionHeading eyebrow="Timeline" title="Experience" link={{ href: '/resume', label: 'Full résumé' }} />
-      <ol class="relative space-y-10 border-l border-border pl-8">
-        {site.experience.map((job, i) => (
-          <li class="reveal relative" style={`--reveal-delay: ${i * 60}ms`}>
-            <span
-              class:list={[
-                'absolute -left-[2.4rem] top-1.5 size-3 rounded-full ring-4 ring-bg',
-                i === 0 ? 'bg-accent' : 'bg-border-strong',
-              ]}
-              aria-hidden="true"
-            ></span>
-            <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-              <h3 class="font-display text-lg font-semibold text-ink">
-                {job.title} <span class="font-sans font-normal text-ink-muted">· {job.org}, {job.place}</span>
-              </h3>
-              <p class="text-sm tabular-nums text-ink-faint">{job.start} – {job.end}</p>
-            </div>
-            <ul class="mt-3 max-w-(--container-reading) space-y-2 text-sm leading-relaxed text-ink-muted">
-              {job.bullets.map((b) => (
-                <li class="flex gap-3">
-                  <span class="mt-2 size-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true"></span>
-                  <span>{b}</span>
-                </li>
-              ))}
-            </ul>
-          </li>
-        ))}
-      </ol>
     </section>
   </div>
 </Base>

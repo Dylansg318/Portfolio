@@ -341,13 +341,13 @@ export const tickets: Ticket[] = [
         from: 'agent',
         name: 'DYLAN (AGENT)',
         text:
-          'Yes — after a human has tested it first. A team of ten of us automated an Odoo ERP with Selenium and Cucumber: readable Given/When/Then specifications, run nightly in Jenkins. The manual exploratory pass stays, because it finds the bugs no script was told to look for.',
+          'Yes — after a human has tested it first. A team of ten of us automated a modern ERP with Selenium and Cucumber: readable Given/When/Then specifications, run nightly in Jenkins. The manual exploratory pass stays, because it finds the bugs no script was told to look for.',
       },
     ],
     resolution: {
       headline: 'A nightly regression suite; manual testing refocused on finding new bugs.',
       points: [
-        'Selenium + Cucumber BDD over an Odoo ERP, built by a team of ten',
+        'Selenium + Cucumber BDD over a modern ERP, built by a team of ten',
         'Jenkins ran the suite nightly and reported by morning',
         'Replaced a two-day manual regression pass',
       ],

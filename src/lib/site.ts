@@ -92,7 +92,7 @@ export const site = {
       start: 'Jun 2025',
       end: 'Present',
       summary:
-        'Built and run MHLHUB, the internal ERP that replaced SellerCloud, spreadsheets and Gmail triage for a six-channel dental distributor.',
+        'Built and run MHLHUB, the in-house ERP that replaced off-the-shelf ERP software, spreadsheets and inbox triage for a six-channel dental distributor.',
       bullets: [
         'Designed and shipped the ERP the business runs on: order intake from six channels, inventory and lots, shipping labels, customer service, returns, and QuickBooks integration — one PostgreSQL database, ~180 scheduled jobs.',
         'Daily orders roughly doubled (≈270 → ≈520/day) on a 32,000-product catalog without adding ops headcount.',
@@ -135,7 +135,7 @@ export const site = {
       place: 'Tysons, VA',
       when: 'Feb – Oct 2024',
       detail:
-        'Selenium WebDriver, Cucumber/Gherkin BDD, REST Assured, JDBC, Jenkins CI, Agile-Scrum. Team project automating an Odoo ERP.',
+        'Selenium, Cucumber/Gherkin BDD, REST Assured, JDBC, Jenkins. Capstone: automating a modern ERP with a team of ten.',
     },
     {
       title: 'B.S. Computer Science',
@@ -156,17 +156,17 @@ export const site = {
     {
       title: 'Subtly wrong is worse than obviously broken.',
       body:
-        'A page that crashes gets fixed the same day. A number that is plausibly wrong gets trusted for a month. I design for the second case: hard filters, ledgers with evidence, and jobs that fail loudly rather than report success while doing nothing.',
+        'A page that crashes gets fixed the same day. A number that is plausibly wrong gets trusted for a month. I build for the second case.',
     },
     {
       title: 'The app is the work, not a view of it.',
       body:
-        'If someone has to export to a spreadsheet to finish their job, the feature is not done. Every screen I build is where the task actually happens — the order gets shipped there, the return gets decided there.',
+        'If someone has to export to a spreadsheet to finish their job, the feature is not done. The screen is where the work happens.',
     },
     {
       title: 'Store the raw thing, parse it after.',
       body:
-        'Every external payload — a carrier invoice, an eBay order, a QuickBooks response — gets stored as received before it gets interpreted. When the question changes later, the answer is already in the database instead of behind a vendor API that has since expired the data.',
+        'Every external payload gets stored exactly as received, before anything interprets it. When the question changes later, the answer is already in the database.',
     },
   ],
 } as const;
