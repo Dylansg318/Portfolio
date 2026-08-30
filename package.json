@@ -10,7 +10,7 @@
     "dev": "astro dev",
     "build": "astro build && pagefind --site dist/client",
     "preview": "astro preview",
-    "check": "astro check",
+    "check": "astro check && node scripts/check-contrast.mjs",
     "astro": "astro",
     "cf:dev": "wrangler dev",
     "cf:deploy": "wrangler deploy",

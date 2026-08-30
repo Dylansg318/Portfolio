@@ -6,39 +6,62 @@
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 /* ---------------------------------------------------------------------------
-   DESIGN TOKENS — this block is the entire design system.
-   The look of the site is decided here and nowhere else. Components reference
-   semantic names (surface, ink, accent), never raw colour values, so a redesign
-   is editing this file rather than auditing every component.
-   Deliberately restrained for now: real design pass comes after content exists.
+   DESIGN TOKENS — the entire design system lives in this block.
+
+   Palette: "Meadow Green" — a ten-step ramp from lime to deep navy.
+   Text is only ever near-black or white; the palette drives the furniture
+   (nav bar, active tab, pills, buttons, borders, surfaces).
+
+   Contrast rule baked into the assignments below: the ramp FLIPS at step 8.
+   Steps 1-7 are light enough to carry black text; steps 8-10 need white.
+   Never put white text on meadow-1..7 or black text on meadow-8..10.
 --------------------------------------------------------------------------- */
 :root {
+  /* the raw ramp — available as bg-meadow-lime, text-meadow-yale, etc. */
+  --meadow-lime: #d9ed92;
+  --meadow-light: #b5e48c;
+  --meadow-willow: #99d98c;
+  --meadow-emerald: #76c893;
+  --meadow-mist: #52b69a;
+  --meadow-teal: #34a0a4;
+  --meadow-bondi: #168aad;
+  --meadow-cerulean: #1a759f;
+  --meadow-baltic: #1e6091;
+  --meadow-yale: #184e77;
+
   color-scheme: light;
 
-  /* surfaces, back to front */
-  --bg: oklch(0.985 0.002 250);
-  --surface: oklch(1 0 0);
-  --surface-raised: oklch(0.975 0.003 250);
-  --border: oklch(0.9 0.005 250);
-  --border-strong: oklch(0.82 0.008 250);
+  /* page surfaces — a whisper of the teal end, never a wash */
+  --bg: #f6faf8;
+  --surface: #ffffff;
+  --surface-raised: #edf5f1;
+  --border: #d7e7df;
+  --border-strong: #6c96a0;
 
-  /* text */
-  --ink: oklch(0.22 0.01 250);
-  --ink-muted: oklch(0.52 0.012 250);
-  --ink-faint: oklch(0.66 0.01 250);
+  /* text — black only */
+  --ink: #0b1512;
+  --ink-muted: #3c554d;
+  --ink-faint: #4e6a61;
 
-  /* accent — the one colour with a job */
-  --accent: oklch(0.55 0.17 255);
-  --accent-hover: oklch(0.48 0.18 255);
-  --accent-ink: oklch(0.99 0 0);
-  --accent-wash: oklch(0.95 0.03 255);
+  /* the nav bar is the palette's loudest moment */
+  --nav: #184e77;
+  --nav-ink: #ffffff;
+  --nav-muted: #b7d3e5;
+  --tab-active: #b5e48c;
+  --tab-active-ink: #0b1512;
 
-  /* status */
-  --ok: oklch(0.6 0.14 155);
-  --warn: oklch(0.72 0.15 75);
-  --danger: oklch(0.58 0.19 25);
+  /* accent — deep enough to carry white text */
+  --accent: #1a759f;
+  --accent-hover: #1e6091;
+  --accent-ink: #ffffff;
+  --accent-wash: #e1f0f7;
 
-  /* motion — every duration in one place so reduced-motion can zero them */
+  /* status, kept inside the palette where the hue allows */
+  --ok: #2f7a55;
+  --warn: #7a6410;
+  --danger: #a32f2f;
+
+  /* motion — one place, so reduced-motion can zero all of it */
   --dur-fast: 120ms;
   --dur: 200ms;
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
@@ -47,24 +70,32 @@
 [data-theme='dark'] {
   color-scheme: dark;
 
-  --bg: oklch(0.17 0.008 260);
-  --surface: oklch(0.21 0.01 260);
-  --surface-raised: oklch(0.25 0.012 260);
-  --border: oklch(0.3 0.012 260);
-  --border-strong: oklch(0.4 0.015 260);
+  /* deep ocean ground, so the green end of the ramp can be the accent */
+  --bg: #071c27;
+  --surface: #0c2734;
+  --surface-raised: #113445;
+  --border: #1b4a5f;
+  --border-strong: #2f6e83;
 
-  --ink: oklch(0.95 0.004 260);
-  --ink-muted: oklch(0.72 0.012 260);
-  --ink-faint: oklch(0.56 0.012 260);
+  /* text — white only */
+  --ink: #ffffff;
+  --ink-muted: #a9ccd9;
+  --ink-faint: #83b3c3;
 
-  --accent: oklch(0.72 0.15 255);
-  --accent-hover: oklch(0.79 0.14 255);
-  --accent-ink: oklch(0.17 0.01 260);
-  --accent-wash: oklch(0.28 0.05 255);
+  --nav: #051620;
+  --nav-ink: #ffffff;
+  --nav-muted: #8fb8c9;
+  --tab-active: #b5e48c;
+  --tab-active-ink: #0b1512;
 
-  --ok: oklch(0.72 0.15 155);
-  --warn: oklch(0.8 0.15 75);
-  --danger: oklch(0.7 0.18 25);
+  --accent: #b5e48c;
+  --accent-hover: #d9ed92;
+  --accent-ink: #071c27;
+  --accent-wash: #113445;
+
+  --ok: #76c893;
+  --warn: #d9ed92;
+  --danger: #ff9d9d;
 }
 
 /* `inline` makes the utilities resolve to var(--x) at runtime rather than
@@ -84,6 +115,23 @@
   --color-accent-hover: var(--accent-hover);
   --color-accent-ink: var(--accent-ink);
   --color-accent-wash: var(--accent-wash);
+
+  --color-nav: var(--nav);
+  --color-nav-ink: var(--nav-ink);
+  --color-nav-muted: var(--nav-muted);
+  --color-tab-active: var(--tab-active);
+  --color-tab-active-ink: var(--tab-active-ink);
+
+  --color-meadow-lime: var(--meadow-lime);
+  --color-meadow-light: var(--meadow-light);
+  --color-meadow-willow: var(--meadow-willow);
+  --color-meadow-emerald: var(--meadow-emerald);
+  --color-meadow-mist: var(--meadow-mist);
+  --color-meadow-teal: var(--meadow-teal);
+  --color-meadow-bondi: var(--meadow-bondi);
+  --color-meadow-cerulean: var(--meadow-cerulean);
+  --color-meadow-baltic: var(--meadow-baltic);
+  --color-meadow-yale: var(--meadow-yale);
 
   --color-ok: var(--ok);
   --color-warn: var(--warn);
