@@ -1,6 +1,7 @@
 ---
 title: Keeping the books and the app in agreement
 blurb: A two-way QuickBooks Desktop integration over the Web Connector, plus a claims ledger so a finance discrepancy is refuted once, not rediscovered monthly.
+plainBlurb: The sales system and the accounting books have to agree to the penny. This is the connection that keeps them agreeing — and the logbook that ended the false alarms.
 date: 2026-07-30
 featured: 60
 status: live
@@ -39,6 +40,31 @@ metrics:
   - { label: sync direction, value: "2-way" }
   - { label: settled claims, value: "Ledgered" }
 ---
+
+<PlainOnly>
+
+## The story
+
+The company's real books live in QuickBooks — that's what the accountant and the IRS
+see. The day-to-day selling happens in the system I built. Those two have to agree to
+the penny, forever, and neither was designed to talk to the other.
+
+I built the bridge. Every invoice and bill created on our side gets sent into QuickBooks
+and *linked*, so "did this make it into the books?" has a yes-or-no answer instead of a
+shrug. Cancelled invoices get properly voided, never deleted, so the paper trail stays
+intact for the accountant.
+
+My favorite part is unglamorous: a logbook of every scary finding anyone has ever
+raised. Early on, a check of the books said customers owed us **$18 million** — the real
+number was about $2 million; the query behind it counted the wrong pile. Alarming, cost
+a day to untangle, and the same false alarm kept coming back every few months as new
+eyes made the same mistake. So now every investigated claim is written down with its
+verdict and proof. A scary number gets checked against the logbook first — false alarms
+die once instead of monthly.
+
+</PlainOnly>
+
+<EngOnly>
 
 ## Why Desktop, and why it's hard
 
@@ -95,3 +121,5 @@ accounts-payable side is a read-only mirror of QuickBooks bills so the app can s
 we owe without ever being a second source of truth for it. Cost of goods, journal entries
 per leg of a return, and the reports that matter — P&L, balance sheet, trial balance — read
 from one set of canonical filters that the claims ledger keeps honest.
+
+</EngOnly>

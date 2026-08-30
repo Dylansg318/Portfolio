@@ -55,7 +55,12 @@ const PAIRS = [
 ];
 
 let failed = 0;
-for (const [theme, selector] of [['light', ':root {'], ['dark', "[data-theme='dark'] {"]]) {
+for (const [theme, selector] of [
+  ['light', ':root {'],
+  ['dark', "[data-theme='dark'] {"],
+  ['slip light', ":root[data-skin='slip'] {"],
+  ['slip dark', ":root[data-skin='slip'][data-theme='dark'] {"],
+]) {
   const t = tokensFor(selector);
   console.log(`\n${theme}`);
   for (const [fg, bg, min, label] of PAIRS) {

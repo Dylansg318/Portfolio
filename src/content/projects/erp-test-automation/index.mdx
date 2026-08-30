@@ -1,6 +1,7 @@
 ---
 title: Automating an ERP with Cucumber and Selenium
 blurb: Team BDD test suite for an Odoo-based ERP during the CYDEO SDET program — manual test plan first, then feature files, page objects and Jenkins.
+plainBlurb: Ten of us taught robots to re-test a business app every night — after testing it by hand first, which is how we found the bugs the robots would have missed.
 date: 2024-07-15
 featured: 30
 status: archived
@@ -32,6 +33,27 @@ aiNote: >-
 links:
   source: https://github.com/drwekilowa/B34_G11_Sprint_2CloudAuto
 ---
+
+<PlainOnly>
+
+## The story
+
+The capstone of my testing program: a team of ten, two sprints, and a business app —
+logins, calendars, contacts, sales orders, expenses — that took a whole day to re-check
+by hand after every change.
+
+We did something that felt slow and turned out to be the fastest path: before writing
+any automation, we tested everything by hand and wrote down exactly what "working"
+means. That hand pass caught real bugs a robot would have sailed past — an error message
+missing a word, an automatic logout that never happened, a menu missing an option. Then
+we taught the robots to repeat those checks, every night, in minutes instead of a day.
+
+This project is where my professional reflexes come from: check it yourself before you
+trust it, write down what "correct" means, and never trust a test that has never failed.
+
+</PlainOnly>
+
+<EngOnly>
 
 ## The setup
 
@@ -66,3 +88,5 @@ Cucumber's HTML report as the artefact.
 This is where the discipline behind everything else on this site comes from: verify before
 you assert, make the check explicit, and treat a test that can't fail as a test that hasn't
 passed.
+
+</EngOnly>

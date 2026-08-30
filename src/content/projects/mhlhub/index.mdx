@@ -1,6 +1,7 @@
 ---
 title: MHLHUB — the ERP that runs a dental supply company
 blurb: One system for orders, inventory, repricing, shipping, service and books across six sales channels — built from scratch, about 500 orders a day.
+plainBlurb: The company sold on six websites using six different tools that never agreed. I built the one system that runs it all — about 500 orders a day.
 date: 2026-08-30
 featured: 100
 status: live
@@ -40,6 +41,35 @@ metrics:
   - { label: scheduled jobs, value: "180" }
   - { label: database tables, value: "636" }
 ---
+
+<PlainOnly>
+
+## The story
+
+RMH3 Dental sells dental supplies to dentists across the country — on Net32, eBay,
+Amazon, Shopify, Walmart, and over the phone. When I joined, each of those lived in its
+own tool, plus a dozen spreadsheets and a shared email inbox someone sorted by hand.
+The tools disagreed with each other every single day, and someone had to figure out
+which one was lying before the trucks left.
+
+I was hired to fix one spreadsheet — the one where prices got updated every morning.
+Instead, piece by piece, I built the company a single system that does all of it: every
+order from every website lands in one place; the warehouse picks and packs from one
+screen; prices update themselves; shipping labels get bought and printed automatically;
+returns and customer emails live in the same place as the orders they're about; and the
+accounting matches the sales, with the receipts to prove it.
+
+The result you can measure: the company went from about 270 orders a day to about 520 —
+almost double — **without hiring anyone new in operations**. And when a number looks
+wrong now, there's one system to ask, and it shows its work.
+
+The part I'm proudest of isn't a feature. It's that the expensive mistakes — the ones
+where a number is *believably* wrong and nobody notices for a month — now have guardrails
+built in, because each one only ever got to happen once.
+
+</PlainOnly>
+
+<EngOnly>
 
 ## What the business needed
 
@@ -108,3 +138,5 @@ signals feed that surfaces what a human should look at today.
 
 About 520 orders a day go through it now — roughly double where it started — with the same
 operations team.
+
+</EngOnly>

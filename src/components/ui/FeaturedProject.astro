@@ -19,7 +19,7 @@ const { data, id } = project;
         sizes="(max-width: 768px) 100vw, 640px"
       />
     ) : (
-      <div class="size-full" style={`background: ${coverGradient(id)}`}>
+      <div class="cover-art size-full" style={`background: ${coverGradient(id)}`}>
         <div class="absolute inset-0 grid place-items-center p-8">
           <p class="font-display text-center text-3xl font-bold leading-tight text-white/90 drop-shadow sm:text-4xl">
             {data.title}
@@ -53,8 +53,15 @@ const { data, id } = project;
     <h3 class="mt-3 font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">
       <a href={`/projects/${id}`} class="after:absolute after:inset-0">{data.title}</a>
     </h3>
-    <p class="mt-3 text-[0.975rem] leading-relaxed text-ink-muted">{data.blurb}</p>
-    <p class="mt-3 line-clamp-3 text-sm leading-relaxed text-ink-muted/90">{data.problem}</p>
+    {data.plainBlurb ? (
+      <>
+        <p class="only-plain mt-3 text-[0.975rem] leading-relaxed text-ink-muted">{data.plainBlurb}</p>
+        <p class="only-eng mt-3 text-[0.975rem] leading-relaxed text-ink-muted">{data.blurb}</p>
+      </>
+    ) : (
+      <p class="mt-3 text-[0.975rem] leading-relaxed text-ink-muted">{data.blurb}</p>
+    )}
+    <p class="only-eng mt-3 line-clamp-3 text-sm leading-relaxed text-ink-muted/90">{data.problem}</p>
 
     {data.metrics.length > 0 && (
       <dl class="mt-5 grid grid-cols-3 gap-3">

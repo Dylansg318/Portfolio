@@ -1,6 +1,7 @@
 ---
 title: Split the check from a photo
 blurb: A small Java tool that OCRs a receipt photo with Tesseract and asks a language model to split it between friends — my first AI-as-a-component build.
+plainBlurb: Photograph the dinner receipt, say who ate what, and it tells everyone what they owe. A weekend project that taught me a lot about where AI actually breaks.
 date: 2025-02-28
 featured: 40
 status: archived
@@ -29,6 +30,27 @@ aiNote: >-
   arithmetic over clean text) and where they aren't (reading a crumpled receipt).
 ---
 
+<PlainOnly>
+
+## The story
+
+Every group dinner ends the same way: one person holding the receipt, reading line items
+out loud, while everyone does phone math. I wanted the lazy version — take a photo, say
+who had what, get the split.
+
+So I built it. The computer reads the text off the receipt photo, then an AI does the
+assigning and the arithmetic — tax and tip split fairly. What actually broke, over and
+over, wasn't the AI: it was the receipts. Thermal paper fades, people fold them, a
+coffee ring turns an 8 into a 3. The unglamorous step before the clever step is where
+these things really fail — a lesson I've reused constantly since.
+
+The other keeper: a confident wrong answer is worse than an error message. Today I'd
+make it re-add the split and refuse to show one that doesn't match the printed total.
+
+</PlainOnly>
+
+<EngOnly>
+
 ## What it does
 
 Point it at a receipt photo. Tesseract (through Tess4J) extracts the text. The text goes to
@@ -56,3 +78,5 @@ fails.
 Validate the output against the printed total and refuse to show a split that doesn't add up.
 Keep the OCR-first shape. And wrap it in something my friends would actually open at the
 table — which is a different project.
+
+</EngOnly>

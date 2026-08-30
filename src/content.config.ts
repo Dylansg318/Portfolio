@@ -43,6 +43,12 @@ const projectSchema = ({ image }: SchemaContext) =>
      */
     aiNote: z.string().optional(),
 
+    /**
+     * The blurb again, but for the Plain English mode — no jargon, business
+     * terms only. Cards fall back to `blurb` when this is absent.
+     */
+    plainBlurb: z.string().max(200).optional(),
+
     stack: z.array(z.string()).min(1),
     /** e.g. "solo", "led 3 devs", "contributor" */
     role: z.string().optional(),

@@ -1,143 +1,69 @@
 ---
 import Base from '../layouts/Base.astro';
+import { site } from '../lib/site';
+
+// Deliberately a plain email page, not a form. The form scaffold still lives
+// at src/pages/api/contact.ts — wire RESEND_API_KEY / CONTACT_TO and restore
+// the form from git history if a structured form is ever wanted again.
+const subject = encodeURIComponent('Hello from your portfolio');
 ---
-<Base title="Contact" description="Get in touch.">
-  <div class="mx-auto max-w-(--container-reading) px-4 py-16 sm:px-6">
-    <h1 class="text-4xl font-bold tracking-tight text-ink sm:text-5xl">Contact</h1>
-    <p class="mt-4 text-lg text-ink-muted">
-      Questions, work, or just to say hello — this reaches me directly.
-    </p>
+<Base title="Contact" description={`Get in touch with ${site.name} — email, GitHub, résumé.`}>
+  <section class="ambient">
+    <div class="mx-auto max-w-(--container-reading) px-4 py-16 sm:px-6 sm:py-24">
+      <p class="eyebrow reveal">Contact</p>
+      <h1 class="reveal mt-4 text-4xl font-extrabold tracking-tight text-ink sm:text-6xl" style="--reveal-delay: 60ms">
+        Say hello.
+      </h1>
+      <p class="reveal mt-5 max-w-prose text-lg leading-relaxed text-ink-muted" style="--reveal-delay: 120ms">
+        Email is the whole system — no form, no ticket queue. It lands in my inbox and
+        I reply within a day, usually sooner. {site.timezone}.
+      </p>
 
-    <form id="contact-form" class="mt-10 space-y-5" novalidate>
-      <!-- Honeypot. Hidden from people, irresistible to bots. -->
-      <div class="absolute left-[-9999px]" aria-hidden="true">
-        <label>
-          Company
-          <input type="text" name="company" tabindex="-1" autocomplete="off" />
-        </label>
+      <div class="reveal mt-9 flex flex-wrap items-center gap-3" style="--reveal-delay: 180ms">
+        <a href={`mailto:${site.email}?subject=${subject}`} class="btn btn-primary">
+          Email {site.shortName}
+          <span aria-hidden="true">→</span>
+        </a>
+        <button type="button" id="copy-email" class="btn btn-ghost" data-email={site.email}>
+          {site.email}
+        </button>
       </div>
+      <p id="copy-status" role="status" aria-live="polite" class="mt-2 min-h-5 text-sm text-ok"></p>
 
-      <div>
-        <label for="name" class="mb-1.5 block text-sm font-medium text-ink">Name</label>
-        <input
-          id="name"
-          name="name"
-          type="text"
-          required
-          autocomplete="name"
-          class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-ink outline-none transition-colors focus:border-accent"
-        />
-        <p data-error="name" class="mt-1 hidden text-sm text-danger"></p>
+      <div class="reveal mt-12 grid gap-4 sm:grid-cols-2" style="--reveal-delay: 240ms">
+        <div class="tile p-5">
+          <h2 class="eyebrow mb-3 text-xs">Useful to include</h2>
+          <ul class="space-y-2 text-sm leading-relaxed text-ink-muted">
+            <li>What you're hiring for, or what you're building</li>
+            <li>Timeline, and remote / hybrid / on-site</li>
+            <li>A link to the role or the company</li>
+          </ul>
+        </div>
+        <div class="tile p-5">
+          <h2 class="eyebrow mb-3 text-xs">Elsewhere</h2>
+          <ul class="space-y-2 text-sm leading-relaxed">
+            <li><a class="text-accent hover:underline" href={site.links.github} rel="me noopener">GitHub</a></li>
+            {site.links.linkedin && (
+              <li><a class="text-accent hover:underline" href={site.links.linkedin} rel="me noopener">LinkedIn</a></li>
+            )}
+            <li><a class="text-accent hover:underline" href={site.resumeUrl}>Résumé</a></li>
+          </ul>
+        </div>
       </div>
-
-      <div>
-        <label for="email" class="mb-1.5 block text-sm font-medium text-ink">Email</label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          required
-          autocomplete="email"
-          class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-ink outline-none transition-colors focus:border-accent"
-        />
-        <p data-error="email" class="mt-1 hidden text-sm text-danger"></p>
-      </div>
-
-      <div>
-        <label for="message" class="mb-1.5 block text-sm font-medium text-ink">Message</label>
-        <textarea
-          id="message"
-          name="message"
-          rows="6"
-          required
-          class="w-full resize-y rounded-lg border border-border bg-surface px-3 py-2 text-ink outline-none transition-colors focus:border-accent"
-        ></textarea>
-        <p data-error="message" class="mt-1 hidden text-sm text-danger"></p>
-      </div>
-
-      <!-- Turnstile mounts here once a site key is configured:
-           <div class="cf-turnstile" data-sitekey="YOUR_SITE_KEY"></div>
-           <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-      -->
-
-      <button
-        type="submit"
-        class="rounded-lg bg-accent px-5 py-2.5 font-medium text-accent-ink transition-colors hover:bg-accent-hover disabled:opacity-60"
-      >
-        Send message
-      </button>
-
-      <p id="form-status" role="status" aria-live="polite" class="text-sm"></p>
-    </form>
-  </div>
+    </div>
+  </section>
 </Base>
 
 <script>
-  type ContactResponse = {
-    ok?: boolean;
-    error?: string;
-    fields?: Record<string, string>;
-  };
-
-  const form = document.getElementById('contact-form') as HTMLFormElement | null;
-  const status = document.getElementById('form-status');
-
-  const clearErrors = () =>
-    form?.querySelectorAll<HTMLElement>('[data-error]').forEach((el) => {
-      el.textContent = '';
-      el.classList.add('hidden');
-    });
-
-  form?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    clearErrors();
-
-    const btn = form.querySelector<HTMLButtonElement>('button[type=submit]')!;
-    const data = Object.fromEntries(new FormData(form).entries());
-
-    btn.disabled = true;
-    if (status) {
-      status.textContent = 'Sending…';
-      status.className = 'text-sm text-ink-muted';
-    }
-
+  const btn = document.getElementById('copy-email');
+  const status = document.getElementById('copy-status');
+  btn?.addEventListener('click', async () => {
+    const email = (btn as HTMLElement).dataset.email ?? '';
     try {
-      const res = await fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      const body = (await res.json()) as ContactResponse;
-
-      if (res.ok) {
-        form.reset();
-        if (status) {
-          status.textContent = "Sent — thanks. I'll get back to you.";
-          status.className = 'text-sm text-ok';
-        }
-        return;
-      }
-
-      if (body.fields) {
-        for (const [field, msg] of Object.entries(body.fields)) {
-          const el = form.querySelector<HTMLElement>(`[data-error="${field}"]`);
-          if (el) {
-            el.textContent = msg;
-            el.classList.remove('hidden');
-          }
-        }
-      }
-      if (status) {
-        status.textContent = body.error ?? 'Something went wrong.';
-        status.className = 'text-sm text-danger';
-      }
+      await navigator.clipboard.writeText(email);
+      if (status) status.textContent = 'Copied to clipboard.';
     } catch {
-      if (status) {
-        status.textContent = 'Network error — please try again.';
-        status.className = 'text-sm text-danger';
-      }
-    } finally {
-      btn.disabled = false;
+      if (status) status.textContent = email;
     }
   });
 </script>

@@ -1,6 +1,7 @@
 ---
 title: Repricing every minute without a race to the bottom
 blurb: Replaced a morning pricing spreadsheet with an engine that reprices every minute — with cooldowns, floors, and a rule to never chase the lowest price.
+plainBlurb: Prices used to be a spreadsheet someone updated every morning. Now a robot checks every product once a minute — and knows better than to start a price war.
 date: 2026-06-15
 featured: 90
 status: live
@@ -39,6 +40,30 @@ metrics:
   - { label: cooldown per product, value: "12h" }
   - { label: pricing engines, value: "1" }
 ---
+
+<PlainOnly>
+
+## The story
+
+On a marketplace like Net32, the seller with the right price wins the sale — and
+competitors change their prices all day long. Ours were set from a spreadsheet someone
+updated every morning by eyeballing the competition. By lunchtime it was stale. By the
+next morning we'd either lost sales overnight or quietly given margin away.
+
+So I built the robot version of that morning routine. Every minute it looks at the
+products that are due for a check, sees what competitors are charging right now, and
+decides: move, or hold. It has manners built in — it never drops below the floor price a
+human set, it waits twelve hours before touching the same product twice, and it never
+plays "match the lowest," because two robots doing that race each other to zero profit
+in an afternoon.
+
+It has made over **138,000 price changes** so far, and every single one is written down
+with the reason — so when someone asks "why is this listed at $41.20?", the answer takes
+one look, not an argument.
+
+</PlainOnly>
+
+<EngOnly>
 
 ## Where it started
 
@@ -93,3 +118,5 @@ say which listings lost the box, which competitors are new, and where our floor 
 holding us back. Pricing overrides — contract pricing, temporary promos — stay manual on
 purpose. Those are judgment calls; the engine's job is to make them visible, not to make
 them.
+
+</EngOnly>
