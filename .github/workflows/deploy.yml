@@ -33,9 +33,26 @@ jobs:
         env:
           SITE_URL: ${{ vars.SITE_URL }}
 
-      # Deploy only from main. PRs get build + typecheck as a gate.
+      # Secrets can't be used directly in an `if:`, so surface presence as an env
+      # flag. Without this the deploy step fails on every push until Cloudflare
+      # credentials exist, leaving CI permanently red for no reason.
+      - name: Check for Cloudflare credentials
+        id: cf
+        run: |
+          if [ -n "${{ secrets.CLOUDFLARE_API_TOKEN }}" ] && [ -n "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Cloudflare credentials not set — build verified, deploy skipped."
+          fi
+
+      # Deploy only from main, and only once credentials exist.
+      # PRs get build + typecheck as a gate.
       - name: Deploy to Cloudflare Workers
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: >-
+          github.ref == 'refs/heads/main'
+          && github.event_name == 'push'
+          && steps.cf.outputs.ready == 'true'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}

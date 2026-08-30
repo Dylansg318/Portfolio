@@ -7,7 +7,10 @@ import expressiveCode from 'astro-expressive-code';
 import tailwindcss from '@tailwindcss/vite';
 
 // Change this when a real domain is attached. It feeds sitemap, RSS and OG image URLs.
-const SITE = process.env.SITE_URL ?? 'https://portfolio.dylansg.workers.dev';
+// `||` not `??` on purpose: CI sets SITE_URL to an EMPTY STRING when the repo
+// variable is unset, and '' is not nullish — so `??` kept it and the build died
+// with "Invalid URL".
+const SITE = process.env.SITE_URL || 'https://portfolio.dylansg.workers.dev';
 
 export default defineConfig({
   site: SITE,
