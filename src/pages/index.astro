@@ -1,0 +1,55 @@
+---
+import Base from '../layouts/Base.astro';
+import ProjectCard from '../components/ui/ProjectCard.astro';
+import { site } from '../lib/site';
+import { getProjects } from '../lib/content';
+
+const projects = (await getProjects()).slice(0, 6);
+---
+<Base>
+  <section class="mx-auto max-w-(--container-wide) px-4 py-20 sm:px-6 sm:py-28">
+    <p class="text-sm font-medium uppercase tracking-wider text-accent">{site.name}</p>
+    <h1 class="mt-3 max-w-3xl text-4xl font-bold tracking-tight text-ink sm:text-6xl">
+      {site.tagline}
+    </h1>
+    <p class="mt-6 max-w-(--container-reading) text-lg leading-relaxed text-ink-muted">
+      {site.description}
+    </p>
+    <div class="mt-8 flex flex-wrap gap-3">
+      <a
+        href="/projects"
+        class="rounded-lg bg-accent px-5 py-2.5 font-medium text-accent-ink transition-colors hover:bg-accent-hover"
+      >
+        See the work
+      </a>
+      <a
+        href="/about"
+        class="rounded-lg border border-border px-5 py-2.5 font-medium text-ink transition-colors hover:border-border-strong"
+      >
+        About me
+      </a>
+    </div>
+  </section>
+
+  <section class="mx-auto max-w-(--container-wide) px-4 pb-20 sm:px-6">
+    <div class="mb-8 flex items-baseline justify-between">
+      <h2 class="text-2xl font-semibold tracking-tight text-ink">Selected work</h2>
+      <a href="/projects" class="text-sm text-accent transition-colors hover:text-accent-hover">
+        All projects →
+      </a>
+    </div>
+
+    {projects.length === 0 ? (
+      <p class="rounded-xl border border-dashed border-border p-10 text-center text-ink-muted">
+        No projects published yet. Add one at
+        <code class="mx-1 rounded bg-surface-raised px-1.5 py-0.5 text-sm">
+          src/content/projects/&lt;slug&gt;/index.mdx
+        </code>
+      </p>
+    ) : (
+      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {projects.map((project) => <ProjectCard project={project} />)}
+      </div>
+    )}
+  </section>
+</Base>

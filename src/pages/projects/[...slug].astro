@@ -1,0 +1,199 @@
+---
+import { render } from 'astro:content';
+import { Image } from 'astro:assets';
+import Base from '../../layouts/Base.astro';
+import Demo from '../../components/mdx/Demo.astro';
+import CodeFile from '../../components/mdx/CodeFile.astro';
+import Video from '../../components/mdx/Video.astro';
+import Figure from '../../components/mdx/Figure.astro';
+import Takeaway from '../../components/mdx/Takeaway.astro';
+import { getProjects, getProjectNeighbours, coverGradient, statusLabel } from '../../lib/content';
+
+// Same helper as the index, so the draft exclusion gates ROUTE GENERATION too.
+// Filtering only the listing would leave drafts live at their own URL.
+export async function getStaticPaths() {
+  const projects = await getProjects();
+  return projects.map((project) => ({
+    params: { slug: project.id },
+    props: { project },
+  }));
+}
+
+const { project } = Astro.props;
+const { data } = project;
+const { Content } = await render(project);
+const { prev, next } = await getProjectNeighbours(project.id);
+
+// Components available inside the MDX body.
+const components = { Demo, CodeFile, Video, Figure, Takeaway };
+---
+
+<Base
+  title={data.title}
+  description={data.blurb}
+  ogImage={`/og/projects/${project.id}.png`}
+>
+  <article>
+    <!-- Hero -->
+    <header class="border-b border-border bg-surface">
+      <div class="mx-auto max-w-(--container-wide) px-4 py-12 sm:px-6 sm:py-16">
+        <a
+          href="/projects"
+          class="mb-6 inline-flex items-center gap-1.5 text-sm text-ink-muted transition-colors hover:text-ink"
+        >
+          <span aria-hidden="true">←</span> All projects
+        </a>
+
+        <div class="flex flex-wrap items-center gap-3 text-sm">
+          <span
+            class:list={[
+              'rounded-full px-2.5 py-1 text-xs font-medium',
+              data.status === 'live' && 'bg-ok/15 text-ok',
+              data.status === 'wip' && 'bg-warn/15 text-warn',
+              data.status === 'archived' && 'bg-ink-faint/15 text-ink-muted',
+            ]}
+          >
+            {statusLabel[data.status]}
+          </span>
+          <time class="text-ink-faint" datetime={data.date.toISOString()}>
+            {data.date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}
+          </time>
+          {data.role && <span class="text-ink-faint">· {data.role}</span>}
+        </div>
+
+        <h1 class="mt-4 text-4xl font-bold tracking-tight text-ink sm:text-5xl">
+          {data.title}
+        </h1>
+        <p class="mt-4 max-w-(--container-reading) text-lg text-ink-muted">{data.blurb}</p>
+
+        <ul class="mt-6 flex flex-wrap gap-2">
+          {data.stack.map((tech) => (
+            <li class="rounded-lg bg-surface-raised px-2.5 py-1 text-sm text-ink-muted">
+              {tech}
+            </li>
+          ))}
+        </ul>
+
+        {(data.links.source || data.links.live || data.links.writeup) && (
+          <div class="mt-6 flex flex-wrap gap-3">
+            {data.links.live && (
+              <a
+                href={data.links.live}
+                rel="noopener"
+                class="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink transition-colors hover:bg-accent-hover"
+              >
+                View live
+              </a>
+            )}
+            {data.links.source && (
+              <a
+                href={data.links.source}
+                rel="noopener"
+                class="rounded-lg border border-border px-4 py-2 text-sm font-medium text-ink transition-colors hover:border-border-strong"
+              >
+                Source
+              </a>
+            )}
+            {data.links.writeup && (
+              <a
+                href={data.links.writeup}
+                rel="noopener"
+                class="rounded-lg border border-border px-4 py-2 text-sm font-medium text-ink transition-colors hover:border-border-strong"
+              >
+                External write-up
+              </a>
+            )}
+          </div>
+        )}
+
+        {data.metrics.length > 0 && (
+          <dl class="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {data.metrics.map((m) => (
+              <div class="rounded-lg border border-border bg-bg p-3">
+                <dt class="text-xs uppercase tracking-wide text-ink-faint">{m.label}</dt>
+                <dd class="mt-1 text-xl font-semibold text-ink">{m.value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+      </div>
+    </header>
+
+    {data.cover ? (
+      <div class="mx-auto max-w-(--container-wide) px-4 sm:px-6">
+        <Image
+          src={data.cover}
+          alt={data.coverAlt ?? ''}
+          class="-mt-8 w-full rounded-xl border border-border shadow-xl"
+          widths={[640, 1024, 1600]}
+          sizes="(max-width: 1152px) 100vw, 1152px"
+        />
+      </div>
+    ) : (
+      <div class="mx-auto max-w-(--container-wide) px-4 sm:px-6">
+        <div
+          class="-mt-8 h-40 w-full rounded-xl border border-border shadow-xl sm:h-56"
+          style={`background: ${coverGradient(project.id)}`}
+        />
+      </div>
+    )}
+
+    <!-- THE CONTRACT: rendered identically on every project, so a reader
+         comparing two projects finds the same answers in the same place. -->
+    <div class="mx-auto max-w-(--container-reading) px-4 py-12 sm:px-6">
+      <section class="grid gap-6 sm:grid-cols-2">
+        <div class="rounded-xl border border-border bg-surface p-5">
+          <h2 class="mb-2 text-xs font-semibold uppercase tracking-wider text-ink-faint">
+            The problem
+          </h2>
+          <p class="text-[0.975rem] leading-relaxed text-ink">{data.problem}</p>
+        </div>
+        <div class="rounded-xl border border-border bg-surface p-5">
+          <h2 class="mb-2 text-xs font-semibold uppercase tracking-wider text-ink-faint">
+            What was unique
+          </h2>
+          <p class="text-[0.975rem] leading-relaxed text-ink">{data.unique}</p>
+        </div>
+      </section>
+
+      <div class="prose-portfolio mt-12">
+        <Content components={components} />
+      </div>
+
+      <section class="mt-12 rounded-xl border border-accent/25 bg-accent-wash/30 p-6">
+        <h2 class="mb-4 text-sm font-semibold uppercase tracking-wider text-accent">
+          What I learned
+        </h2>
+        <ul class="space-y-3">
+          {data.learned.map((lesson) => (
+            <li class="flex gap-3 text-[0.975rem] leading-relaxed text-ink">
+              <span class="mt-2 size-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true" />
+              <span>{lesson}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {(prev || next) && (
+        <nav class="mt-12 flex gap-4 border-t border-border pt-8" aria-label="More projects">
+          {prev && (
+            <a href={`/projects/${prev.id}`} class="group flex-1 text-left">
+              <span class="text-xs uppercase tracking-wide text-ink-faint">Previous</span>
+              <span class="mt-1 block font-medium text-ink transition-colors group-hover:text-accent">
+                {prev.data.title}
+              </span>
+            </a>
+          )}
+          {next && (
+            <a href={`/projects/${next.id}`} class="group flex-1 text-right">
+              <span class="text-xs uppercase tracking-wide text-ink-faint">Next</span>
+              <span class="mt-1 block font-medium text-ink transition-colors group-hover:text-accent">
+                {next.data.title}
+              </span>
+            </a>
+          )}
+        </nav>
+      )}
+    </div>
+  </article>
+</Base>

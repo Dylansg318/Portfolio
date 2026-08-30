@@ -1,0 +1,99 @@
+---
+title: This Portfolio
+blurb: A content site that can also run games — built so the writing stays easy and the demos stay cheap.
+date: 2026-08-30
+featured: 100
+status: live
+role: solo
+stack: [Astro, TypeScript, Tailwind, Cloudflare Workers, MDX]
+
+problem: >-
+  A portfolio has two jobs that pull in opposite directions. It has to be a fast,
+  readable, mostly-text site — and it also has to run interactive things like games,
+  which are the heaviest thing a browser can be asked to do. Optimise for one and
+  you compromise the other.
+
+unique: >-
+  Rather than pick a side, the interactive work is isolated behind a seam with two
+  lanes: demos written in-repo hydrate as islands, and prebuilt engine exports run
+  in a sandboxed iframe that never enters the site's build graph. Both are declared
+  in one frontmatter field, and neither costs a reader anything until they click.
+
+learned:
+  - Making the write-up fields required in the schema — rather than merely conventional — turns "explain what you learned" from a habit into a build error. The tooling does the remembering.
+  - The cheapest performance win is not optimising the heavy thing, it's not loading the heavy thing. Click-to-start on every demo and video removes the cost entirely for the majority of visitors who only came to read.
+  - Committing to design tokens before designing anything means the eventual visual pass is one file, not an audit of every component.
+
+metrics:
+  - { label: JS on a write-up, value: "0 KB" }
+  - { label: Hosting, value: "$0/mo" }
+  - { label: Demo lanes, value: "2" }
+
+links:
+  source: https://github.com/Dylansg318/Portfolio
+
+demo:
+  kind: island
+  entry: reflex
+  label: Play Reflex
+---
+
+This page is the template. Everything below demonstrates a component you can use in
+your own write-ups — delete the prose, keep the shapes.
+
+## The demo seam
+
+The frontmatter above declares `demo.kind: island`, which mounts a component from
+`src/demos/reflex/`. Here it is, inline:
+
+<Demo demo={frontmatter.demo} title={frontmatter.title} />
+
+The important part isn't the game — it's that switching this to a Godot export is a
+frontmatter change:
+
+```yaml
+demo:
+  kind: iframe
+  src: /demos/my-game/index.html
+  aspect: "16 / 9"
+```
+
+No component changes, no build config, no architecture decision. A 40MB WASM bundle
+sits in `public/` and gets a sandboxed iframe injected on click.
+
+<Takeaway>
+  The seam exists so that adding the *second* game is as cheap as the first. Most
+  architecture debt comes from solving one case well and discovering the second case
+  needs a different shape.
+</Takeaway>
+
+## Code that can't go stale
+
+`<CodeFile>` reads a real file off disk at build time and highlights it. The snippet
+below isn't a copy — it's the file:
+
+<CodeFile src="portfolio-site/snippets/contract.ts" title="The narrative contract" />
+
+Pasted code drifts from the code it describes; this can't, because there's only one
+copy. If the file moves or gets deleted, the build fails instead of quietly showing
+you something that used to be true.
+
+## Video
+
+Video is never committed here — GitHub rejects files over 100MB and Cloudflare caps a
+static asset at 25MiB, so a three-minute screen capture breaks both. `<Video>` takes a
+provider and an id, renders a poster, and only injects the real player on click:
+
+```mdx
+<Video provider="youtube" id="dQw4w9WgXcQ" title="Walkthrough of the order pipeline" />
+```
+
+Three videos on a page cost nothing until one is watched. Swapping YouTube for Bunny
+or Cloudflare Stream later is a prop change on a handful of files.
+
+## What the reader always gets
+
+Every project renders **The problem** and **What was unique** above the write-up, and
+**What I learned** below it — in the same places, every time. A reader comparing two
+projects finds the same answers in the same spots, which is what makes a portfolio
+scannable rather than a pile of posts.

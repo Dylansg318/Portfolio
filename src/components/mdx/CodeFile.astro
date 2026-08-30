@@ -1,0 +1,67 @@
+---
+/**
+ * Renders a REAL source file from disk, highlighted.
+ *
+ * The point: a code sample in a write-up can't rot into being wrong, because it
+ * *is* the file. Paste-in snippets drift from the code they describe; this can't.
+ *
+ * `src` is relative to src/content/projects/ —
+ *   <CodeFile src="example-project/snippets/schema.ts" lines="4-18" />
+ */
+import { Code } from 'astro-expressive-code/components';
+
+interface Props {
+  src: string;
+  /** e.g. "12-40" or "12-40,55-60". Omit for the whole file. */
+  lines?: string;
+  title?: string;
+  lang?: string;
+  /** Passed through to Expressive Code, e.g. "3,7-9" */
+  mark?: string;
+}
+
+const { src, lines, title, lang, mark } = Astro.props;
+
+const files = import.meta.glob<string>('../../content/projects/**/*.*', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+});
+
+const key = `../../content/projects/${src}`;
+let source = files[key];
+
+if (source === undefined) {
+  throw new Error(
+    `<CodeFile src="${src}"> — no such file. Expected src/content/projects/${src}\n` +
+      `Available:\n  ${Object.keys(files)
+        .map((k) => k.replace('../../content/projects/', ''))
+        .join('\n  ')}`,
+  );
+}
+
+// Slice to the requested line ranges, keeping them in the order given.
+if (lines) {
+  const all = source.split('\n');
+  const picked: string[] = [];
+  for (const range of lines.split(',')) {
+    const [from, to] = range.split('-').map((n) => parseInt(n.trim(), 10));
+    const start = Math.max(1, from) - 1;
+    const end = Number.isFinite(to) ? to : from;
+    picked.push(...all.slice(start, end));
+  }
+  source = picked.join('\n');
+}
+
+const ext = src.split('.').pop() ?? 'txt';
+const language = lang ?? ext;
+const displayTitle = title ?? src.split('/').pop();
+---
+
+<Code
+  code={source.trimEnd()}
+  lang={language}
+  title={displayTitle}
+  mark={mark}
+  frame="code"
+/>

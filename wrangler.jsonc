@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "portfolio",
+  "main": "@astrojs/cloudflare/entrypoints/server",
+  "compatibility_date": "2026-08-30",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./dist/client",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  }
+  // Secrets (set with `wrangler secret put <NAME>`, never committed):
+  //   RESEND_API_KEY      — contact form delivery
+  //   TURNSTILE_SECRET    — contact form spam check
+  //   CONTACT_TO          — destination email address
+}

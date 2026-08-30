@@ -1,0 +1,156 @@
+---
+/**
+ * THE DEMO SEAM.
+ *
+ * One component, two delivery lanes, chosen by frontmatter:
+ *
+ *  island — a demo written in this repo (src/demos/<entry>/index.tsx).
+ *  iframe — a prebuilt engine export (Godot/Unity/Phaser) under
+ *           public/demos/<slug>/, run sandboxed.
+ *
+ * Both lanes load ONLY on demand, so a reader who never clicks pays nothing.
+ *
+ * The island lane mounts React by hand rather than via `client:visible`.
+ * That's deliberate: Astro's client directives need a statically-analysable
+ * import, which would mean editing this file for every new demo. A real dynamic
+ * import keeps the promise that adding a demo is just adding a folder — and for
+ * a game it's strictly better anyway, since there's no point server-rendering
+ * markup that a canvas is about to replace.
+ */
+import type { CollectionEntry } from 'astro:content';
+
+type DemoConfig = CollectionEntry<'projects'>['data']['demo'];
+
+interface Props {
+  demo: DemoConfig;
+  title?: string;
+  /** Slug for the fullscreen link. */
+  slug?: string;
+}
+
+const { demo, title, slug } = Astro.props;
+---
+
+{
+  demo.kind === 'none' ? null : (
+    <section class="not-prose my-10" aria-label={title ?? 'Interactive demo'}>
+      {demo.kind === 'island' && (
+        <div
+          class="relative min-h-64 overflow-hidden rounded-xl border border-border bg-surface"
+          data-demo-island={demo.entry}
+        >
+          <div class="grid min-h-64 place-items-center p-8 text-sm text-ink-muted" data-demo-loading>
+            Loading demo…
+          </div>
+        </div>
+      )}
+
+      {demo.kind === 'iframe' && (
+        <div
+          class="group relative overflow-hidden rounded-xl border border-border bg-surface-raised"
+          style={`aspect-ratio: ${demo.aspect};`}
+          data-demo-frame
+          data-src={demo.src}
+        >
+          <button
+            type="button"
+            data-demo-start
+            class="absolute inset-0 grid place-items-center gap-3 text-ink-muted transition-colors hover:text-ink"
+          >
+            <span class="grid size-14 place-items-center rounded-full bg-accent text-accent-ink shadow-lg transition-transform group-hover:scale-105">
+              <svg viewBox="0 0 24 24" class="size-6" fill="currentColor" aria-hidden="true">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </span>
+            <span class="text-sm font-medium">{demo.label}</span>
+            <span class="text-xs text-ink-faint">
+              Loads on click — nothing downloads until you ask
+            </span>
+          </button>
+        </div>
+      )}
+
+      {demo.fullscreen && slug && (
+        <p class="mt-2 text-sm text-ink-faint">
+          Runs small here.{' '}
+          <a class="text-accent underline underline-offset-4" href={`/play/${slug}`}>
+            Open fullscreen
+          </a>
+        </p>
+      )}
+    </section>
+  )
+}
+
+<script>
+  // --- island lane -------------------------------------------------------
+  // Lazy glob: Vite code-splits each demo into its own chunk, fetched only
+  // when that demo actually scrolls into view.
+  const demoModules = import.meta.glob<{ default: any }>('../../demos/*/index.tsx');
+
+  const mountIsland = async (el: HTMLElement) => {
+    const name = el.dataset.demoIsland;
+    if (!name) return;
+
+    const loader = demoModules[`../../demos/${name}/index.tsx`];
+    if (!loader) {
+      el.innerHTML = `<p class="p-4 text-sm text-danger">No demo island at src/demos/${name}/index.tsx</p>`;
+      return;
+    }
+
+    try {
+      const [React, { createRoot }, mod] = await Promise.all([
+        import('react'),
+        import('react-dom/client'),
+        loader(),
+      ]);
+      el.querySelector('[data-demo-loading]')?.remove();
+      createRoot(el).render(React.createElement(mod.default));
+    } catch (err) {
+      console.error('[demo] failed to mount', name, err);
+      el.innerHTML = `<p class="p-4 text-sm text-danger">This demo failed to load.</p>`;
+    }
+  };
+
+  const islands = document.querySelectorAll<HTMLElement>('[data-demo-island]');
+  if (islands.length > 0) {
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            io.unobserve(entry.target);
+            mountIsland(entry.target as HTMLElement);
+          }
+        }
+      },
+      { rootMargin: '200px' },
+    );
+    islands.forEach((el) => io.observe(el));
+  }
+
+  // --- iframe lane -------------------------------------------------------
+  // Vanilla, so a prebuilt engine export costs zero framework JS.
+  document.querySelectorAll<HTMLElement>('[data-demo-frame]').forEach((frame) => {
+    const btn = frame.querySelector<HTMLButtonElement>('[data-demo-start]');
+    btn?.addEventListener(
+      'click',
+      () => {
+        const src = frame.dataset.src;
+        if (!src) return;
+        const iframe = document.createElement('iframe');
+        iframe.src = src;
+        iframe.className = 'absolute inset-0 size-full border-0';
+        iframe.setAttribute('title', 'Interactive demo');
+        // Least privilege: enough to run a game, not enough to touch the page.
+        iframe.setAttribute(
+          'sandbox',
+          'allow-scripts allow-same-origin allow-pointer-lock allow-popups',
+        );
+        iframe.setAttribute('allow', 'fullscreen; autoplay; gamepad; pointer-lock');
+        btn.remove();
+        frame.appendChild(iframe);
+      },
+      { once: true },
+    );
+  });
+</script>

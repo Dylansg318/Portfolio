@@ -1,0 +1,71 @@
+---
+import { Image } from 'astro:assets';
+import { coverGradient, statusLabel, type Project } from '../../lib/content';
+
+interface Props { project: Project }
+const { project } = Astro.props;
+const { data, id } = project;
+---
+<article
+  class="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-surface transition-all hover:border-border-strong hover:shadow-lg"
+>
+  <div class="relative aspect-16/9 overflow-hidden bg-surface-raised">
+    {
+      data.cover ? (
+        <Image
+          src={data.cover}
+          alt={data.coverAlt ?? ''}
+          class="size-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+          widths={[400, 800]}
+          sizes="(max-width: 768px) 100vw, 400px"
+        />
+      ) : (
+        <div class="size-full" style={`background: ${coverGradient(id)}`} />
+      )
+    }
+    {data.draft && (
+      <span class="absolute left-3 top-3 rounded-md bg-warn px-2 py-0.5 text-xs font-semibold text-black">
+        Draft
+      </span>
+    )}
+  </div>
+
+  <div class="flex flex-1 flex-col p-5">
+    <div class="mb-2 flex items-center gap-2 text-xs text-ink-faint">
+      <span
+        class:list={[
+          'inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 font-medium',
+          data.status === 'live' && 'bg-ok/15 text-ok',
+          data.status === 'wip' && 'bg-warn/15 text-warn',
+          data.status === 'archived' && 'bg-ink-faint/15 text-ink-muted',
+        ]}
+      >
+        {statusLabel[data.status]}
+      </span>
+      <time datetime={data.date.toISOString()}>
+        {data.date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' })}
+      </time>
+      {data.demo.kind !== 'none' && (
+        <span class="ml-auto rounded-full bg-accent-wash px-2 py-0.5 font-medium text-accent">
+          Playable
+        </span>
+      )}
+    </div>
+
+    <h3 class="text-lg font-semibold tracking-tight text-ink">
+      <a href={`/projects/${id}`} class="after:absolute after:inset-0">
+        {data.title}
+      </a>
+    </h3>
+    <p class="mt-1.5 flex-1 text-sm leading-relaxed text-ink-muted">{data.blurb}</p>
+
+    <ul class="mt-4 flex flex-wrap gap-1.5">
+      {data.stack.slice(0, 4).map((tech) => (
+        <li class="rounded-md bg-surface-raised px-2 py-0.5 text-xs text-ink-muted">{tech}</li>
+      ))}
+      {data.stack.length > 4 && (
+        <li class="px-1 py-0.5 text-xs text-ink-faint">+{data.stack.length - 4}</li>
+      )}
+    </ul>
+  </div>
+</article>
