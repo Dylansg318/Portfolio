@@ -2,7 +2,6 @@
 import { defineConfig, fontProviders } from 'astro/config';
 import cloudflare from '@astrojs/cloudflare';
 import mdx from '@astrojs/mdx';
-import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
 import expressiveCode from 'astro-expressive-code';
 import tailwindcss from '@tailwindcss/vite';
@@ -12,6 +11,14 @@ const SITE = process.env.SITE_URL ?? 'https://portfolio.dylansg.workers.dev';
 
 export default defineConfig({
   site: SITE,
+
+  // Clean URLs with no trailing slash. Astro's default emits
+  // /projects/index.html, which Cloudflare serves at /projects/ and 307s
+  // /projects onto — so every internal link cost a redirect round-trip.
+  // `format: 'file'` emits /projects.html instead, and the assets handler is
+  // told to drop the slash, so the links the site emits resolve directly.
+  trailingSlash: 'never',
+  build: { format: 'file' },
 
   // Everything prerenders by default. Only routes that explicitly opt out
   // (`export const prerender = false`) invoke the Worker at request time.
@@ -30,7 +37,6 @@ export default defineConfig({
     // that mdx then uses. Its options live in ec.config.mjs (see that file).
     expressiveCode(),
     mdx(),
-    react(),
     sitemap({ filter: (page) => !page.includes('/play/') }),
   ],
 

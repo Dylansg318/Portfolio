@@ -1,4 +1,8 @@
 import type { APIRoute } from 'astro';
+// Astro v6 removed `Astro.locals.runtime.env`; bindings and secrets now come
+// from the Workers runtime module. This resolves at request time inside the
+// Worker, which is the only place this route ever runs.
+import { env } from 'cloudflare:workers';
 
 /**
  * The ONLY route in this site that runs at request time. Everything else is
@@ -38,8 +42,8 @@ async function verifyTurnstile(token: string, secret: string, ip: string | null)
   return data.success === true;
 }
 
-export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
-  const env = (locals as any)?.runtime?.env ?? (import.meta.env as Record<string, string>);
+export const POST: APIRoute = async ({ request, clientAddress }) => {
+  const secrets = env as unknown as Record<string, string | undefined>;
 
   let payload: ContactPayload;
   try {
@@ -68,7 +72,7 @@ export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
   }
 
   // Spam check. Skipped only when no secret is configured (local dev).
-  const turnstileSecret = env.TURNSTILE_SECRET;
+  const turnstileSecret = secrets.TURNSTILE_SECRET;
   if (turnstileSecret) {
     const token = payload['cf-turnstile-response'];
     if (typeof token !== 'string' || token === '') {
@@ -78,8 +82,8 @@ export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
     if (!ok) return json({ error: 'Spam check failed. Please try again.' }, 403);
   }
 
-  const apiKey = env.RESEND_API_KEY;
-  const to = env.CONTACT_TO;
+  const apiKey = secrets.RESEND_API_KEY;
+  const to = secrets.CONTACT_TO;
 
   // Not configured yet: accept and log rather than 500 at a visitor.
   if (!apiKey || !to) {
