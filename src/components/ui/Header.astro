@@ -9,10 +9,10 @@ const isActive = (href: string) =>
 <header
   class="sticky top-0 z-40 border-b border-white/10 bg-nav/90 text-nav-ink backdrop-blur-md supports-[backdrop-filter]:bg-nav/80"
 >
-  <div class="mx-auto flex h-16 max-w-(--container-wide) items-center gap-3 px-4 sm:gap-4 sm:px-6">
+  <div class="mx-auto flex h-16 max-w-(--container-wide) items-center gap-1.5 px-3 md:gap-4 md:px-6">
     <a
       href="/"
-      class="flex items-center gap-2.5 font-semibold tracking-tight text-nav-ink transition-opacity hover:opacity-80"
+      class="flex shrink-0 items-center gap-2.5 font-semibold tracking-tight text-nav-ink transition-opacity hover:opacity-80"
     >
       <span
         class="grid size-8 place-items-center rounded-lg bg-tab-active font-display text-sm font-bold text-tab-active-ink"
@@ -20,20 +20,20 @@ const isActive = (href: string) =>
       >
         D
       </span>
-      <span class="hidden sm:inline">{site.name}</span>
-      <span class="sm:hidden">{site.shortName}</span>
+      <span class="hidden md:inline">{site.name}</span>
+      <span class="sr-only">{site.shortName}</span>
     </a>
 
     <!-- Four short links, so they stay visible on mobile. A hamburger for four
          items is a tap the visitor should not have to make. -->
-    <nav class="ml-auto flex items-center gap-0.5 sm:gap-1" aria-label="Main">
+    <nav class="ml-auto flex items-center gap-0.5 md:gap-1" aria-label="Main">
       {
         site.nav.map((item) => (
           <a
             href={item.href}
             aria-current={isActive(item.href) ? 'page' : undefined}
             class:list={[
-              'rounded-lg px-2 py-1.5 text-sm transition-colors sm:px-3',
+              'rounded-lg px-1 py-1.5 text-xs transition-colors md:px-3 md:text-sm',
               isActive(item.href)
                 ? 'bg-tab-active font-semibold text-tab-active-ink'
                 : 'text-nav-muted hover:bg-white/10 hover:text-nav-ink',
@@ -48,23 +48,23 @@ const isActive = (href: string) =>
     <!-- Plain English ⇄ Engineer: the same pages, two registers. Default is
          plain; the choice sticks. -->
     <div
-      class="flex items-center rounded-lg border border-white/20 p-0.5 text-xs font-medium"
+      class="flex shrink-0 items-center rounded-lg border border-white/20 p-0.5 text-[0.6875rem] font-medium md:text-xs"
       role="group"
       aria-label="Reading mode"
     >
       <button
         type="button"
         data-mode-btn="plain"
-        class="rounded-md px-2 py-1 text-nav-muted transition-colors sm:px-2.5"
+        class="rounded-md px-1 py-1 text-nav-muted transition-colors md:px-2.5"
       >
-        <span class="hidden sm:inline">Plain English</span><span class="sm:hidden">Plain</span>
+        <span class="hidden md:inline">Plain English</span><span class="md:hidden">Plain</span>
       </button>
       <button
         type="button"
         data-mode-btn="eng"
-        class="rounded-md px-2 py-1 text-nav-muted transition-colors sm:px-2.5"
+        class="rounded-md px-1 py-1 text-nav-muted transition-colors md:px-2.5"
       >
-        <span class="hidden sm:inline">Engineer</span><span class="sm:hidden">Tech</span>
+        <span class="hidden md:inline">Engineer</span><span class="md:hidden">Tech</span>
       </button>
     </div>
 
