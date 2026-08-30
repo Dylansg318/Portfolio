@@ -73,6 +73,12 @@ import Base from '../layouts/Base.astro';
 </Base>
 
 <script>
+  type ContactResponse = {
+    ok?: boolean;
+    error?: string;
+    fields?: Record<string, string>;
+  };
+
   const form = document.getElementById('contact-form') as HTMLFormElement | null;
   const status = document.getElementById('form-status');
 
@@ -101,7 +107,7 @@ import Base from '../layouts/Base.astro';
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(data),
       });
-      const body = await res.json();
+      const body = (await res.json()) as ContactResponse;
 
       if (res.ok) {
         form.reset();
@@ -113,7 +119,7 @@ import Base from '../layouts/Base.astro';
       }
 
       if (body.fields) {
-        for (const [field, msg] of Object.entries(body.fields as Record<string, string>)) {
+        for (const [field, msg] of Object.entries(body.fields)) {
           const el = form.querySelector<HTMLElement>(`[data-error="${field}"]`);
           if (el) {
             el.textContent = msg;

@@ -56,8 +56,9 @@ const projectSchema = ({ image }: SchemaContext) =>
      * How this project's interactive demo is delivered, if it has one.
      *
      *  none   — write-up only
-     *  island — source lives in src/demos/<entry>, mounted as an Astro island.
-     *           Hot reload, TypeScript, shares the design tokens.
+     *  island — src/demos/<entry>/index.ts exporting `mount(el) => cleanup`.
+     *           Framework-free by contract: canvas, WebGL, plain DOM, or bring
+     *           your own library. Must be .ts, never .tsx — see Demo.astro.
      *  iframe — a prebuilt engine export (Godot/Unity/Phaser) under
      *           public/demos/<slug>/, run in a sandboxed iframe so a 40MB
      *           WASM bundle never enters this site's build graph.

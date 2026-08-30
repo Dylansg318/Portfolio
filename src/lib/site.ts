@@ -8,6 +8,11 @@ export const site = {
   email: 'you@example.com', // TODO: replace before launch
   locale: 'en',
 
+  /** Drop a PDF at public/resume.pdf and set this to '/resume.pdf' to show
+   *  the button. Empty means the link is not rendered at all, rather than
+   *  rendered and 404ing. */
+  resumeUrl: '',
+
   links: {
     github: 'https://github.com/Dylansg318',
     linkedin: '',

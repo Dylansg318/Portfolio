@@ -66,16 +66,24 @@ draft: false            # true = visible in dev, excluded from the built site
 Two lanes, chosen by frontmatter. Adding one does not require touching any
 component.
 
-**In-repo (TypeScript/React/canvas)** — create `src/demos/<name>/index.tsx`
-exporting a default component, then:
+**In-repo (TypeScript / canvas / WebGL)** — create `src/demos/<name>/index.ts`
+exporting `mount(el: HTMLElement): () => void`, then:
 
 ```yaml
 demo: { kind: island, entry: <name> }
 ```
 
-Copy the start-gate pattern from `src/demos/reflex/` — the island should render
-a poster immediately and only begin expensive work (animation loop, audio,
-WASM) after an explicit click, and it must honour `prefers-reduced-motion`.
+Copy the start-gate pattern from `src/demos/reflex/` — mount should be cheap
+and only begin expensive work (animation loop, audio, WASM) after an explicit
+click, and it must honour `prefers-reduced-motion`. Return a cleanup function
+that stops every timer it started.
+
+> Demo entries must be `.ts`, not `.tsx`. A JSX entry is transformed by
+> `@vitejs/plugin-react`, which injects a Fast Refresh guard that throws unless
+> Astro has put a React preamble in the page — and Astro only does that for
+> `client:*` islands it can see statically. A dynamic import is invisible to it,
+> so a `.tsx` demo dies in `astro dev` with "can't detect preamble". No
+> framework is needed here anyway; a game loop is not React-shaped.
 
 **Prebuilt engine export (Godot / Unity / Phaser)** — drop the export in
 `public/demos/<slug>/`, then:
