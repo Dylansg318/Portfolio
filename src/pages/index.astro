@@ -40,13 +40,22 @@ const marquee = [...stack, ...stack];
       </h1>
 
       <p
-        class="reveal mt-7 max-w-(--container-reading) text-lg leading-relaxed text-ink-muted sm:text-xl"
+        class="only-plain reveal mt-7 max-w-(--container-reading) text-lg leading-relaxed text-ink-muted sm:text-xl"
         style="--reveal-delay: 120ms"
       >
-        One ERP, built from scratch, that takes orders from six sales channels, keeps
-        32,000 products in agreement across every marketplace, reprices them every
-        minute, buys the shipping labels, and closes the books in QuickBooks. About 500
-        orders a day run through it. These are the write-ups.
+        A dental supply company sells on six different websites. I built the one system
+        that catches every order, keeps prices and stock right everywhere, prints the
+        shipping labels, and keeps the books straight — about 500 orders a day, run by
+        a small team. These are the stories.
+      </p>
+      <p
+        class="only-eng reveal mt-7 max-w-(--container-reading) text-lg leading-relaxed text-ink-muted sm:text-xl"
+        style="--reveal-delay: 120ms"
+      >
+        One ERP, built from scratch: order intake from six channels, 32,000 products
+        kept in agreement across every marketplace, repricing every minute, label
+        purchase across three carriers, and a two-way QuickBooks integration — one
+        TypeScript/PostgreSQL codebase, ~180 scheduled jobs. These are the write-ups.
       </p>
 
       <div class="reveal mt-9 flex flex-wrap gap-3" style="--reveal-delay: 180ms">
@@ -73,7 +82,7 @@ const marquee = [...stack, ...stack];
           </div>
         ))}
       </dl>
-      <p class="mt-3 text-xs text-ink-faint">Measured on the production database, {site.statsAsOf}.</p>
+      <p class="note mt-3">real numbers, pulled from the live database {site.statsAsOf} — not vibes</p>
     </div>
   </section>
 
@@ -104,14 +113,21 @@ const marquee = [...stack, ...stack];
         <h3 class="mt-3 font-display text-2xl font-bold text-ink">
           Operations Technology Manager, RMH3 Dental Supply
         </h3>
-        <p class="mt-3 leading-relaxed text-ink-muted">
+        <p class="only-plain mt-3 leading-relaxed text-ink-muted">
+          I own the whole system the company runs on — the screens the warehouse uses to
+          pick and pack, the robots that fetch orders from every website we sell on and
+          push prices and stock back, the ones that watch the carriers for deliveries,
+          and the connection that keeps the accounting honest. When a number looks even
+          slightly off, finding out why is my job.
+        </p>
+        <p class="only-eng mt-3 leading-relaxed text-ink-muted">
           I own the whole system — from the React screens the warehouse uses to pick
           orders, to the PostgreSQL schema, to the 180 background jobs that pull orders
           from Net32, eBay, Amazon, Shopify and Walmart, push prices and stock back, poll
           three carriers for delivery, and mirror the books to QuickBooks. When something
           is subtly wrong with a number, it's my job to find out why.
         </p>
-        <ul class="mt-5 flex flex-wrap gap-2 text-xs">
+        <ul class="only-eng mt-5 flex flex-wrap gap-2 text-xs">
           {['Node + TypeScript', 'React', 'PostgreSQL', 'Railway', 'GitHub Actions', 'QuickBooks Desktop'].map((t) => (
             <li class="rounded-md bg-surface-raised px-2 py-1 text-ink-muted">{t}</li>
           ))}
@@ -138,7 +154,13 @@ const marquee = [...stack, ...stack];
       <!-- Built -->
       <article class="tile reveal p-6 md:col-span-2" style="--reveal-delay: 120ms">
         <p class="eyebrow">Built</p>
-        <ul class="mt-4 space-y-3 text-sm leading-relaxed text-ink-muted">
+        <ul class="only-plain mt-4 space-y-3 text-sm leading-relaxed text-ink-muted">
+          <li><strong class="text-ink">One inbox for every sale</strong> — orders from six websites land in one place, ready to pack.</li>
+          <li><strong class="text-ink">A pricing robot</strong> that checks every product once a minute and never starts a price war.</li>
+          <li><strong class="text-ink">Shipping</strong> — it finds the cheapest label, buys it, and prints it on the warehouse floor.</li>
+          <li><strong class="text-ink">Honest books</strong> — the sales system and the accounting always agree, with receipts.</li>
+        </ul>
+        <ul class="only-eng mt-4 space-y-3 text-sm leading-relaxed text-ink-muted">
           <li><strong class="text-ink">Order intake</strong> from six channels into one order table, with the identity rules each marketplace needs.</li>
           <li><strong class="text-ink">Repricing engine</strong> that runs every minute, with cooldowns and floors, and never chases the lowest price.</li>
           <li><strong class="text-ink">Shipping</strong> — rate shopping, label purchase, thermal print, proof of delivery.</li>
@@ -159,7 +181,13 @@ const marquee = [...stack, ...stack];
       <!-- How I work -->
       <article class="tile reveal p-6 md:col-span-2" style="--reveal-delay: 200ms">
         <p class="eyebrow">How I work</p>
-        <ul class="mt-4 space-y-3 text-sm leading-relaxed text-ink-muted">
+        <ul class="only-plain mt-4 space-y-3 text-sm leading-relaxed text-ink-muted">
+          <li>Check before claiming — I don't say "fixed" until I've watched it work.</li>
+          <li>Keep the original paperwork; you always need it later.</li>
+          <li>If something breaks, it should break loudly — quiet failures cost the most.</li>
+          <li>Write everything down so nothing lives only in my head.</li>
+        </ul>
+        <ul class="only-eng mt-4 space-y-3 text-sm leading-relaxed text-ink-muted">
           <li>Verify before asserting — run the query, curl the endpoint, read the file.</li>
           <li>Store the raw payload at every ingest; parse after.</li>
           <li>Fail loudly. A job that reports success while doing nothing is the worst bug.</li>

@@ -90,12 +90,31 @@ const personLd = {
     <script is:inline>
       (() => {
         // `js` gates the scroll-reveal hidden state: no JS, nothing hides.
-        document.documentElement.classList.add('js');
+        const root = document.documentElement;
+        root.classList.add('js');
         try {
+          // A ?skin= or ?mode= param wins and persists — that is what makes
+          // shareable A/B links work. Otherwise the stored choice applies.
+          const params = new URLSearchParams(location.search);
+
           const stored = localStorage.getItem('theme');
-          document.documentElement.dataset.theme = stored === 'light' ? 'light' : 'dark';
+          root.dataset.theme = stored === 'light' ? 'light' : 'dark';
+
+          const skinParam = params.get('skin');
+          if (skinParam === 'slip' || skinParam === 'meadow') {
+            localStorage.setItem('skin', skinParam);
+          }
+          if ((localStorage.getItem('skin') ?? 'meadow') === 'slip') {
+            root.dataset.skin = 'slip';
+          }
+
+          const modeParam = params.get('mode');
+          if (modeParam === 'eng' || modeParam === 'plain') {
+            localStorage.setItem('mode', modeParam);
+          }
+          root.dataset.mode = localStorage.getItem('mode') === 'eng' ? 'eng' : 'plain';
         } catch {
-          /* private mode / blocked storage — the dark default already applies */
+          /* private mode / blocked storage — dark Meadow, plain English */
         }
       })();
     </script>
@@ -123,10 +142,13 @@ const personLd = {
 
     {!bare && <Footer />}
 
-    <!-- One observer for every .reveal on the page. Elements above the fold
-         are shown immediately so nothing flashes in on load. -->
+    <!-- One observer for every .reveal on the page, PLUS a scroll-position
+         sweep as a safety net: if the observer ever misses (fast programmatic
+         scrolling, browser quirks), anything at or above the viewport gets
+         revealed anyway. Content staying invisible is the one failure this
+         effect is never allowed to have. -->
     <script>
-      const els = document.querySelectorAll<HTMLElement>('.reveal');
+      const els = [...document.querySelectorAll<HTMLElement>('.reveal')];
       if (els.length > 0 && 'IntersectionObserver' in window) {
         const io = new IntersectionObserver(
           (entries) => {
@@ -140,6 +162,31 @@ const personLd = {
           { rootMargin: '0px 0px -8% 0px', threshold: 0.05 },
         );
         els.forEach((el) => io.observe(el));
+
+        let pending = els;
+        let timer = 0;
+        const sweep = () => {
+          pending = pending.filter((el) => {
+            if (el.classList.contains('is-in')) return false;
+            // display:none (a mode-hidden variant) has no geometry — leave it
+            // pending; the mode toggle reveals everything when it flips.
+            if (el.getClientRects().length === 0) return true;
+            const r = el.getBoundingClientRect();
+            if (r.top < window.innerHeight || r.bottom < 0) {
+              el.classList.add('is-in');
+              io.unobserve(el);
+              return false;
+            }
+            return true;
+          });
+          if (pending.length === 0) window.removeEventListener('scroll', onScroll);
+        };
+        const onScroll = () => {
+          window.clearTimeout(timer);
+          timer = window.setTimeout(sweep, 150);
+        };
+        window.addEventListener('scroll', onScroll, { passive: true });
+        sweep();
       } else {
         els.forEach((el) => el.classList.add('is-in'));
       }

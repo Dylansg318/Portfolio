@@ -7,6 +7,8 @@ import CodeFile from '../../components/mdx/CodeFile.astro';
 import Video from '../../components/mdx/Video.astro';
 import Figure from '../../components/mdx/Figure.astro';
 import Takeaway from '../../components/mdx/Takeaway.astro';
+import PlainOnly from '../../components/mdx/PlainOnly.astro';
+import EngOnly from '../../components/mdx/EngOnly.astro';
 import { getProjects, getProjectNeighbours, coverGradient, statusLabel } from '../../lib/content';
 
 // Same helper as the index, so the draft exclusion gates ROUTE GENERATION too.
@@ -25,7 +27,7 @@ const { Content } = await render(project);
 const { prev, next } = await getProjectNeighbours(project.id);
 
 // Components available inside the MDX body.
-const components = { Demo, CodeFile, Video, Figure, Takeaway };
+const components = { Demo, CodeFile, Video, Figure, Takeaway, PlainOnly, EngOnly };
 ---
 
 <Base
@@ -114,7 +116,7 @@ const components = { Demo, CodeFile, Video, Figure, Takeaway };
     ) : (
       <div class="mx-auto max-w-(--container-wide) px-4 sm:px-6">
         <div
-          class="-mt-8 h-24 w-full rounded-xl border border-border shadow-xl sm:h-32"
+          class="cover-art -mt-8 h-24 w-full rounded-xl border border-border shadow-xl sm:h-32"
           style={`background: ${coverGradient(project.id)}`}
         />
       </div>

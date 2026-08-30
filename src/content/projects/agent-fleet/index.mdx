@@ -1,6 +1,7 @@
 ---
 title: Running a dozen AI coding sessions on one repo
 blurb: How I use AI coding agents at scale without vibe-coding — auto-loading rules, hooks that block the dangerous operations, and review triggered by consequence.
+plainBlurb: I use AI helpers to write much of the code — like a chef running a fast kitchen. This is the system of rules and checks that keeps the plates right.
 date: 2026-08-10
 featured: 70
 status: live
@@ -40,6 +41,31 @@ metrics:
   - { label: operating docs, value: "40+" }
   - { label: models cross-reviewing, value: "2" }
 ---
+
+<PlainOnly>
+
+## The story
+
+Honest answer to a fair question: how does one person build and run a system this size?
+I use AI coding assistants, heavily — several at once, like a kitchen running multiple
+line cooks. They're fast. They're also confidently wrong sometimes, and if you just
+accept whatever they produce, you're not an engineer, you're a spectator.
+
+So the real work is the kitchen, not the cooking. I decide what gets built and how it
+should behave. Written house rules load automatically so every helper knows things like
+"never let a website overwrite the product catalog." The genuinely dangerous actions
+aren't just discouraged — they're *blocked*, the way a fryer has a guard rail. Anything
+touching money or the books gets reviewed twice, by a second set of eyes, before it
+runs. And nothing gets called "done" until I've watched it work — run the numbers,
+clicked the buttons, seen the result.
+
+Every time something did go wrong, it became a new guard rail the same day. That's the
+whole trick: the helpers make me fast, the rules keep it safe, and I own everything that
+ships.
+
+</PlainOnly>
+
+<EngOnly>
 
 ## Vibe coding versus engineering
 
@@ -106,3 +132,5 @@ one command that shows what it really is — and it's how confidently-wrong work
 
 That rule applies to me as much as to the agents. It's the part of the job that hasn't
 changed.
+
+</EngOnly>

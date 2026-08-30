@@ -45,9 +45,32 @@ const isActive = (href: string) =>
       }
     </nav>
 
+    <!-- Plain English ⇄ Engineer: the same pages, two registers. Default is
+         plain; the choice sticks. -->
+    <div
+      class="flex items-center rounded-lg border border-white/20 p-0.5 text-xs font-medium"
+      role="group"
+      aria-label="Reading mode"
+    >
+      <button
+        type="button"
+        data-mode-btn="plain"
+        class="rounded-md px-2 py-1 text-nav-muted transition-colors sm:px-2.5"
+      >
+        <span class="hidden sm:inline">Plain English</span><span class="sm:hidden">Plain</span>
+      </button>
+      <button
+        type="button"
+        data-mode-btn="eng"
+        class="rounded-md px-2 py-1 text-nav-muted transition-colors sm:px-2.5"
+      >
+        <span class="hidden sm:inline">Engineer</span><span class="sm:hidden">Tech</span>
+      </button>
+    </div>
+
     <a
       href="/contact"
-      class="hidden rounded-lg border border-white/20 px-3 py-1.5 text-sm font-medium text-nav-ink transition-colors hover:border-white/40 hover:bg-white/10 md:inline-flex"
+      class="hidden rounded-lg border border-white/20 px-3 py-1.5 text-sm font-medium text-nav-ink transition-colors hover:border-white/40 hover:bg-white/10 lg:inline-flex"
     >
       Get in touch
     </a>
@@ -55,3 +78,37 @@ const isActive = (href: string) =>
     <ThemeToggle />
   </div>
 </header>
+
+<script>
+  const buttons = document.querySelectorAll<HTMLButtonElement>('[data-mode-btn]');
+  const ACTIVE = ['bg-tab-active', 'text-tab-active-ink', 'font-semibold'];
+
+  const paint = () => {
+    const mode = document.documentElement.dataset.mode === 'eng' ? 'eng' : 'plain';
+    buttons.forEach((b) => {
+      const on = b.dataset.modeBtn === mode;
+      b.classList.toggle('text-nav-muted', !on);
+      ACTIVE.forEach((c) => b.classList.toggle(c, on));
+      b.setAttribute('aria-pressed', String(on));
+    });
+  };
+
+  buttons.forEach((b) =>
+    b.addEventListener('click', () => {
+      const mode = b.dataset.modeBtn === 'eng' ? 'eng' : 'plain';
+      document.documentElement.dataset.mode = mode;
+      try {
+        localStorage.setItem('mode', mode);
+      } catch {
+        /* storage blocked — still flips for this page view */
+      }
+      // Copy hidden by the previous mode was display:none, so the scroll
+      // observer never revealed it. Reveal everything on flip or the newly
+      // shown variant sits at opacity 0 forever.
+      document.querySelectorAll('.reveal').forEach((el) => el.classList.add('is-in'));
+      paint();
+    }),
+  );
+
+  paint();
+</script>

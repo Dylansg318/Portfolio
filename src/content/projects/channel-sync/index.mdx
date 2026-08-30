@@ -1,6 +1,7 @@
 ---
 title: Six channels, one product master
 blurb: Order intake and listing sync for six channels, with the identity rules that keep 49,000 marketplace listings from ever overwriting the product catalog.
+plainBlurb: Six websites, each with its own version of the truth about our 32,000 products. One catalog, owned by people, that none of them is allowed to overwrite.
 date: 2026-07-20
 featured: 80
 status: live
@@ -39,6 +40,32 @@ metrics:
   - { label: orders ingested, value: "300K" }
   - { label: syncs that write to master, value: "0" }
 ---
+
+<PlainOnly>
+
+## The story
+
+Selling on six websites at once sounds like six copies of the same job. It isn't — each
+site has its own opinion about what a product is, what an order is, even what our company
+is. One of them splits a single customer checkout into *two* orders under our two store
+names and gives both the same order number. Get that wrong and you refund the wrong one.
+
+The old setup let each website write its own opinions straight into our product catalog.
+One bad update could rename thousands of products overnight — and once, it did.
+
+The fix was a house rule: **the catalog belongs to people.** The websites each get their
+own copy to scribble on, and a person approves anything before it touches the real thing.
+Now when a marketplace sends something weird, it becomes a ten-minute review for a human
+instead of a week-long cleanup. And every scrap of paper the marketplaces send us gets
+kept — which has quietly answered three "can we find out…?" questions months later, for
+free.
+
+Today that's about **300,000 orders** and **49,000 listings** flowing through one set of
+rules.
+
+</PlainOnly>
+
+<EngOnly>
 
 ## The shape of the problem
 
@@ -96,3 +123,5 @@ The other direction matters too. Stock levels push to every channel so we stop s
 what we don't have; a marketplace that suppressed us for cancelling too many orders was the
 lesson there. Prices push from the repricing engine. Tracking pushes on ship. Each push is a
 job with a checkpoint, so a redeploy mid-run resumes rather than restarts.
+
+</EngOnly>

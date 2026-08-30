@@ -115,6 +115,85 @@
   --grid-line: rgba(181, 228, 140, 0.06);
 }
 
+/* ---------------------------------------------------------------------------
+   SKIN: "Packing slip" — an alternate design language drawn from the actual
+   day job: thermal labels, receipts, bin tags. Toggled with data-skin='slip'
+   on <html> (footer control, or ?skin=slip for A/B links). The Meadow skin
+   above stays the default. Both slip blocks are checked by
+   scripts/check-contrast.mjs, same as the Meadow pair.
+
+   Specificity note: these :root[data-skin] blocks (0,2,0) outrank the plain
+   [data-theme='dark'] block (0,1,0), so the slip-dark block below must
+   redefine EVERY token slip-light sets — partial overrides would leak
+   paper-light values into the dark warehouse. Keep the two sets identical
+   in shape.
+--------------------------------------------------------------------------- */
+:root[data-skin='slip'] {
+  --bg: #efe9da;
+  --surface: #f7f3e8;
+  --surface-raised: #e6dfcc;
+  --border: #c6bca1;
+  --border-strong: #6b6350;
+
+  --ink: #191512;
+  --ink-muted: #453d31;
+  --ink-faint: #575039;
+
+  --nav: #191512;
+  --nav-ink: #f7f3e8;
+  --nav-muted: #b5ab97;
+  --tab-active: #ffd83d;
+  --tab-active-ink: #191512;
+
+  --accent: #a2301f;
+  --accent-hover: #7f2718;
+  --accent-ink: #ffffff;
+  --accent-wash: #f0ddd0;
+
+  --ok: #2f6b3f;
+  --warn: #6e5700;
+  --danger: #a2301f;
+
+  --glow-a: rgba(25, 21, 18, 0.04);
+  --glow-b: rgba(162, 48, 31, 0.05);
+  --glow-c: rgba(25, 21, 18, 0.03);
+  --grid-line: rgba(25, 21, 18, 0.07);
+
+  --font-display: var(--font-mono);
+}
+
+:root[data-skin='slip'][data-theme='dark'] {
+  --bg: #14110b;
+  --surface: #1d1912;
+  --surface-raised: #272115;
+  --border: #3d3624;
+  --border-strong: #6f6549;
+
+  --ink: #f3ecd9;
+  --ink-muted: #c9bfa4;
+  --ink-faint: #a89d80;
+
+  --nav: #0d0b07;
+  --nav-ink: #f3ecd9;
+  --nav-muted: #a89d80;
+  --tab-active: #ffd83d;
+  --tab-active-ink: #14110b;
+
+  --accent: #ffb547;
+  --accent-hover: #ffc76e;
+  --accent-ink: #14110b;
+  --accent-wash: #2c2314;
+
+  --ok: #8fc98f;
+  --warn: #ffd83d;
+  --danger: #ff9d8a;
+
+  --glow-a: rgba(255, 181, 71, 0.06);
+  --glow-b: rgba(243, 236, 217, 0.04);
+  --glow-c: rgba(255, 216, 61, 0.04);
+  --grid-line: rgba(243, 236, 217, 0.05);
+}
+
 /* `inline` makes the utilities resolve to var(--x) at runtime rather than
    baking the value at build time — which is what lets the theme toggle work. */
 @theme inline {
@@ -424,6 +503,141 @@
 
   .prose-portfolio :where(a):hover {
     color: var(--accent-hover);
+  }
+
+  /* ---- content modes: Plain English (default) vs Engineer ----------------
+     Copy variants live side by side in the HTML; data-mode on <html> picks
+     one. No attribute (no JS, crawlers, RSS readers) = plain English. ---- */
+  [data-mode='eng'] .only-plain {
+    display: none !important;
+  }
+  :root:not([data-mode='eng']) .only-eng {
+    display: none !important;
+  }
+
+  /* ---- skin-scoped visibility ------------------------------------------- */
+  [data-skin='slip'] .meadow-only {
+    display: none !important;
+  }
+  :root:not([data-skin='slip']) .slip-only {
+    display: none !important;
+  }
+
+  /* ---- margin note: a small hand-annotated aside ------------------------ */
+  .note {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    line-height: 1.4;
+    color: var(--ink-faint);
+    transform: rotate(-1.5deg);
+  }
+  .note::before {
+    content: '↖ ';
+    color: var(--accent);
+  }
+
+  /* ---- barcode: pure CSS, decorative ------------------------------------ */
+  .barcode {
+    display: inline-block;
+    height: 1.1em;
+    width: 6.5em;
+    background: repeating-linear-gradient(
+      90deg,
+      currentColor 0 2px,
+      transparent 2px 4px,
+      currentColor 4px 7px,
+      transparent 7px 9px,
+      currentColor 9px 10px,
+      transparent 10px 13px
+    );
+  }
+
+  /* =======================================================================
+     PACKING-SLIP SKIN OVERRIDES — same HTML, different clothes.
+     ======================================================================= */
+  [data-skin='slip'] body {
+    /* subtle paper grain via a dot lattice */
+    background-image: radial-gradient(var(--grid-line) 0.5px, transparent 0.5px);
+    background-size: 14px 14px;
+  }
+
+  [data-skin='slip'] h1,
+  [data-skin='slip'] h2,
+  [data-skin='slip'] .font-display {
+    letter-spacing: -0.045em;
+  }
+
+  /* tiles become paper: sharp corners, hard ink border, offset stack shadow,
+     and a barcode strip along the top edge instead of the hover glow line */
+  [data-skin='slip'] .tile {
+    border-radius: 4px;
+    border: 1.5px solid var(--ink);
+    box-shadow: 4px 4px 0 0 color-mix(in srgb, var(--ink) 22%, transparent);
+  }
+  [data-skin='slip'] .tile::before {
+    inset: 8px 12px auto 12px;
+    height: 10px;
+    opacity: 0.55;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--ink) 0 2px,
+      transparent 2px 4px,
+      var(--ink) 4px 7px,
+      transparent 7px 9px,
+      var(--ink) 9px 10px,
+      transparent 10px 13px
+    );
+  }
+  [data-skin='slip'] .tile:hover {
+    transform: translate(-2px, -2px);
+    border-color: var(--ink);
+    box-shadow: 6px 6px 0 0 color-mix(in srgb, var(--ink) 30%, transparent);
+  }
+  [data-skin='slip'] .tile:hover::before {
+    opacity: 0.85;
+  }
+
+  /* headline accent: no gradient ink on paper — a highlighter swipe */
+  [data-skin='slip'] .text-gradient {
+    background: linear-gradient(transparent 58%, var(--tab-active) 58% 94%, transparent 94%);
+    -webkit-background-clip: border-box;
+    background-clip: border-box;
+    color: var(--ink);
+  }
+
+  /* label-field eyebrows: FROM: / SHIP TO: energy */
+  [data-skin='slip'] .eyebrow {
+    font-family: var(--font-mono);
+  }
+  [data-skin='slip'] .eyebrow::before {
+    content: '▪';
+    width: auto;
+    height: auto;
+    background: none;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  [data-skin='slip'] .btn {
+    border-radius: 4px;
+  }
+  [data-skin='slip'] .btn-primary {
+    border: 1.5px solid var(--ink);
+    box-shadow: 3px 3px 0 0 color-mix(in srgb, var(--ink) 30%, transparent);
+  }
+  [data-skin='slip'] .btn-ghost {
+    border: 1.5px solid var(--ink);
+  }
+
+  /* the ambient grid reads as graph paper here; kill the glows-as-mist */
+  [data-skin='slip'] .ambient::after {
+    background-size: 2rem 2rem;
+  }
+
+  /* generated cover gradients are Meadow-coloured; on paper they read as
+     stamped ink instead */
+  [data-skin='slip'] .cover-art {
+    filter: saturate(0.35) sepia(0.3) contrast(1.05);
   }
 
   /* ---- print: the résumé page is meant to be printed --------------------- */
