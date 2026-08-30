@@ -476,16 +476,3 @@ export const cannedReplies: CannedReply[] = [
       'The desk does not actually use this one. It is here because no help desk is complete without it.',
   },
 ];
-
-/** Ticker line for the status marquee — assembled here so the numbers live
- *  next to the other numbers. */
-export const tickerItems = [
-  'QUEUE: 1 OPEN — YOURS',
-  '≈520 ORDERS/DAY IN PRODUCTION',
-  '138,241+ PRICE PUSHES LOGGED',
-  '32,000 PRODUCTS · 6 CHANNELS',
-  '180 SCHEDULED JOBS RUNNING',
-  'AVG FIRST RESPONSE: FAST',
-  'HOLD MUSIC: NONE. YOU’RE WELCOME',
-  'SLA: THE SOFTWARE ANSWERS SO I DON’T HAVE TO',
-];
