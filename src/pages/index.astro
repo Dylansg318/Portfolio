@@ -9,10 +9,6 @@ import { getProjects } from '../lib/content';
 const projects = await getProjects();
 const [flagship, ...rest] = projects;
 const selected = rest.slice(0, 3);
-
-// The marquee repeats the list twice so the loop is seamless.
-const stack = site.skills.flatMap((s) => s.items);
-const marquee = [...stack, ...stack];
 ---
 <Base>
   <!-- ============================== HERO ============================== -->
@@ -86,24 +82,12 @@ const marquee = [...stack, ...stack];
     </div>
   </section>
 
-  <!-- ============================ STACK MARQUEE ======================= -->
-  <section class="marquee-wrap overflow-hidden border-y border-border bg-surface/60 py-4" aria-label="Technologies">
-    <div class="marquee text-sm font-medium text-ink-muted">
-      {marquee.map((t) => (
-        <span class="inline-flex items-center gap-2.5 whitespace-nowrap">
-          <span class="size-1 rounded-full bg-accent" aria-hidden="true"></span>
-          {t}
-        </span>
-      ))}
-    </div>
-  </section>
-
   <!-- ============================ AT A GLANCE ========================= -->
   <section class="mx-auto max-w-(--container-wide) px-4 py-20 sm:px-6">
     <SectionHeading
       eyebrow="At a glance"
       title="What I actually do all day"
-      lead="Not a list of frameworks — the shape of the work, so you can tell in thirty seconds whether it matches what you need."
+      lead="The shape of the work, not a list of frameworks."
     />
 
     <div class="grid gap-4 md:grid-cols-6">
@@ -114,18 +98,14 @@ const marquee = [...stack, ...stack];
           Operations Technology Manager, RMH3 Dental Supply
         </h3>
         <p class="only-plain mt-3 leading-relaxed text-ink-muted">
-          I own the whole system the company runs on — the screens the warehouse uses to
-          pick and pack, the robots that fetch orders from every website we sell on and
-          push prices and stock back, the ones that watch the carriers for deliveries,
-          and the connection that keeps the accounting honest. When a number looks even
-          slightly off, finding out why is my job.
+          I own the whole system: the screens the warehouse packs from, the robots that
+          fetch orders from every website we sell on and push prices and stock back, and
+          the link that keeps the accounting honest.
         </p>
         <p class="only-eng mt-3 leading-relaxed text-ink-muted">
-          I own the whole system — from the React screens the warehouse uses to pick
-          orders, to the PostgreSQL schema, to the 180 background jobs that pull orders
-          from Net32, eBay, Amazon, Shopify and Walmart, push prices and stock back, poll
-          three carriers for delivery, and mirror the books to QuickBooks. When something
-          is subtly wrong with a number, it's my job to find out why.
+          React screens, the PostgreSQL schema, and 180 background jobs: order pulls from
+          five marketplaces, price and stock pushes, three carrier polls, and a two-way
+          QuickBooks mirror.
         </p>
         <ul class="only-eng mt-5 flex flex-wrap gap-2 text-xs">
           {['Node + TypeScript', 'React', 'PostgreSQL', 'Railway', 'GitHub Actions', 'QuickBooks Desktop'].map((t) => (
@@ -202,7 +182,7 @@ const marquee = [...stack, ...stack];
     <SectionHeading
       eyebrow="Selected work"
       title="What the problem was, and what came out of it"
-      lead="Every write-up answers the same three questions in the same places: the problem, what was non-obvious, and what I learned."
+      lead="Each write-up answers the same three questions: the problem, what was non-obvious, and what I learned."
       link={{ href: '/projects', label: 'All projects' }}
     />
 
@@ -275,8 +255,7 @@ const marquee = [...stack, ...stack];
         If you need someone who'll own a system end-to-end, let's talk.
       </h2>
       <p class="mx-auto mt-4 max-w-xl text-ink-muted">
-        I'm happiest on problems where being subtly wrong costs real money — inventory,
-        orders, pricing, books — and where the fix has to survive the people using it.
+        Happiest where being subtly wrong costs real money — inventory, orders, pricing, books.
       </p>
       <div class="mt-8 flex flex-wrap justify-center gap-3">
         <a href="/contact" class="btn btn-primary">Get in touch</a>

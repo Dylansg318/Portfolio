@@ -355,20 +355,6 @@
     background: var(--accent);
   }
 
-  /* ---- animated marquee of the stack, pauses on hover / reduced motion -- */
-  .marquee {
-    display: flex;
-    gap: 2.5rem;
-    width: max-content;
-    animation: marquee 38s linear infinite;
-  }
-  .marquee-wrap:hover .marquee {
-    animation-play-state: paused;
-  }
-  @keyframes marquee {
-    to { transform: translateX(-50%); }
-  }
-
   /* Long-form MDX styling. Without this, project write-ups render as an
      undifferentiated wall of text: Tailwind's preflight strips heading and list
      styling, and MDX-generated HTML has no classes to hook. */
