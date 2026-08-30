@@ -2,12 +2,14 @@
 import { Image } from 'astro:assets';
 import { coverGradient, statusLabel, type Project } from '../../lib/content';
 
-interface Props { project: Project }
-const { project } = Astro.props;
+interface Props { project: Project; delay?: number }
+const { project, delay = 0 } = Astro.props;
 const { data, id } = project;
+const headline = data.metrics[0];
 ---
 <article
-  class="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-surface transition-all hover:border-border-strong hover:shadow-lg"
+  class="tile reveal group flex flex-col"
+  style={`--reveal-delay: ${delay}ms`}
 >
   <div class="relative aspect-16/9 overflow-hidden bg-surface-raised">
     {
@@ -20,7 +22,14 @@ const { data, id } = project;
           sizes="(max-width: 768px) 100vw, 400px"
         />
       ) : (
-        <div class="size-full" style={`background: ${coverGradient(id)}`} />
+        <div class="size-full transition-transform duration-500 group-hover:scale-[1.03]" style={`background: ${coverGradient(id)}`}>
+          {headline && (
+            <div class="absolute inset-0 flex flex-col justify-end p-5">
+              <p class="font-display text-4xl font-bold leading-none text-white drop-shadow">{headline.value}</p>
+              <p class="mt-1 text-xs font-medium uppercase tracking-wider text-white/85">{headline.label}</p>
+            </div>
+          )}
+        </div>
       )
     }
     {data.draft && (
@@ -52,7 +61,7 @@ const { data, id } = project;
       )}
     </div>
 
-    <h3 class="text-lg font-semibold tracking-tight text-ink">
+    <h3 class="font-display text-lg font-semibold tracking-tight text-ink">
       <a href={`/projects/${id}`} class="after:absolute after:inset-0">
         {data.title}
       </a>

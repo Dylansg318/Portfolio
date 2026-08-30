@@ -2,7 +2,7 @@
 title: This Portfolio
 blurb: A content site that can also run games — built so the writing stays easy and the demos stay cheap.
 date: 2026-08-30
-featured: 100
+featured: 10
 status: live
 role: solo
 stack: [Astro, TypeScript, Tailwind, Cloudflare Workers, MDX]
@@ -23,6 +23,13 @@ learned:
   - Making the write-up fields required in the schema — rather than merely conventional — turns "explain what you learned" from a habit into a build error. The tooling does the remembering.
   - The cheapest performance win is not optimising the heavy thing, it's not loading the heavy thing. Click-to-start on every demo and video removes the cost entirely for the majority of visitors who only came to read.
   - Committing to design tokens before designing anything means the eventual visual pass is one file, not an audit of every component.
+
+aiNote: >-
+  Scaffolded with Claude Code from a written brief: the two-lane demo seam, the
+  required narrative fields, and the contrast gate were my decisions, made before
+  any code existed. The agent produced the first pass; I cut what it over-built
+  (a React runtime for a two-state theme toggle, for one) and kept the build honest
+  by making the write-up fields fail the build when missing.
 
 metrics:
   - { label: JS on a write-up, value: "0 KB" }

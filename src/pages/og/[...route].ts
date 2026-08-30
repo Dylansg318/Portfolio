@@ -22,14 +22,15 @@ export const { getStaticPaths, GET } = await OGImageRoute({
     title: page.title,
     description: page.description,
     padding: 70,
+    // Meadow Green — the same ocean ground and lime accent as the dark theme.
     bgGradient: [
-      [23, 23, 30],
-      [38, 38, 52],
+      [7, 28, 39],
+      [20, 72, 106],
     ],
-    border: { color: [88, 110, 220], width: 12, side: 'inline-start' },
+    border: { color: [181, 228, 140], width: 12, side: 'inline-start' },
     font: {
-      title: { size: 64, weight: 'Bold', color: [245, 245, 250] },
-      description: { size: 30, color: [165, 165, 185], lineHeight: 1.4 },
+      title: { size: 64, weight: 'Bold', color: [255, 255, 255] },
+      description: { size: 30, color: [169, 204, 217], lineHeight: 1.4 },
     },
   }),
 });

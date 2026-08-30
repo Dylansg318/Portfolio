@@ -1,55 +1,259 @@
 ---
 import Base from '../layouts/Base.astro';
 import ProjectCard from '../components/ui/ProjectCard.astro';
+import FeaturedProject from '../components/ui/FeaturedProject.astro';
+import SectionHeading from '../components/ui/SectionHeading.astro';
 import { site } from '../lib/site';
 import { getProjects } from '../lib/content';
 
-const projects = (await getProjects()).slice(0, 6);
+const projects = await getProjects();
+const [flagship, ...rest] = projects;
+const selected = rest.slice(0, 3);
+
+// The marquee repeats the list twice so the loop is seamless.
+const stack = site.skills.flatMap((s) => s.items);
+const marquee = [...stack, ...stack];
 ---
 <Base>
-  <section class="mx-auto max-w-(--container-wide) px-4 py-20 sm:px-6 sm:py-28">
-    <p class="text-sm font-medium uppercase tracking-wider text-accent">{site.name}</p>
-    <h1 class="mt-3 max-w-3xl text-4xl font-bold tracking-tight text-ink sm:text-6xl">
-      {site.tagline}
-    </h1>
-    <p class="mt-6 max-w-(--container-reading) text-lg leading-relaxed text-ink-muted">
-      {site.description}
-    </p>
-    <div class="mt-8 flex flex-wrap gap-3">
-      <a
-        href="/projects"
-        class="rounded-lg bg-accent px-5 py-2.5 font-medium text-accent-ink transition-colors hover:bg-accent-hover"
+  <!-- ============================== HERO ============================== -->
+  <section class="ambient">
+    <div class="mx-auto max-w-(--container-wide) px-4 pb-16 pt-20 sm:px-6 sm:pb-20 sm:pt-28">
+      <div class="reveal flex flex-wrap items-center gap-3">
+        <p class="eyebrow">{site.name} · {site.location}</p>
+        {site.availability && (
+          <span class="inline-flex items-center gap-2 rounded-full border border-ok/40 bg-ok/10 px-3 py-1 text-xs font-medium text-ok">
+            <span class="relative flex size-2">
+              <span class="absolute inline-flex size-full animate-ping rounded-full bg-ok opacity-60"></span>
+              <span class="relative inline-flex size-2 rounded-full bg-ok"></span>
+            </span>
+            {site.availability}
+          </span>
+        )}
+      </div>
+
+      <h1
+        class="reveal mt-6 max-w-4xl text-[2.6rem] font-extrabold leading-[1.02] tracking-tight text-ink sm:text-6xl lg:text-7xl"
+        style="--reveal-delay: 60ms"
       >
-        See the work
-      </a>
-      <a
-        href="/about"
-        class="rounded-lg border border-border px-5 py-2.5 font-medium text-ink transition-colors hover:border-border-strong"
+        I build the software that{' '}
+        <span class="text-gradient">runs a dental supply company.</span>
+      </h1>
+
+      <p
+        class="reveal mt-7 max-w-(--container-reading) text-lg leading-relaxed text-ink-muted sm:text-xl"
+        style="--reveal-delay: 120ms"
       >
-        About me
-      </a>
+        One ERP, built from scratch, that takes orders from six sales channels, keeps
+        32,000 products in agreement across every marketplace, reprices them every
+        minute, buys the shipping labels, and closes the books in QuickBooks. About 500
+        orders a day run through it. These are the write-ups.
+      </p>
+
+      <div class="reveal mt-9 flex flex-wrap gap-3" style="--reveal-delay: 180ms">
+        <a href="/projects" class="btn btn-primary">
+          See the work
+          <span aria-hidden="true">→</span>
+        </a>
+        <a href={site.resumeUrl} class="btn btn-ghost">Résumé</a>
+        <a href={site.links.github} rel="me noopener" class="btn btn-ghost">
+          <svg viewBox="0 0 24 24" class="size-4" fill="currentColor" aria-hidden="true">
+            <path d="M12 .5A11.5 11.5 0 0 0 .5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.37-3.87-1.37-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.79 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.12 3.05.74.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.05.78 2.12v3.14c0 .31.2.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z" />
+          </svg>
+          GitHub
+        </a>
+      </div>
+
+      <!-- The numbers a recruiter should see in the first ten seconds. -->
+      <dl class="reveal mt-14 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4" style="--reveal-delay: 240ms">
+        {site.stats.map((s) => (
+          <div class="tile p-5">
+            <dd class="font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">{s.value}</dd>
+            <dt class="mt-1 text-sm font-medium text-ink">{s.label}</dt>
+            <p class="mt-1 text-xs leading-snug text-ink-faint">{s.note}</p>
+          </div>
+        ))}
+      </dl>
+      <p class="mt-3 text-xs text-ink-faint">Measured on the production database, {site.statsAsOf}.</p>
     </div>
   </section>
 
-  <section class="mx-auto max-w-(--container-wide) px-4 pb-20 sm:px-6">
-    <div class="mb-8 flex items-baseline justify-between">
-      <h2 class="text-2xl font-semibold tracking-tight text-ink">Selected work</h2>
-      <a href="/projects" class="text-sm text-accent transition-colors hover:text-accent-hover">
-        All projects →
-      </a>
+  <!-- ============================ STACK MARQUEE ======================= -->
+  <section class="marquee-wrap overflow-hidden border-y border-border bg-surface/60 py-4" aria-label="Technologies">
+    <div class="marquee text-sm font-medium text-ink-muted">
+      {marquee.map((t) => (
+        <span class="inline-flex items-center gap-2.5 whitespace-nowrap">
+          <span class="size-1 rounded-full bg-accent" aria-hidden="true"></span>
+          {t}
+        </span>
+      ))}
     </div>
+  </section>
+
+  <!-- ============================ AT A GLANCE ========================= -->
+  <section class="mx-auto max-w-(--container-wide) px-4 py-20 sm:px-6">
+    <SectionHeading
+      eyebrow="At a glance"
+      title="What I actually do all day"
+      lead="Not a list of frameworks — the shape of the work, so you can tell in thirty seconds whether it matches what you need."
+    />
+
+    <div class="grid gap-4 md:grid-cols-6">
+      <!-- Currently -->
+      <article class="tile reveal p-6 md:col-span-4" style="--reveal-delay: 0ms">
+        <p class="eyebrow">Currently</p>
+        <h3 class="mt-3 font-display text-2xl font-bold text-ink">
+          Operations Technology Manager, RMH3 Dental Supply
+        </h3>
+        <p class="mt-3 leading-relaxed text-ink-muted">
+          I own the whole system — from the React screens the warehouse uses to pick
+          orders, to the PostgreSQL schema, to the 180 background jobs that pull orders
+          from Net32, eBay, Amazon, Shopify and Walmart, push prices and stock back, poll
+          three carriers for delivery, and mirror the books to QuickBooks. When something
+          is subtly wrong with a number, it's my job to find out why.
+        </p>
+        <ul class="mt-5 flex flex-wrap gap-2 text-xs">
+          {['Node + TypeScript', 'React', 'PostgreSQL', 'Railway', 'GitHub Actions', 'QuickBooks Desktop'].map((t) => (
+            <li class="rounded-md bg-surface-raised px-2 py-1 text-ink-muted">{t}</li>
+          ))}
+        </ul>
+      </article>
+
+      <!-- Contact tile -->
+      <article class="tile reveal flex flex-col justify-between bg-accent p-6 text-accent-ink md:col-span-2" style="--reveal-delay: 80ms">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider opacity-80">Talk to me</p>
+          <h3 class="mt-3 font-display text-2xl font-bold">Hiring for backend or full-stack?</h3>
+          <p class="mt-2 text-sm leading-relaxed opacity-90">
+            I reply within a day. {site.timezone}, remote or Northern Virginia.
+          </p>
+        </div>
+        <a
+          href="/contact"
+          class="mt-6 inline-flex items-center gap-2 rounded-xl bg-bg px-4 py-2.5 text-sm font-semibold text-ink transition-transform hover:translate-x-0.5"
+        >
+          Get in touch <span aria-hidden="true">→</span>
+        </a>
+      </article>
+
+      <!-- Built -->
+      <article class="tile reveal p-6 md:col-span-2" style="--reveal-delay: 120ms">
+        <p class="eyebrow">Built</p>
+        <ul class="mt-4 space-y-3 text-sm leading-relaxed text-ink-muted">
+          <li><strong class="text-ink">Order intake</strong> from six channels into one order table, with the identity rules each marketplace needs.</li>
+          <li><strong class="text-ink">Repricing engine</strong> that runs every minute, with cooldowns and floors, and never chases the lowest price.</li>
+          <li><strong class="text-ink">Shipping</strong> — rate shopping, label purchase, thermal print, proof of delivery.</li>
+          <li><strong class="text-ink">Books</strong> — invoices, AR/AP, and a QuickBooks reconcile that shows its evidence.</li>
+        </ul>
+      </article>
+
+      <!-- Background -->
+      <article class="tile reveal p-6 md:col-span-2" style="--reveal-delay: 160ms">
+        <p class="eyebrow">Background</p>
+        <ul class="mt-4 space-y-3 text-sm leading-relaxed text-ink-muted">
+          <li><strong class="text-ink">CYDEO SDET bootcamp</strong> — Selenium, Cucumber, REST Assured, Jenkins. Where the testing habits came from.</li>
+          <li><strong class="text-ink">George Mason University</strong> — B.S. Computer Science.</li>
+          <li><strong class="text-ink">Ran a store and a restaurant floor</strong> before I wrote software for a living. I know what it's like to be the person the software is for.</li>
+        </ul>
+      </article>
+
+      <!-- How I work -->
+      <article class="tile reveal p-6 md:col-span-2" style="--reveal-delay: 200ms">
+        <p class="eyebrow">How I work</p>
+        <ul class="mt-4 space-y-3 text-sm leading-relaxed text-ink-muted">
+          <li>Verify before asserting — run the query, curl the endpoint, read the file.</li>
+          <li>Store the raw payload at every ingest; parse after.</li>
+          <li>Fail loudly. A job that reports success while doing nothing is the worst bug.</li>
+          <li>Write it down. The codebase has 40+ pages of operating docs I maintain.</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============================ SELECTED WORK ======================= -->
+  <section class="mx-auto max-w-(--container-wide) px-4 py-12 sm:px-6" id="work">
+    <SectionHeading
+      eyebrow="Selected work"
+      title="What the problem was, and what came out of it"
+      lead="Every write-up answers the same three questions in the same places: the problem, what was non-obvious, and what I learned."
+      link={{ href: '/projects', label: 'All projects' }}
+    />
 
     {projects.length === 0 ? (
       <p class="rounded-xl border border-dashed border-border p-10 text-center text-ink-muted">
-        No projects published yet. Add one at
-        <code class="mx-1 rounded bg-surface-raised px-1.5 py-0.5 text-sm">
-          src/content/projects/&lt;slug&gt;/index.mdx
-        </code>
+        No projects published yet.
       </p>
     ) : (
-      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {projects.map((project) => <ProjectCard project={project} />)}
+      <div class="space-y-6">
+        {flagship && <FeaturedProject project={flagship} />}
+        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {selected.map((project, i) => <ProjectCard project={project} delay={i * 70} />)}
+        </div>
       </div>
     )}
+  </section>
+
+  <!-- ============================ PRINCIPLES ========================== -->
+  <section class="ambient mt-12 border-y border-border">
+    <div class="mx-auto max-w-(--container-wide) px-4 py-20 sm:px-6">
+      <SectionHeading
+        eyebrow="Principles"
+        title="Three things I've learned the expensive way"
+      />
+      <div class="grid gap-4 md:grid-cols-3">
+        {site.principles.map((p, i) => (
+          <article class="tile reveal p-6" style={`--reveal-delay: ${i * 80}ms`}>
+            <span class="font-display text-4xl font-extrabold text-accent/60">0{i + 1}</span>
+            <h3 class="mt-3 font-display text-xl font-bold text-ink">{p.title}</h3>
+            <p class="mt-3 text-sm leading-relaxed text-ink-muted">{p.body}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ EXPERIENCE ========================== -->
+  <section class="mx-auto max-w-(--container-wide) px-4 py-20 sm:px-6">
+    <SectionHeading
+      eyebrow="Experience"
+      title="Where I've been"
+      link={{ href: '/resume', label: 'Full résumé' }}
+    />
+    <ol class="relative space-y-8 border-l border-border pl-8">
+      {site.experience.map((job, i) => (
+        <li class="reveal relative" style={`--reveal-delay: ${i * 60}ms`}>
+          <span
+            class:list={[
+              'absolute -left-[2.4rem] top-1.5 size-3 rounded-full ring-4 ring-bg',
+              i === 0 ? 'bg-accent' : 'bg-border-strong',
+            ]}
+            aria-hidden="true"
+          ></span>
+          <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+            <h3 class="font-display text-lg font-semibold text-ink">
+              {job.title} <span class="font-sans font-normal text-ink-muted">· {job.org}</span>
+            </h3>
+            <p class="text-sm tabular-nums text-ink-faint">{job.start} – {job.end}</p>
+          </div>
+          <p class="mt-1.5 max-w-(--container-reading) text-sm leading-relaxed text-ink-muted">{job.summary}</p>
+        </li>
+      ))}
+    </ol>
+  </section>
+
+  <!-- ============================ CTA ================================= -->
+  <section class="mx-auto max-w-(--container-wide) px-4 pb-8 sm:px-6">
+    <div class="tile reveal ambient overflow-hidden p-8 text-center sm:p-14">
+      <h2 class="mx-auto max-w-2xl text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+        If you need someone who'll own a system end-to-end, let's talk.
+      </h2>
+      <p class="mx-auto mt-4 max-w-xl text-ink-muted">
+        I'm happiest on problems where being subtly wrong costs real money — inventory,
+        orders, pricing, books — and where the fix has to survive the people using it.
+      </p>
+      <div class="mt-8 flex flex-wrap justify-center gap-3">
+        <a href="/contact" class="btn btn-primary">Get in touch</a>
+        <a href={`mailto:${site.email}`} class="btn btn-ghost">{site.email}</a>
+      </div>
+    </div>
   </section>
 </Base>

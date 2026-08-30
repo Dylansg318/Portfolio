@@ -35,11 +35,11 @@ const components = { Demo, CodeFile, Video, Figure, Takeaway };
 >
   <article>
     <!-- Hero -->
-    <header class="border-b border-border bg-surface">
+    <header class="ambient border-b border-border">
       <div class="mx-auto max-w-(--container-wide) px-4 py-12 sm:px-6 sm:py-16">
         <a
           href="/projects"
-          class="mb-6 inline-flex items-center gap-1.5 text-sm text-ink-muted transition-colors hover:text-ink"
+          class="mb-8 inline-flex items-center gap-1.5 text-sm text-ink-muted transition-colors hover:text-ink"
         >
           <span aria-hidden="true">←</span> All projects
         </a>
@@ -61,14 +61,14 @@ const components = { Demo, CodeFile, Video, Figure, Takeaway };
           {data.role && <span class="text-ink-faint">· {data.role}</span>}
         </div>
 
-        <h1 class="mt-4 text-4xl font-bold tracking-tight text-ink sm:text-5xl">
+        <h1 class="mt-4 max-w-4xl text-4xl font-extrabold tracking-tight text-ink sm:text-6xl">
           {data.title}
         </h1>
-        <p class="mt-4 max-w-(--container-reading) text-lg text-ink-muted">{data.blurb}</p>
+        <p class="mt-5 max-w-(--container-reading) text-lg leading-relaxed text-ink-muted sm:text-xl">{data.blurb}</p>
 
         <ul class="mt-6 flex flex-wrap gap-2">
           {data.stack.map((tech) => (
-            <li class="rounded-lg bg-surface-raised px-2.5 py-1 text-sm text-ink-muted">
+            <li class="rounded-lg border border-border bg-surface px-2.5 py-1 text-sm text-ink-muted">
               {tech}
             </li>
           ))}
@@ -77,41 +77,23 @@ const components = { Demo, CodeFile, Video, Figure, Takeaway };
         {(data.links.source || data.links.live || data.links.writeup) && (
           <div class="mt-6 flex flex-wrap gap-3">
             {data.links.live && (
-              <a
-                href={data.links.live}
-                rel="noopener"
-                class="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink transition-colors hover:bg-accent-hover"
-              >
-                View live
-              </a>
+              <a href={data.links.live} rel="noopener" class="btn btn-primary text-sm">View live</a>
             )}
             {data.links.source && (
-              <a
-                href={data.links.source}
-                rel="noopener"
-                class="rounded-lg border border-border px-4 py-2 text-sm font-medium text-ink transition-colors hover:border-border-strong"
-              >
-                Source
-              </a>
+              <a href={data.links.source} rel="noopener" class="btn btn-ghost text-sm">Source</a>
             )}
             {data.links.writeup && (
-              <a
-                href={data.links.writeup}
-                rel="noopener"
-                class="rounded-lg border border-border px-4 py-2 text-sm font-medium text-ink transition-colors hover:border-border-strong"
-              >
-                External write-up
-              </a>
+              <a href={data.links.writeup} rel="noopener" class="btn btn-ghost text-sm">External write-up</a>
             )}
           </div>
         )}
 
         {data.metrics.length > 0 && (
-          <dl class="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <dl class="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {data.metrics.map((m) => (
-              <div class="rounded-lg border border-border bg-bg p-3">
-                <dt class="text-xs uppercase tracking-wide text-ink-faint">{m.label}</dt>
-                <dd class="mt-1 text-xl font-semibold text-ink">{m.value}</dd>
+              <div class="tile p-4">
+                <dd class="font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">{m.value}</dd>
+                <dt class="mt-1 text-xs uppercase tracking-wide text-ink-faint">{m.label}</dt>
               </div>
             ))}
           </dl>
@@ -132,7 +114,7 @@ const components = { Demo, CodeFile, Video, Figure, Takeaway };
     ) : (
       <div class="mx-auto max-w-(--container-wide) px-4 sm:px-6">
         <div
-          class="-mt-8 h-40 w-full rounded-xl border border-border shadow-xl sm:h-56"
+          class="-mt-8 h-24 w-full rounded-xl border border-border shadow-xl sm:h-32"
           style={`background: ${coverGradient(project.id)}`}
         />
       </div>
@@ -142,28 +124,34 @@ const components = { Demo, CodeFile, Video, Figure, Takeaway };
          comparing two projects finds the same answers in the same place. -->
     <div class="mx-auto max-w-(--container-reading) px-4 py-12 sm:px-6">
       <section class="grid gap-6 sm:grid-cols-2">
-        <div class="rounded-xl border border-border bg-surface p-5">
-          <h2 class="mb-2 text-xs font-semibold uppercase tracking-wider text-ink-faint">
-            The problem
-          </h2>
+        <div class="tile p-6">
+          <h2 class="eyebrow mb-3 !font-sans text-xs !tracking-[0.12em]">The problem</h2>
           <p class="text-[0.975rem] leading-relaxed text-ink">{data.problem}</p>
         </div>
-        <div class="rounded-xl border border-border bg-surface p-5">
-          <h2 class="mb-2 text-xs font-semibold uppercase tracking-wider text-ink-faint">
-            What was unique
-          </h2>
+        <div class="tile p-6">
+          <h2 class="eyebrow mb-3 !font-sans text-xs !tracking-[0.12em]">What was unique</h2>
           <p class="text-[0.975rem] leading-relaxed text-ink">{data.unique}</p>
         </div>
       </section>
+
+      {data.aiNote && (
+        <aside class="mt-6 flex gap-4 rounded-2xl border border-border bg-surface/60 p-5">
+          <span class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg bg-surface-raised text-sm font-bold text-ink-muted" aria-hidden="true">
+            AI
+          </span>
+          <div>
+            <h2 class="text-xs font-semibold uppercase tracking-[0.12em] text-ink-faint">Where AI fit in</h2>
+            <p class="mt-1.5 text-sm leading-relaxed text-ink-muted">{data.aiNote}</p>
+          </div>
+        </aside>
+      )}
 
       <div class="prose-portfolio mt-12">
         <Content components={components} />
       </div>
 
-      <section class="mt-12 rounded-xl border border-accent/25 bg-accent-wash/30 p-6">
-        <h2 class="mb-4 text-sm font-semibold uppercase tracking-wider text-accent">
-          What I learned
-        </h2>
+      <section class="mt-12 rounded-2xl border border-accent/25 bg-accent-wash/30 p-6 sm:p-8">
+        <h2 class="eyebrow mb-4 !font-sans text-xs !tracking-[0.12em] !text-accent">What I learned</h2>
         <ul class="space-y-3">
           {data.learned.map((lesson) => (
             <li class="flex gap-3 text-[0.975rem] leading-relaxed text-ink">

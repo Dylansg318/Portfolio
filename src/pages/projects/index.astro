@@ -6,16 +6,23 @@ import { getProjects } from '../../lib/content';
 const projects = await getProjects();
 const stacks = [...new Set(projects.flatMap((p) => p.data.stack))].sort();
 ---
-<Base title="Projects" description="Everything I've built and written up.">
-  <div class="mx-auto max-w-(--container-wide) px-4 py-16 sm:px-6">
-    <h1 class="text-4xl font-bold tracking-tight text-ink sm:text-5xl">Projects</h1>
-    <p class="mt-4 max-w-(--container-reading) text-lg text-ink-muted">
-      Each one says what the problem was, what was non-obvious about the approach, and what
-      came out of it.
-    </p>
+<Base title="Work" description="Everything I've built and written up — the problem, what was non-obvious, and what came out of it.">
+  <section class="ambient">
+    <div class="mx-auto max-w-(--container-wide) px-4 pb-10 pt-16 sm:px-6 sm:pt-24">
+      <p class="eyebrow reveal">Work</p>
+      <h1 class="reveal mt-4 text-4xl font-extrabold tracking-tight text-ink sm:text-6xl" style="--reveal-delay: 60ms">
+        Projects, written up{' '}<span class="text-gradient">properly.</span>
+      </h1>
+      <p class="reveal mt-5 max-w-(--container-reading) text-lg text-ink-muted" style="--reveal-delay: 120ms">
+        Each one says what the problem was, what was non-obvious about the approach, and what
+        came out of it — in the same places every time, so you can compare them.
+      </p>
+    </div>
+  </section>
 
+  <div class="mx-auto max-w-(--container-wide) px-4 sm:px-6">
     {stacks.length > 0 && (
-      <div class="mt-8 flex flex-wrap gap-2" role="group" aria-label="Filter by technology">
+      <div class="reveal flex flex-wrap gap-2" role="group" aria-label="Filter by technology">
         <button
           type="button"
           data-filter="all"
@@ -38,9 +45,9 @@ const stacks = [...new Set(projects.flatMap((p) => p.data.stack))].sort();
     )}
 
     <div id="project-grid" class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {projects.map((project) => (
+      {projects.map((project, i) => (
         <div data-stack={project.data.stack.join('|')}>
-          <ProjectCard project={project} />
+          <ProjectCard project={project} delay={(i % 3) * 70} />
         </div>
       ))}
     </div>

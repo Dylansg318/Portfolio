@@ -33,19 +33,42 @@ const canonicalPath = Astro.url.pathname
   .replace(/\.html$/, '');
 const canonical = new URL(canonicalPath || '/', Astro.site);
 const ogUrl = ogImage ? new URL(ogImage, Astro.site) : new URL('/og/default.png', Astro.site);
+
+// Structured data so a recruiter's search — or an AI assistant's — resolves
+// this page to a person with a job title, not an anonymous website.
+const personLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: site.name,
+  jobTitle: 'Software Engineer',
+  email: `mailto:${site.email}`,
+  url: Astro.site?.toString(),
+  address: { '@type': 'PostalAddress', addressLocality: 'Chantilly', addressRegion: 'VA' },
+  worksFor: { '@type': 'Organization', name: 'RMH3 Dental Supply' },
+  alumniOf: [
+    { '@type': 'CollegeOrUniversity', name: 'George Mason University' },
+    { '@type': 'EducationalOrganization', name: 'CYDEO' },
+  ],
+  sameAs: [site.links.github, site.links.linkedin].filter(Boolean),
+};
 ---
 
 <!doctype html>
-<html lang={site.locale} data-theme="light">
+<html lang={site.locale} data-theme="dark">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="canonical" href={canonical} />
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
+    <meta name="author" content={site.name} />
+    <meta name="theme-color" content="#071c27" />
     {noindex && <meta name="robots" content="noindex, nofollow" />}
 
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={site.name} />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
@@ -56,20 +79,23 @@ const ogUrl = ogImage ? new URL(ogImage, Astro.site) : new URL('/og/default.png'
     <link rel="alternate" type="application/rss+xml" title={site.name} href="/rss.xml" />
 
     <Font cssVariable="--font-sans" preload />
+    <Font cssVariable="--font-display" preload />
     <Font cssVariable="--font-mono" />
 
+    <script is:inline type="application/ld+json" set:html={JSON.stringify(personLd)} />
+
     <!-- Set the theme before first paint. Inline and blocking on purpose:
-         deferring this is what causes the white flash on a dark-mode reload. -->
+         deferring this is what causes the white flash on a dark-mode reload.
+         Dark is the default; a visitor's explicit toggle wins over it. -->
     <script is:inline>
       (() => {
+        // `js` gates the scroll-reveal hidden state: no JS, nothing hides.
+        document.documentElement.classList.add('js');
         try {
           const stored = localStorage.getItem('theme');
-          const theme =
-            stored ??
-            (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-          document.documentElement.dataset.theme = theme;
+          document.documentElement.dataset.theme = stored === 'light' ? 'light' : 'dark';
         } catch {
-          /* private mode / blocked storage — the light default already applies */
+          /* private mode / blocked storage — the dark default already applies */
         }
       })();
     </script>
@@ -96,5 +122,27 @@ const ogUrl = ogImage ? new URL(ogImage, Astro.site) : new URL('/og/default.png'
     </main>
 
     {!bare && <Footer />}
+
+    <!-- One observer for every .reveal on the page. Elements above the fold
+         are shown immediately so nothing flashes in on load. -->
+    <script>
+      const els = document.querySelectorAll<HTMLElement>('.reveal');
+      if (els.length > 0 && 'IntersectionObserver' in window) {
+        const io = new IntersectionObserver(
+          (entries) => {
+            for (const e of entries) {
+              if (e.isIntersecting) {
+                e.target.classList.add('is-in');
+                io.unobserve(e.target);
+              }
+            }
+          },
+          { rootMargin: '0px 0px -8% 0px', threshold: 0.05 },
+        );
+        els.forEach((el) => io.observe(el));
+      } else {
+        els.forEach((el) => el.classList.add('is-in'));
+      }
+    </script>
   </body>
 </html>

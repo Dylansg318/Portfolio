@@ -45,13 +45,15 @@ export async function getProjectNeighbours(id: string) {
   };
 }
 
-/** Deterministic cover gradient for projects without cover art. */
+/** Deterministic cover gradient for projects without cover art.
+ *  Hues are clamped into the Meadow palette's range (green → teal → blue,
+ *  ~140-260 in oklch) so a hash can never land on a clashing red. */
 export function coverGradient(id: string): string {
   let h = 0;
   for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) % 360;
-  const a = h;
-  const b = (h + 48) % 360;
-  return `linear-gradient(135deg, oklch(0.62 0.14 ${a}), oklch(0.52 0.16 ${b}))`;
+  const a = 140 + (h % 120);
+  const b = a + 40;
+  return `linear-gradient(135deg, oklch(0.6 0.11 ${a}), oklch(0.48 0.13 ${b}))`;
 }
 
 export const statusLabel: Record<Project['data']['status'], string> = {
