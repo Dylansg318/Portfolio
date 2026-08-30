@@ -1,0 +1,35 @@
+---
+import Base from '../../layouts/Base.astro';
+import Demo from '../../components/mdx/Demo.astro';
+import { getProjects } from '../../lib/content';
+
+// Only projects that actually have a demo get a /play route.
+export async function getStaticPaths() {
+  const projects = await getProjects();
+  return projects
+    .filter((p) => p.data.demo.kind !== 'none')
+    .map((project) => ({ params: { slug: project.id }, props: { project } }));
+}
+
+const { project } = Astro.props;
+const { data } = project;
+---
+<Base title={`Play — ${data.title}`} description={data.blurb} bare noindex>
+  <div class="flex min-h-dvh flex-col bg-bg">
+    <div class="flex items-center gap-4 border-b border-border px-4 py-3">
+      <a
+        href={`/projects/${project.id}`}
+        class="inline-flex items-center gap-1.5 text-sm text-ink-muted transition-colors hover:text-ink"
+      >
+        <span aria-hidden="true">←</span> Back to write-up
+      </a>
+      <span class="ml-auto text-sm font-medium text-ink">{data.title}</span>
+    </div>
+
+    <div class="flex flex-1 items-center justify-center p-4">
+      <div class="w-full max-w-5xl">
+        <Demo demo={{ ...data.demo, fullscreen: false }} title={data.title} />
+      </div>
+    </div>
+  </div>
+</Base>

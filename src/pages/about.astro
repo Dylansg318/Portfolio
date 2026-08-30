@@ -1,0 +1,39 @@
+---
+import Base from '../layouts/Base.astro';
+import { site } from '../lib/site';
+---
+<Base title="About" description={`About ${site.name}`}>
+  <div class="mx-auto max-w-(--container-reading) px-4 py-16 sm:px-6">
+    <h1 class="text-4xl font-bold tracking-tight text-ink sm:text-5xl">About</h1>
+
+    <!-- Plain prose, deliberately. Recruiters and their screening tools both
+         need to parse this; keep it honest and specific. -->
+    <div class="prose-portfolio mt-8">
+      <p>
+        TODO — replace this. A short paragraph on what you build, what you're good at, and
+        what you're looking for. Specific beats impressive: "I run the systems that move
+        ~1,200 orders a day across five sales channels" lands harder than "passionate
+        full-stack developer".
+      </p>
+      <p>
+        Keep it to three short paragraphs: what you do now, what you've built that you're
+        proud of, and how to reach you.
+      </p>
+    </div>
+
+    <div class="mt-10 flex flex-wrap gap-3">
+      <a
+        href="/resume.pdf"
+        class="rounded-lg border border-border px-4 py-2 text-sm font-medium text-ink transition-colors hover:border-border-strong"
+      >
+        Résumé (PDF)
+      </a>
+      <a
+        href="/contact"
+        class="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink transition-colors hover:bg-accent-hover"
+      >
+        Get in touch
+      </a>
+    </div>
+  </div>
+</Base>

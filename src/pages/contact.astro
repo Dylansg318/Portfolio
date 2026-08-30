@@ -1,0 +1,137 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Contact" description="Get in touch.">
+  <div class="mx-auto max-w-(--container-reading) px-4 py-16 sm:px-6">
+    <h1 class="text-4xl font-bold tracking-tight text-ink sm:text-5xl">Contact</h1>
+    <p class="mt-4 text-lg text-ink-muted">
+      Questions, work, or just to say hello — this reaches me directly.
+    </p>
+
+    <form id="contact-form" class="mt-10 space-y-5" novalidate>
+      <!-- Honeypot. Hidden from people, irresistible to bots. -->
+      <div class="absolute left-[-9999px]" aria-hidden="true">
+        <label>
+          Company
+          <input type="text" name="company" tabindex="-1" autocomplete="off" />
+        </label>
+      </div>
+
+      <div>
+        <label for="name" class="mb-1.5 block text-sm font-medium text-ink">Name</label>
+        <input
+          id="name"
+          name="name"
+          type="text"
+          required
+          autocomplete="name"
+          class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-ink outline-none transition-colors focus:border-accent"
+        />
+        <p data-error="name" class="mt-1 hidden text-sm text-danger"></p>
+      </div>
+
+      <div>
+        <label for="email" class="mb-1.5 block text-sm font-medium text-ink">Email</label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          required
+          autocomplete="email"
+          class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-ink outline-none transition-colors focus:border-accent"
+        />
+        <p data-error="email" class="mt-1 hidden text-sm text-danger"></p>
+      </div>
+
+      <div>
+        <label for="message" class="mb-1.5 block text-sm font-medium text-ink">Message</label>
+        <textarea
+          id="message"
+          name="message"
+          rows="6"
+          required
+          class="w-full resize-y rounded-lg border border-border bg-surface px-3 py-2 text-ink outline-none transition-colors focus:border-accent"
+        ></textarea>
+        <p data-error="message" class="mt-1 hidden text-sm text-danger"></p>
+      </div>
+
+      <!-- Turnstile mounts here once a site key is configured:
+           <div class="cf-turnstile" data-sitekey="YOUR_SITE_KEY"></div>
+           <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+      -->
+
+      <button
+        type="submit"
+        class="rounded-lg bg-accent px-5 py-2.5 font-medium text-accent-ink transition-colors hover:bg-accent-hover disabled:opacity-60"
+      >
+        Send message
+      </button>
+
+      <p id="form-status" role="status" aria-live="polite" class="text-sm"></p>
+    </form>
+  </div>
+</Base>
+
+<script>
+  const form = document.getElementById('contact-form') as HTMLFormElement | null;
+  const status = document.getElementById('form-status');
+
+  const clearErrors = () =>
+    form?.querySelectorAll<HTMLElement>('[data-error]').forEach((el) => {
+      el.textContent = '';
+      el.classList.add('hidden');
+    });
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearErrors();
+
+    const btn = form.querySelector<HTMLButtonElement>('button[type=submit]')!;
+    const data = Object.fromEntries(new FormData(form).entries());
+
+    btn.disabled = true;
+    if (status) {
+      status.textContent = 'Sending…';
+      status.className = 'text-sm text-ink-muted';
+    }
+
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const body = await res.json();
+
+      if (res.ok) {
+        form.reset();
+        if (status) {
+          status.textContent = "Sent — thanks. I'll get back to you.";
+          status.className = 'text-sm text-ok';
+        }
+        return;
+      }
+
+      if (body.fields) {
+        for (const [field, msg] of Object.entries(body.fields as Record<string, string>)) {
+          const el = form.querySelector<HTMLElement>(`[data-error="${field}"]`);
+          if (el) {
+            el.textContent = msg;
+            el.classList.remove('hidden');
+          }
+        }
+      }
+      if (status) {
+        status.textContent = body.error ?? 'Something went wrong.';
+        status.className = 'text-sm text-danger';
+      }
+    } catch {
+      if (status) {
+        status.textContent = 'Network error — please try again.';
+        status.className = 'text-sm text-danger';
+      }
+    } finally {
+      btn.disabled = false;
+    }
+  });
+</script>

@@ -1,0 +1,33 @@
+# build output
+dist/
+.astro/
+
+# deps
+node_modules/
+
+# env & secrets
+.env
+.env.production
+.dev.vars
+.wrangler/
+
+# scratch
+public/_*.html
+
+# os / editor
+.DS_Store
+*.log
+.idea/
+.vscode/
+
+# Large prebuilt game/demo bundles are NOT committed by default.
+# See README — engine exports are uploaded at deploy time or hosted externally.
+# Remove this block if a demo is small enough to version.
+public/demos/**/*.wasm
+public/demos/**/*.pck
+public/demos/**/*.data
+
+# never commit video
+*.mp4
+*.mov
+*.webm

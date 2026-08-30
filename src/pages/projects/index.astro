@@ -1,0 +1,83 @@
+---
+import Base from '../../layouts/Base.astro';
+import ProjectCard from '../../components/ui/ProjectCard.astro';
+import { getProjects } from '../../lib/content';
+
+const projects = await getProjects();
+const stacks = [...new Set(projects.flatMap((p) => p.data.stack))].sort();
+---
+<Base title="Projects" description="Everything I've built and written up.">
+  <div class="mx-auto max-w-(--container-wide) px-4 py-16 sm:px-6">
+    <h1 class="text-4xl font-bold tracking-tight text-ink sm:text-5xl">Projects</h1>
+    <p class="mt-4 max-w-(--container-reading) text-lg text-ink-muted">
+      Each one says what the problem was, what was non-obvious about the approach, and what
+      came out of it.
+    </p>
+
+    {stacks.length > 0 && (
+      <div class="mt-8 flex flex-wrap gap-2" role="group" aria-label="Filter by technology">
+        <button
+          type="button"
+          data-filter="all"
+          aria-pressed="true"
+          class="rounded-lg border border-accent bg-accent px-3 py-1.5 text-sm font-medium text-accent-ink"
+        >
+          All
+        </button>
+        {stacks.map((tech) => (
+          <button
+            type="button"
+            data-filter={tech}
+            aria-pressed="false"
+            class="rounded-lg border border-border px-3 py-1.5 text-sm text-ink-muted transition-colors hover:border-border-strong hover:text-ink"
+          >
+            {tech}
+          </button>
+        ))}
+      </div>
+    )}
+
+    <div id="project-grid" class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {projects.map((project) => (
+        <div data-stack={project.data.stack.join('|')}>
+          <ProjectCard project={project} />
+        </div>
+      ))}
+    </div>
+
+    <p id="empty-state" class="hidden py-16 text-center text-ink-muted">
+      Nothing matches that filter.
+    </p>
+  </div>
+</Base>
+
+<script>
+  // Vanilla filtering — no framework runtime on the index page.
+  const buttons = document.querySelectorAll<HTMLButtonElement>('[data-filter]');
+  const cards = document.querySelectorAll<HTMLElement>('#project-grid > [data-stack]');
+  const empty = document.getElementById('empty-state');
+
+  const ACTIVE = ['border-accent', 'bg-accent', 'text-accent-ink', 'font-medium'];
+  const IDLE = ['border-border', 'text-ink-muted'];
+
+  buttons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const filter = btn.dataset.filter!;
+
+      buttons.forEach((b) => {
+        const on = b === btn;
+        b.setAttribute('aria-pressed', String(on));
+        b.classList.remove(...(on ? IDLE : ACTIVE));
+        b.classList.add(...(on ? ACTIVE : IDLE));
+      });
+
+      let shown = 0;
+      cards.forEach((card) => {
+        const match = filter === 'all' || (card.dataset.stack ?? '').split('|').includes(filter);
+        card.hidden = !match;
+        if (match) shown++;
+      });
+      empty?.classList.toggle('hidden', shown > 0);
+    });
+  });
+</script>

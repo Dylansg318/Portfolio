@@ -1,0 +1,93 @@
+---
+import { Font } from 'astro:assets';
+import { site } from '../lib/site';
+import Header from '../components/ui/Header.astro';
+import Footer from '../components/ui/Footer.astro';
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  /** Absolute or root-relative OG image URL. Falls back to the generated one. */
+  ogImage?: string;
+  /** Hide site chrome — used by the fullscreen /play routes. */
+  bare?: boolean;
+  noindex?: boolean;
+}
+
+const {
+  title,
+  description = site.description,
+  ogImage,
+  bare = false,
+  noindex = false,
+} = Astro.props;
+
+const pageTitle = title ? `${title} — ${site.name}` : site.title;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const ogUrl = ogImage ? new URL(ogImage, Astro.site) : new URL('/og/default.png', Astro.site);
+---
+
+<!doctype html>
+<html lang={site.locale} data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="canonical" href={canonical} />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogUrl} />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <link rel="alternate" type="application/rss+xml" title={site.name} href="/rss.xml" />
+
+    <Font cssVariable="--font-sans" preload />
+    <Font cssVariable="--font-mono" />
+
+    <!-- Set the theme before first paint. Inline and blocking on purpose:
+         deferring this is what causes the white flash on a dark-mode reload. -->
+    <script is:inline>
+      (() => {
+        try {
+          const stored = localStorage.getItem('theme');
+          const theme =
+            stored ??
+            (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+          document.documentElement.dataset.theme = theme;
+        } catch {
+          /* private mode / blocked storage — the light default already applies */
+        }
+      })();
+    </script>
+
+    <!-- Cloudflare Web Analytics: free, cookie-less, no consent banner needed.
+         Paste the token from the Cloudflare dashboard to switch it on.
+    <script defer src='https://static.cloudflareinsights.com/beacon.min.js'
+            data-cf-beacon='{"token": "YOUR_TOKEN"}'></script>
+    -->
+  </head>
+
+  <body class="min-h-dvh flex flex-col bg-bg text-ink antialiased">
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-accent focus:px-4 focus:py-2 focus:text-accent-ink"
+    >
+      Skip to content
+    </a>
+
+    {!bare && <Header />}
+
+    <main id="main" class="flex-1">
+      <slot />
+    </main>
+
+    {!bare && <Footer />}
+  </body>
+</html>

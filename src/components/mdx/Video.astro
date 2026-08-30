@@ -1,0 +1,99 @@
+---
+/**
+ * Video is NEVER committed to this repo. GitHub rejects files over 100MB and
+ * Cloudflare caps a static asset at 25MiB — a three-minute screen capture
+ * breaks both. So video is always externally hosted, behind this component.
+ *
+ * Facade loading: renders a poster image and only injects the real player on
+ * click. Three videos on a page therefore cost nothing until one is watched.
+ *
+ * Swapping providers later is a prop change here, not a migration.
+ */
+interface Props {
+  provider?: 'youtube' | 'vimeo' | 'bunny' | 'file';
+  /** YouTube/Vimeo id, Bunny embed path, or a direct file URL. */
+  id: string;
+  title: string;
+  poster?: string;
+  aspect?: string;
+}
+
+const { provider = 'youtube', id, title, poster, aspect = '16 / 9' } = Astro.props;
+
+const embedSrc = {
+  youtube: `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`,
+  vimeo: `https://player.vimeo.com/video/${id}?autoplay=1`,
+  bunny: `https://iframe.mediadelivery.net/embed/${id}?autoplay=true`,
+  file: id,
+}[provider];
+
+// youtube-nocookie still serves a thumbnail from the standard image host.
+const fallbackPoster =
+  provider === 'youtube' ? `https://i.ytimg.com/vi/${id}/maxresdefault.jpg` : undefined;
+const posterSrc = poster ?? fallbackPoster;
+---
+
+<figure class="not-prose my-8">
+  <div
+    class="group relative overflow-hidden rounded-xl border border-border bg-surface-raised"
+    style={`aspect-ratio: ${aspect};`}
+    data-video
+    data-src={embedSrc}
+    data-provider={provider}
+  >
+    {posterSrc && (
+      <img
+        src={posterSrc}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        class="absolute inset-0 size-full object-cover"
+      />
+    )}
+    <button
+      type="button"
+      data-video-play
+      class="absolute inset-0 grid place-items-center bg-black/25 transition-colors hover:bg-black/40"
+      aria-label={`Play video: ${title}`}
+    >
+      <span
+        class="grid size-16 place-items-center rounded-full bg-white/95 text-black shadow-lg transition-transform group-hover:scale-105"
+      >
+        <svg viewBox="0 0 24 24" class="size-7" fill="currentColor" aria-hidden="true">
+          <path d="M8 5v14l11-7z" />
+        </svg>
+      </span>
+    </button>
+  </div>
+  <figcaption class="mt-2 text-sm text-ink-muted">{title}</figcaption>
+</figure>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-video]').forEach((wrap) => {
+    const btn = wrap.querySelector<HTMLButtonElement>('[data-video-play]');
+    btn?.addEventListener(
+      'click',
+      () => {
+        const src = wrap.dataset.src;
+        if (!src) return;
+        const el =
+          wrap.dataset.provider === 'file'
+            ? Object.assign(document.createElement('video'), {
+                src,
+                controls: true,
+                autoplay: true,
+                className: 'absolute inset-0 size-full',
+              })
+            : Object.assign(document.createElement('iframe'), {
+                src,
+                className: 'absolute inset-0 size-full border-0',
+                allow:
+                  'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen',
+              });
+        wrap.innerHTML = '';
+        wrap.appendChild(el);
+      },
+      { once: true },
+    );
+  });
+</script>

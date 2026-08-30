@@ -1,0 +1,16 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Not found" noindex>
+  <div class="mx-auto flex max-w-(--container-reading) flex-col items-center px-4 py-32 text-center">
+    <p class="text-6xl font-bold text-accent">404</p>
+    <h1 class="mt-4 text-2xl font-semibold text-ink">That page doesn't exist</h1>
+    <p class="mt-2 text-ink-muted">It may have been renamed, or never existed at all.</p>
+    <a
+      href="/"
+      class="mt-8 rounded-lg bg-accent px-5 py-2.5 font-medium text-accent-ink transition-colors hover:bg-accent-hover"
+    >
+      Back home
+    </a>
+  </div>
+</Base>

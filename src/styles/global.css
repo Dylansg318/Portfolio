@@ -1,0 +1,192 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/typography';
+
+/* Dark mode is driven by an explicit data-theme attribute so the toggle can
+   override the OS preference in BOTH directions. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/* ---------------------------------------------------------------------------
+   DESIGN TOKENS — this block is the entire design system.
+   The look of the site is decided here and nowhere else. Components reference
+   semantic names (surface, ink, accent), never raw colour values, so a redesign
+   is editing this file rather than auditing every component.
+   Deliberately restrained for now: real design pass comes after content exists.
+--------------------------------------------------------------------------- */
+:root {
+  color-scheme: light;
+
+  /* surfaces, back to front */
+  --bg: oklch(0.985 0.002 250);
+  --surface: oklch(1 0 0);
+  --surface-raised: oklch(0.975 0.003 250);
+  --border: oklch(0.9 0.005 250);
+  --border-strong: oklch(0.82 0.008 250);
+
+  /* text */
+  --ink: oklch(0.22 0.01 250);
+  --ink-muted: oklch(0.52 0.012 250);
+  --ink-faint: oklch(0.66 0.01 250);
+
+  /* accent — the one colour with a job */
+  --accent: oklch(0.55 0.17 255);
+  --accent-hover: oklch(0.48 0.18 255);
+  --accent-ink: oklch(0.99 0 0);
+  --accent-wash: oklch(0.95 0.03 255);
+
+  /* status */
+  --ok: oklch(0.6 0.14 155);
+  --warn: oklch(0.72 0.15 75);
+  --danger: oklch(0.58 0.19 25);
+
+  /* motion — every duration in one place so reduced-motion can zero them */
+  --dur-fast: 120ms;
+  --dur: 200ms;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: oklch(0.17 0.008 260);
+  --surface: oklch(0.21 0.01 260);
+  --surface-raised: oklch(0.25 0.012 260);
+  --border: oklch(0.3 0.012 260);
+  --border-strong: oklch(0.4 0.015 260);
+
+  --ink: oklch(0.95 0.004 260);
+  --ink-muted: oklch(0.72 0.012 260);
+  --ink-faint: oklch(0.56 0.012 260);
+
+  --accent: oklch(0.72 0.15 255);
+  --accent-hover: oklch(0.79 0.14 255);
+  --accent-ink: oklch(0.17 0.01 260);
+  --accent-wash: oklch(0.28 0.05 255);
+
+  --ok: oklch(0.72 0.15 155);
+  --warn: oklch(0.8 0.15 75);
+  --danger: oklch(0.7 0.18 25);
+}
+
+/* `inline` makes the utilities resolve to var(--x) at runtime rather than
+   baking the value at build time — which is what lets the theme toggle work. */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-wash: var(--accent-wash);
+
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  /* one content measure, used by every page shell */
+  --container-reading: 46rem;
+  --container-wide: 72rem;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Visible, consistent focus. Never remove this without a replacement —
+     it is the whole keyboard-navigation story. */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  ::selection {
+    background: var(--accent-wash);
+    color: var(--ink);
+  }
+
+  /* Respect the OS setting. Matters most for the demos/games, which are the
+     likeliest thing on this site to cause motion discomfort. */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* Long-form MDX styling. Without this, project write-ups render as an
+     undifferentiated wall of text: Tailwind's preflight strips heading and list
+     styling, and MDX-generated HTML has no classes to hook. */
+  .prose-portfolio {
+    @apply prose prose-lg max-w-none;
+    --tw-prose-body: var(--ink);
+    --tw-prose-headings: var(--ink);
+    --tw-prose-lead: var(--ink-muted);
+    --tw-prose-links: var(--accent);
+    --tw-prose-bold: var(--ink);
+    --tw-prose-counters: var(--ink-faint);
+    --tw-prose-bullets: var(--border-strong);
+    --tw-prose-hr: var(--border);
+    --tw-prose-quotes: var(--ink-muted);
+    --tw-prose-quote-borders: var(--accent);
+    --tw-prose-captions: var(--ink-faint);
+    --tw-prose-code: var(--ink);
+    --tw-prose-th-borders: var(--border-strong);
+    --tw-prose-td-borders: var(--border);
+  }
+
+  /* Expressive Code ships its own complete code-block styling. Hand it back
+     control so the two don't fight over <pre>.
+     (`not-prose` is a selector the prose rules exclude, not an applyable
+     utility — so this neutralises typography's code styling explicitly.) */
+  .prose-portfolio {
+    --tw-prose-pre-bg: transparent;
+    --tw-prose-pre-code: inherit;
+  }
+
+  .prose-portfolio :where(.expressive-code) {
+    margin-block: 1.5rem;
+  }
+
+  .prose-portfolio :where(.expressive-code pre) {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    font-size: inherit;
+    line-height: inherit;
+  }
+
+  /* Typography adds decorative backticks around inline <code>; Expressive Code
+     already renders its own delimiters. */
+  .prose-portfolio :where(code)::before,
+  .prose-portfolio :where(code)::after {
+    content: '';
+  }
+
+  .prose-portfolio :where(a):hover {
+    color: var(--accent-hover);
+  }
+}
