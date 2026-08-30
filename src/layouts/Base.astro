@@ -100,12 +100,11 @@ const personLd = {
           const stored = localStorage.getItem('theme');
           root.dataset.theme = stored === 'light' ? 'light' : 'dark';
 
-          const skinParam = params.get('skin');
-          if (skinParam === 'slip' || skinParam === 'meadow') {
-            localStorage.setItem('skin', skinParam);
-          }
-          if ((localStorage.getItem('skin') ?? 'meadow') === 'slip') {
-            root.dataset.skin = 'slip';
+          // The old "packing slip" skin grew up into Help Desk mode at /desk.
+          // Shared ?skin=slip A/B links keep working by redirecting there.
+          if (params.get('skin') === 'slip' && location.pathname !== '/desk') {
+            localStorage.removeItem('skin');
+            location.replace('/desk');
           }
 
           const modeParam = params.get('mode');
