@@ -114,9 +114,65 @@ never a literal colour — so a redesign is one file, and dark mode already work
 
 ## Deploying
 
-Push to `main` → GitHub Actions typechecks, builds, and deploys via Wrangler.
+**Pushing does not deploy.** The site ships when you run:
 
-Repository secrets required:
+```bash
+./scripts/deploy-from-mac.sh
+```
+
+It resolves `origin/main`, asks for confirmation, builds that commit in a clean
+worktree inside a `linux/amd64` container, deploys with Wrangler, and checks the
+live URL answers 200. Useful flags: `--build-only` (gates only, never touches the
+live site), `--amd64` (exact CI parity, ~2.3x slower), `--yes`, `--ref <ref>`.
+
+Timed four ways, which is why the default is arm64 rather than the exact-parity
+amd64 that was planned:
+
+| | time | |
+|---|---|---|
+| macOS native, no container | 19s | wrong OS, case-insensitive |
+| **linux/arm64 container** | **81s** | default |
+| linux/amd64 via Rosetta | 189s | exact CI parity |
+| GitHub-hosted ubuntu x64 | 84s | what this replaces |
+
+arm64 matches GitHub's own wall-clock for free. Every arch-specific package here
+is a build-time tool — what ships to Cloudflare is JS and WASM — so amd64 buys
+parity in a dimension the artifact doesn't have.
+
+Two things it does deliberately, both easy to "fix" and break:
+
+- **It never sets `SITE_URL`.** `astro.config.mjs` falls back to the workers.dev
+  host when that variable is empty, and the repo variable is unset — so that
+  fallback is what every shipped build has used. Setting it would silently change
+  every canonical URL and the sitemap.
+- **It builds in Linux, not on macOS.** This Mac's filesystem is case-insensitive
+  and Cloudflare's is not, so a miscased import or asset path builds fine here and
+  404s in production. The container is what still catches that.
+
+Credentials come from the login keychain at run time — never from a file. The
+Passwords app can't be read by the `security` CLI (it lives in the iCloud
+keychain), so these are separate items:
+
+```bash
+security add-generic-password -U -s portfolio-cf-token   -a CF_Token   -w
+security add-generic-password -U -s portfolio-cf-account -a CF_Account -w
+```
+
+The first read pops a macOS dialog — choose "Always Allow".
+
+### Why not GitHub Actions
+
+It was ~480 Actions minutes a month against a 2,000 allowance, because billing
+rounds **up to a whole minute per job** and a 50-second build costs a full one.
+The workflow keeps `pull_request` (a free Linux-x64 net that rarely fires, since
+work lands straight on `main`) and `workflow_dispatch` — the fallback when this
+Mac is unavailable. Run it from the Actions tab; it deploys the same way.
+
+The Linux VM is its own colima profile, `portfolio`. MHLHUB's break-glass script
+reuses whatever VM is already running, so sharing `default` would let one project
+silently resize the other's.
+
+Repository secrets (for the `workflow_dispatch` fallback only):
 
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
