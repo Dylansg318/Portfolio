@@ -15,7 +15,7 @@
  */
 import Base from '../layouts/Base.astro';
 import { site } from '../lib/site';
-import { tickets, intakeCategories, cannedReplies } from '../lib/desk';
+import { tickets, cannedReplies } from '../lib/desk';
 
 const description =
   'The help desk. Every project started as a request like these — describe the problem, it leaves as software. Raise a ticket.';
@@ -39,6 +39,15 @@ const resPoints = (points: readonly string[]): ResPoint[] =>
     const m = p.match(/^DSG-(\d{3}) — (.*)$/);
     return m ? { key: m[1], rest: m[2] } : { text: p };
   });
+
+/** The queue leads with one hero ticket; the orientation ticket becomes a link
+ *  rather than a card, so the grid stays six even cards. */
+const hero = tickets.find((t) => t.num === '001');
+const orientation = tickets.find((t) => t.num === '008');
+const gridTickets = tickets.filter((t) => t !== hero && t !== orientation);
+/** Avatar hue follows the ticket's position in the queue, not its position in
+ *  whichever list is being rendered — so a requester keeps one colour. */
+const hueOf = (t: (typeof tickets)[number]) => hue(tickets.indexOf(t));
 
 const prioGlyph: Record<string, { g: string; cls: string }> = {
   Highest: { g: '⇈', cls: 'p-highest' },
@@ -103,17 +112,85 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
           <nav class="crumbs" aria-label="Breadcrumb">
             <a href="/">Portfolio</a> / <span>Help Desk</span> / <span>All tickets</span>
           </nav>
-          <div class="page-head">
-            <h1>All tickets</h1>
-            <span class="head-tools" aria-hidden="true">☆ ⋯</span>
+
+          <div class="masthead">
+            <div class="masthead-copy">
+              <h1>Every project here started as somebody&rsquo;s problem.</h1>
+              <p>
+                {tickets.length} tickets. Open one to see the complaint, the conversation it
+                started, and what actually shipped.
+              </p>
+            </div>
+            <div class="cta-row">
+              <a class="cta cta-hot" href="#DSG-001" data-nav="DSG-001">Start with DSG-001 →</a>
+              <a class="cta" href="/resume">Résumé</a>
+            </div>
           </div>
 
-          <p class="queue-note">
-            First visit? <a href="#DSG-008" data-nav="DSG-008">DSG-008</a> is a 60-second
-            orientation — or go straight to the <a href="/resume">résumé</a>.
+          {hero && (
+            <a class="hero-card" href={`#DSG-${hero.num}`} data-nav={`DSG-${hero.num}`}>
+              <span class="hero-l">
+                <span class="card-meta">
+                  <span class="card-key">DSG-{hero.num}</span>
+                  <span class={`loz loz-${hero.status.tone}`}>{hero.status.label}</span>
+                </span>
+                <span class="quote">“{hero.subject}”</span>
+                <span class="byline">
+                  <span class={`avatar ${hueOf(hero)}`} aria-hidden="true">{initials(hero.requester)}</span>
+                  {hero.requester} · {hero.via.toLowerCase()} · {hero.opened}
+                </span>
+              </span>
+              <span class="hero-r">
+                <span class="hero-figures">
+                  <span class="figure">{hero.card.figure}</span>
+                  <span class="figure-l">{hero.card.note}</span>
+                  {hero.heroNote && <span class="figure-sub">{hero.heroNote}</span>}
+                </span>
+                <span class="openlink">Open ticket →</span>
+              </span>
+            </a>
+          )}
+
+          <div class="cards" id="queue-cards">
+            {gridTickets.map((t) => (
+              <a
+                class={`qcard ${t.status.tone === 'warn' ? 'qcard-arch' : ''}`}
+                href={`#DSG-${t.num}`}
+                data-nav={`DSG-${t.num}`}
+                data-card={`DSG-${t.num}`}
+              >
+                <span class="card-meta">
+                  <span class="card-key">DSG-{t.num}</span>
+                  <span class={`loz loz-${t.status.tone}`}>{t.status.label}</span>
+                </span>
+                <span class="card-q">“{t.subject}”</span>
+                <span class="card-metric">
+                  {t.card.figure}
+                  <small>{t.card.note}</small>
+                </span>
+                <span class="card-foot">
+                  <span>{t.requester}</span>
+                  <b>Open →</b>
+                </span>
+              </a>
+            ))}
+          </div>
+
+          <p class="cards-empty" id="cards-empty" hidden>
+            No tickets match your search. <button type="button" class="linkish" id="clear-search">Clear search</button>
           </p>
 
-          <div class="tablewrap">
+          {orientation && (
+            <p class="queue-note">
+              New here? <a href={`#DSG-${orientation.num}`} data-nav={`DSG-${orientation.num}`}>DSG-{orientation.num}</a>
+              {' '}is a 60-second orientation.
+              <button type="button" class="linkish table-toggle" id="table-toggle" aria-expanded="false" aria-controls="queue-table">
+                Switch to table view
+              </button>
+            </p>
+          )}
+
+          <div class="tablewrap" id="queue-table" hidden>
             <table class="queue">
               <thead>
                 <tr>
@@ -139,7 +216,7 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
                     <td class="c-status"><span class={`loz loz-${t.status.tone}`}>{t.status.label}</span></td>
                     <td class="c-created">{t.opened}</td>
                     <td class="c-sla">
-                      <span class={`sla ${t.timeToRes.breached ? 'sla-bad' : 'sla-ok'}`} data-sla-live={t.timeToRes.breached ? '' : undefined}>
+                      <span class={`sla ${t.timeToRes.breached ? 'sla-bad' : 'sla-ok'}`}>
                         {t.timeToRes.value} <i aria-hidden="true">◷</i>
                       </span>
                     </td>
@@ -147,18 +224,18 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
                   </tr>
                 ))}
                 <tr class="qrow-empty" id="queue-empty" hidden>
-                  <td colspan="9">No tickets match your search. <button type="button" class="linkish" id="clear-search">Clear search</button></td>
+                  <td colspan="9">No tickets match your search.</td>
                 </tr>
               </tbody>
             </table>
+            <p class="table-fine">
+              {tickets.length} tickets · <kbd>j</kbd>/<kbd>k</kbd> to move, <kbd>↵</kbd> to open
+            </p>
           </div>
-          <p class="table-fine">
-            {tickets.length} tickets · <kbd>j</kbd>/<kbd>k</kbd> to move, <kbd>↵</kbd> to open
-          </p>
         </section>
 
         <!-- ============================ ISSUE VIEWS ============================ -->
-        {tickets.map((t, i) => (
+        {tickets.map((t) => (
           <section class="panel panel-issue" id={`panel-DSG-${t.num}`} data-panel={`DSG-${t.num}`} hidden>
             <nav class="crumbs" aria-label="Breadcrumb">
               <a href="/">Portfolio</a> / <a href="#queue" data-nav="queue">Help Desk</a> /
@@ -167,32 +244,40 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
 
             <div class="issue">
               <div class="issue-main">
-                <h1 class="issue-title">{t.subject}</h1>
+                <p class="issue-eyebrow">
+                  <span class="card-key">DSG-{t.num}</span>
+                  <span class={`loz loz-${t.status.tone}`}>{t.status.label}</span>
+                </p>
+                <h1 class="issue-title">“{t.subject}”</h1>
+                <p class="issue-figure">
+                  <b>{t.card.figure}</b>
+                  <span>{t.card.note}</span>
+                </p>
                 <div class="issue-actions">
                   {t.resolution.slug && (
-                    <a class="chip" href={`/projects/${t.resolution.slug}`}>Open the full write-up ↗</a>
+                    <a class="cta cta-hot" href={`/projects/${t.resolution.slug}`}>Read the full write-up →</a>
                   )}
-                  <button type="button" class="chip" data-nav="queue">Back to queue</button>
+                  <button type="button" class="cta" data-nav="queue">← All tickets</button>
                 </div>
 
-                <h2 class="issue-h">Description</h2>
+                <h2 class="issue-h">The request</h2>
                 <div class="comment">
-                  <span class={`avatar ${hue(i)}`} aria-hidden="true">{initials(t.requester)}</span>
+                  <span class={`avatar ${hueOf(t)}`} aria-hidden="true">{initials(t.requester)}</span>
                   <div class="comment-body">
                     <p class="comment-meta"><strong>{t.requester}</strong> <span>via {t.via.toLowerCase()} · {t.opened}</span></p>
                     <p class="comment-text">{t.thread[0].text}</p>
                   </div>
                 </div>
 
-                <h2 class="issue-h">Activity</h2>
+                <h2 class="issue-h">The conversation</h2>
                 <div class="thread">
                   {t.thread.slice(1).map((m, mi) => (
                     <div class={`comment ${m.from === 'agent' ? 'comment-agent' : ''}`} style={`--d:${mi}`}>
-                      <span class={`avatar ${m.from === 'agent' ? 'av-self' : hue(i)}`} aria-hidden="true">
+                      <span class={`avatar ${m.from === 'agent' ? 'av-self' : hueOf(t)}`} aria-hidden="true">
                         {m.from === 'agent' ? 'DS' : initials(t.requester)}
                       </span>
                       <div class="comment-body">
-                        <p class="comment-meta"><strong>{m.name}</strong>{m.from === 'agent' && <span class="agent-tag">AGENT</span>}</p>
+                        <p class="comment-meta"><strong>{m.name.replace(/\s*\(agent\)/i, '')}</strong>{m.from === 'agent' && <span class="agent-tag">AGENT</span>}</p>
                         <p class="comment-text">{m.text}</p>
                       </div>
                     </div>
@@ -200,8 +285,8 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
                 </div>
 
                 <div class="resolution">
-                  <p class="res-stamp" aria-hidden="true">{t.status.label}</p>
-                  <h2>Resolution</h2>
+                  <p class="res-stamp">{t.status.label}</p>
+                  <h2>What shipped</h2>
                   <p class="res-head">{t.resolution.headline}</p>
                   <ul>
                     {resPoints(t.resolution.points).map((p) =>
@@ -229,7 +314,7 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
                     <dt>Assignee</dt>
                     <dd><span class="avatar av-self" aria-hidden="true">DS</span> Dylan San Gabriel</dd>
                     <dt>Reporter</dt>
-                    <dd><span class={`avatar ${hue(i)}`} aria-hidden="true">{initials(t.requester)}</span> {t.requester}</dd>
+                    <dd><span class={`avatar ${hueOf(t)}`} aria-hidden="true">{initials(t.requester)}</span> {t.requester}</dd>
                     <dt>Request type</dt>
                     <dd>{t.type.icon} {t.type.label}</dd>
                     <dt>Channel</dt>
@@ -259,35 +344,19 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
           </nav>
           <div class="page-head"><h1>What do you need built?</h1></div>
           <p class="lede">
-            Every project in this queue began as a request described in plain words. Pick the
-            closest category — a short note is enough to start.
+            Every project in this queue began as a request described in plain words. A short
+            note is enough to start.
           </p>
 
           <div class="intake">
-            <div class="intake-cats" role="group" aria-label="Request type">
-              {intakeCategories.map((c, ci) => (
-                <button type="button" class="cat" data-cat={c.id} data-subject={c.subject} data-reply={c.autoReply} aria-pressed={ci === 0 ? 'true' : 'false'}>
-                  {c.label}
-                </button>
-              ))}
-            </div>
-
-            <div class="intake-reply" id="intake-reply" hidden>
-              <span class="avatar av-bot" aria-hidden="true">A</span>
-              <div class="comment-body">
-                <p class="comment-meta"><strong>AUTO-RESPONSE</strong> <span>just now</span></p>
-                <p class="comment-text" id="intake-reply-text"></p>
-              </div>
-            </div>
-
             <form class="intake-form" id="intake-form" data-email={site.email}>
               <label>
                 Summary
-                <input type="text" id="intake-subject" name="subject" value={intakeCategories[0].subject} />
+                <input type="text" id="intake-subject" name="subject" value="Request: project inquiry" />
               </label>
               <label>
                 Describe the problem
-                <textarea id="intake-body" name="body" rows="5" placeholder="We have this process, and every morning someone…"></textarea>
+                <textarea id="intake-body" name="body" rows="6" placeholder="We have this process, and every morning someone…"></textarea>
               </label>
               <div class="intake-send">
                 <button type="submit" class="create-btn">Send</button>
@@ -295,6 +364,7 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
               </div>
             </form>
           </div>
+
         </section>
 
         <!-- =========================== KNOWLEDGE BASE =========================== -->
@@ -321,24 +391,27 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
             <a href="/">Portfolio</a> / <a href="#queue" data-nav="queue">Help Desk</a> / <span>Reports</span>
           </nav>
           <div class="page-head"><h1>Reports</h1></div>
-          <p class="lede">Real numbers, measured on the production database {site.statsAsOf}. The charts are decorative; the values are not.</p>
-          <div class="rep-grid">
+          <p class="lede">Measured on the production database, {site.statsAsOf}. Every figure traces back to a ticket.</p>
+          <div class="statband">
             {site.stats.map((s) => (
-              <div class="rep-tile">
-                <p class="rep-val">{s.value}</p>
-                <p class="rep-label">{s.label}</p>
-                <p class="rep-note">{s.note}</p>
+              <div class="stat">
+                <p class="stat-v">{s.value}</p>
+                <p class="stat-l">{s.label}</p>
+                <p class="stat-n">{s.note}</p>
               </div>
             ))}
           </div>
           <div class="rep-sla">
-            <h2>SLA performance</h2>
-            {tickets.filter((t) => !t.timeToRes.breached).map((t) => (
-              <div class="rep-row">
+            <h2 class="sect-h">Time to resolution, by ticket</h2>
+            {tickets.map((t) => (
+              <a class="rep-row" href={`#DSG-${t.num}`} data-nav={`DSG-${t.num}`}>
                 <span class="rep-key">DSG-{t.num}</span>
-                <span class="rep-bar"><i style={`--w:${88 - Number(t.num) * 4}%`}></i></span>
-                <span class="rep-met">{t.timeToRes.value}</span>
-              </div>
+                <span class="rep-sum">{t.subject}</span>
+                <span class={`sla ${t.timeToRes.breached ? 'sla-bad' : 'sla-ok'}`}>
+                  {t.timeToRes.value} <i aria-hidden="true">◷</i>
+                </span>
+                <span class="rep-met">{t.status.label}</span>
+              </a>
             ))}
           </div>
         </section>
@@ -348,32 +421,49 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
           <nav class="crumbs" aria-label="Breadcrumb">
             <a href="/">Portfolio</a> / <a href="#queue" data-nav="queue">Help Desk</a> / <span>About</span>
           </nav>
-          <div class="page-head"><h1>About</h1></div>
-          <div class="agent-card">
+          <div class="profile">
             <span class="avatar av-self avatar-xl" aria-hidden="true">DS</span>
-            <div>
-              <h2>{site.name}</h2>
-              <p class="agent-role">{site.role} · {site.location}</p>
-              <p class="agent-bio">
+            <div class="profile-body">
+              <h1>{site.name}</h1>
+              <p class="profile-role">{site.role} · {site.location}</p>
+              <p class="profile-pill">{site.availability}</p>
+              <p class="profile-bio">
                 The only agent on this desk — I also built the desk itself, along with the
-                company systems these tickets describe. {site.availability}.
+                company systems these tickets describe.
               </p>
-              <div class="agent-links">
-                <a class="chip" href={site.links.github} rel="me noopener">GitHub</a>
-                <a class="chip" href={site.resumeUrl}>Résumé</a>
-                <a class="chip" href={`mailto:${site.email}`}>{site.email}</a>
-                <a class="chip" href="/">Standard site →</a>
+              <div class="cta-row">
+                <a class="cta cta-hot" href={site.resumeUrl}>Résumé →</a>
+                <a class="cta" href={site.links.github} rel="me noopener">GitHub</a>
+                <a class="cta" href={`mailto:${site.email}`}>{site.email}</a>
+                <a class="cta" href="/">Standard site</a>
               </div>
             </div>
           </div>
-          <div class="agent-skills">
-            {site.skills.map((g) => (
-              <div class="skill-row">
-                <p class="skill-h">{g.group}</p>
-                <p class="skill-items">{g.items.join(' · ')}</p>
+
+          <div class="statband statband-people">
+            {site.stats.map((s) => (
+              <div class="stat">
+                <p class="stat-v">{s.value}</p>
+                <p class="stat-l">{s.label}</p>
+                <p class="stat-n">{s.note}</p>
               </div>
             ))}
           </div>
+
+          <h2 class="sect-h">Tools I reach for</h2>
+          <div class="skillgrid">
+            {site.skills.map((g) => (
+              <div class="skillcol">
+                <h3>{g.group}</h3>
+                <p class="chips">
+                  {g.items.map((item, ix) => (
+                    <span class={`skill-chip ${ix < 2 ? 'skill-chip-hot' : ''}`}>{item}</span>
+                  ))}
+                </p>
+              </div>
+            ))}
+          </div>
+          <p class="skill-fine">Most-used first in each row, not alphabetical.</p>
         </section>
       </main>
     </div>
@@ -388,7 +478,8 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
         /* No JS: the desk becomes a document — every panel visible, chrome
            that needs JS hidden, table rows link through their summary anchors. */
         .panel[hidden] { display: block !important; }
-        .search { display: none !important; }
+        #queue-table[hidden] { display: block !important; }
+        .search, .table-toggle { display: none !important; }
       </style>
     </noscript>
   </div>
@@ -468,7 +559,6 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
   }
   .avatar-xl { width: 4rem; height: 4rem; font-size: 1.5rem; }
   .av-self { background: var(--dk-blue); }
-  .av-bot { background: var(--dk-ink); }
   .av-a { background: #8f4700; }
   .av-b { background: #5e4db2; }
   .av-c { background: #206a83; }
@@ -513,11 +603,113 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
   .head-tools { color: var(--dk-ink-mut); letter-spacing: 0.2em; }
   .lede { max-width: 44rem; color: var(--dk-ink-mut); line-height: 1.55; margin-bottom: 1.25rem; }
 
+  /* ---- queue: masthead, hero card, ticket cards ---- */
+  .masthead {
+    display: flex; flex-wrap: wrap; gap: 1.4rem 2rem;
+    align-items: flex-end; justify-content: space-between; margin-bottom: 1.4rem;
+  }
+  .masthead h1 {
+    font-family: var(--font-display);
+    font-size: clamp(1.7rem, 3.4vw, 2.3rem);
+    font-weight: 800; line-height: 1.06; letter-spacing: -0.02em;
+    max-width: 18ch; text-wrap: balance;
+  }
+  .masthead p {
+    margin-top: 0.55rem; max-width: 42ch;
+    color: var(--dk-ink-mut); font-size: 0.9rem; line-height: 1.55;
+  }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .cta {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    border: 1.5px solid var(--dk-line); border-radius: 5px;
+    padding: 0.5rem 0.9rem; font: 600 0.85rem/1.2 var(--font-sans);
+    color: var(--dk-ink) !important; background: var(--dk-bg); cursor: pointer;
+  }
+  .cta:hover { background: var(--dk-bg-sub); border-color: var(--dk-blue); text-decoration: none !important; }
+  .cta-hot { background: var(--dk-blue); border-color: var(--dk-blue); color: #fff !important; }
+  .cta-hot:hover { background: var(--dk-blue); filter: brightness(1.12); }
+
+  .card-meta { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+  .card-key { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; color: var(--dk-ink-mut); }
+
+  .hero-card {
+    display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+    border: 1.5px solid var(--dk-ink); border-radius: 8px; overflow: hidden;
+    margin-bottom: 0.85rem; color: var(--dk-ink) !important;
+    transition: box-shadow 0.14s ease;
+  }
+  .hero-card:hover, .hero-card:focus-visible {
+    text-decoration: none !important; box-shadow: 0 12px 26px -16px rgba(28, 43, 65, 0.6);
+  }
+  .hero-l { display: block; padding: 1.2rem 1.35rem; }
+  .quote {
+    display: block; font-family: var(--font-display);
+    font-size: clamp(1.15rem, 2.2vw, 1.5rem); font-weight: 700; line-height: 1.18;
+    letter-spacing: -0.01em; margin: 0.7rem 0 0.6rem; text-wrap: balance;
+  }
+  .byline { display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: var(--dk-ink-mut); }
+  .hero-r {
+    display: flex; flex-direction: column; justify-content: space-between; gap: 1rem;
+    background: var(--dk-bg-sub); border-left: 1px solid var(--dk-line); padding: 1.2rem 1.35rem;
+  }
+  .figure {
+    display: block; font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+    font-size: clamp(1.6rem, 3vw, 2.1rem); font-weight: 700; line-height: 1;
+  }
+  .figure-l { display: block; font-size: 0.78rem; color: var(--dk-ink-mut); margin-top: 0.25rem; }
+  .figure-sub { display: block; font-size: 0.76rem; color: var(--dk-ink-mut); line-height: 1.55; margin-top: 0.7rem; }
+  .openlink { display: block; font-size: 0.85rem; font-weight: 700; color: var(--dk-blue); }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr)); gap: 0.85rem; }
+  .qcard {
+    display: flex; flex-direction: column; gap: 0.55rem;
+    border: 1px solid var(--dk-line); border-left: 4px solid var(--dk-blue);
+    border-radius: 8px; padding: 1rem 1.05rem; color: var(--dk-ink) !important;
+    transition: box-shadow 0.14s ease, background 0.14s ease;
+  }
+  .qcard:hover, .qcard:focus-visible {
+    text-decoration: none !important; background: var(--dk-bg-sub);
+    box-shadow: 0 10px 22px -16px rgba(28, 43, 65, 0.55);
+  }
+  .qcard-arch { border-left-color: #b38600; }
+  .card-q { display: block; font-size: 1rem; font-weight: 600; line-height: 1.32; text-wrap: balance; }
+  .card-metric {
+    display: block; font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+    font-size: 1rem; font-weight: 700;
+  }
+  .card-metric small {
+    display: block; font-family: var(--font-sans); font-size: 0.73rem; font-weight: 400;
+    color: var(--dk-ink-mut); margin-top: 0.15rem; line-height: 1.45;
+  }
+  .card-foot {
+    display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;
+    margin-top: auto; font-size: 0.75rem; color: var(--dk-ink-mut);
+  }
+  .card-foot b { color: var(--dk-blue); }
+  .cards-empty { margin-top: 1.2rem; font-size: 0.88rem; color: var(--dk-ink-mut); }
+  .table-toggle { margin-left: 0.5rem; background: none; border: 0; font: inherit; padding: 0; text-decoration: underline; }
+
+  /* ---- shared: stat band ---- */
+  .statband {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: 1px; background: var(--dk-line); border: 1px solid var(--dk-line);
+    border-radius: 8px; overflow: hidden; max-width: 56rem;
+  }
+  .stat { background: #f4f7ff; padding: 1rem 1.1rem; }
+  .stat-v {
+    font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+    font-size: 1.9rem; font-weight: 700; line-height: 1; color: var(--dk-blue);
+  }
+  .stat-l { font-size: 0.82rem; font-weight: 600; margin-top: 0.3rem; }
+  .stat-n { font-size: 0.7rem; color: var(--dk-ink-mut); margin-top: 0.12rem; line-height: 1.45; }
+  .sect-h {
+    font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase;
+    font-weight: 700; color: var(--dk-ink-mut); margin: 1.8rem 0 0.7rem;
+  }
+
   /* ---- queue table ---- */
   .queue-note {
-    margin-bottom: 0.8rem; font-size: 0.8rem; color: var(--dk-ink-mut);
-    background: var(--dk-loz-info-bg); border: 1px solid var(--dk-line);
-    border-radius: 4px; padding: 0.5rem 0.75rem; max-width: max-content;
+    margin-top: 1.1rem; font-size: 0.8rem; color: var(--dk-ink-mut);
   }
   .tablewrap { overflow-x: auto; border: 1px solid var(--dk-line); border-radius: 6px; }
   .queue { width: 100%; border-collapse: collapse; min-width: 62rem; }
@@ -574,8 +766,17 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
 
   /* ---- issue view ---- */
   .issue { display: grid; grid-template-columns: minmax(0, 1fr) 17rem; gap: 2rem; }
-  .issue-title { font-size: 1.3rem; font-weight: 700; line-height: 1.3; margin-bottom: 0.6rem; }
-  .issue-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.4rem; }
+  .issue-eyebrow { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .issue-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.4rem, 2.8vw, 1.9rem); font-weight: 800;
+    letter-spacing: -0.015em; line-height: 1.14; margin-bottom: 0.7rem;
+    max-width: 24ch; text-wrap: balance;
+  }
+  .issue-figure { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1.1rem; }
+  .issue-figure b { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 1.5rem; }
+  .issue-figure span { font-size: 0.8rem; color: var(--dk-ink-mut); }
+  .issue-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.6rem; }
   .chip {
     display: inline-flex; align-items: center; gap: 0.3rem;
     border: 1px solid var(--dk-line); border-radius: 4px; padding: 0.28rem 0.6rem;
@@ -604,17 +805,17 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
     .panel-issue.is-live .thread .comment {
       opacity: 0; transform: translateY(6px);
       animation: cin 0.45s ease-out forwards;
-      animation-delay: calc(0.45s + var(--d) * 0.85s);
+      animation-delay: calc(var(--d) * 0.06s);
     }
     .panel-issue.is-live .resolution {
       opacity: 0;
-      animation: cin 0.5s ease-out forwards;
-      animation-delay: calc(0.7s + var(--threads, 2) * 0.85s);
+      animation: cin 0.4s ease-out forwards;
+      animation-delay: calc(0.1s + var(--threads, 2) * 0.06s);
     }
     .panel-issue.is-live .res-stamp {
       opacity: 0; transform: rotate(8deg) scale(2.4);
       animation: stamp 0.35s cubic-bezier(0.2, 1.6, 0.4, 1) forwards;
-      animation-delay: calc(1.15s + var(--threads, 2) * 0.85s);
+      animation-delay: calc(0.28s + var(--threads, 2) * 0.06s);
     }
   }
   @keyframes cin { to { opacity: 1; transform: none; } }
@@ -660,22 +861,6 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
 
   /* ---- raise a request ---- */
   .intake { max-width: 46rem; }
-  .intake-cats { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.1rem; }
-  .cat {
-    border: 1px solid var(--dk-line); border-radius: 4px; padding: 0.45rem 0.8rem;
-    font-size: 0.8rem; font-weight: 500; cursor: pointer;
-    color: var(--dk-ink); background: var(--dk-bg);
-  }
-  .cat:hover { background: var(--dk-bg-sub); border-color: var(--dk-blue); }
-  .cat[aria-pressed='true'] {
-    background: var(--dk-loz-info-bg); border-color: var(--dk-blue);
-    color: var(--dk-loz-info-ink); font-weight: 600;
-  }
-  .intake-reply { display: flex; gap: 0.7rem; margin-bottom: 1.1rem; }
-  .intake-reply .comment-text {
-    background: var(--dk-bg-sub); border: 1px solid var(--dk-line);
-    border-radius: 6px; padding: 0.6rem 0.8rem; line-height: 1.6;
-  }
   .intake-form label { display: block; font-size: 0.72rem; font-weight: 700; color: var(--dk-ink-mut); margin-bottom: 0.9rem; }
   .intake-form input, .intake-form textarea {
     display: block; width: 100%; margin-top: 0.3rem;
@@ -688,36 +873,62 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
   .intake-note { font-size: 0.72rem; color: var(--dk-ink-mut); }
 
   /* ---- knowledge base ---- */
-  .kb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 1px; background: var(--dk-line); border: 1px solid var(--dk-line); }
-  .kb-card { background: var(--dk-bg); padding: 1.1rem; }
-  .kb-code { font-family: var(--font-mono); font-size: 0.65rem; color: var(--dk-ink-mut); }
-  .kb-card h2 { font-size: 0.92rem; font-weight: 700; margin: 0.4rem 0 0.5rem; }
-  .kb-card p:last-child { line-height: 1.6; color: var(--dk-ink-mut); font-size: 0.8rem; }
+  .kb-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 0.85rem; max-width: 62rem; }
+  .kb-card { background: var(--dk-bg); border: 1px solid var(--dk-line); border-radius: 8px; padding: 1.2rem 1.25rem; }
+  .kb-code {
+    font-family: var(--font-mono); font-size: 0.66rem; font-weight: 700;
+    letter-spacing: 0.08em; color: var(--dk-blue);
+  }
+  .kb-card h2 {
+    font-family: var(--font-display); font-size: 1.12rem; font-weight: 700;
+    line-height: 1.22; letter-spacing: -0.01em; margin: 0.45rem 0 0.6rem; text-wrap: balance;
+  }
+  .kb-card p:last-child { line-height: 1.65; color: var(--dk-ink-mut); font-size: 0.85rem; }
 
   /* ---- reports ---- */
-  .rep-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 1px; background: var(--dk-line); border: 1px solid var(--dk-line); max-width: 52rem; }
-  .rep-tile { background: var(--dk-bg); padding: 1rem 1.1rem; }
-  .rep-val { font-family: var(--font-mono); font-size: 1.7rem; font-weight: 700; }
-  .rep-label { font-size: 0.75rem; font-weight: 600; }
-  .rep-note { font-size: 0.68rem; color: var(--dk-ink-mut); margin-top: 0.15rem; }
-  .rep-sla { max-width: 52rem; margin-top: 1.6rem; }
-  .rep-sla h2 { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.7rem; }
-  .rep-row { display: grid; grid-template-columns: 5rem 1fr 9rem; gap: 0.8rem; align-items: center; margin-bottom: 0.45rem; }
+  .rep-sla { max-width: 56rem; }
+  .rep-row {
+    display: grid; grid-template-columns: 5.2rem minmax(0, 1fr) 9rem 12rem;
+    gap: 0.8rem; align-items: center; padding: 0.42rem 0.45rem;
+    border-radius: 4px; color: var(--dk-ink) !important;
+  }
+  .rep-row:hover { background: var(--dk-bg-sub); text-decoration: none !important; }
   .rep-key { font-family: var(--font-mono); font-size: 0.72rem; color: var(--dk-ink-mut); }
-  .rep-bar { display: block; height: 0.8rem; background: var(--dk-bg-sub); border: 1px solid var(--dk-line); border-radius: 3px; overflow: hidden; }
-  .rep-bar i { display: block; height: 100%; width: var(--w); background: var(--dk-blue); }
-  .rep-met { font-size: 0.72rem; text-align: right; color: var(--dk-ink-mut); }
+  .rep-sum { font-size: 0.82rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rep-met { font-size: 0.68rem; text-align: right; color: var(--dk-ink-mut); letter-spacing: 0.04em; }
 
   /* ---- people ---- */
-  .agent-card { display: flex; gap: 1.2rem; max-width: 46rem; align-items: flex-start; }
-  .agent-card h2 { font-size: 1.15rem; font-weight: 700; }
-  .agent-role { color: var(--dk-ink-mut); font-size: 0.8rem; margin-bottom: 0.5rem; }
-  .agent-bio { line-height: 1.6; margin-bottom: 0.8rem; }
-  .agent-links { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-  .agent-skills { margin-top: 1.6rem; max-width: 46rem; border-top: 1px solid var(--dk-line); }
-  .skill-row { display: grid; grid-template-columns: 9rem 1fr; gap: 1rem; padding: 0.6rem 0; border-bottom: 1px solid var(--dk-line); }
-  .skill-h { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--dk-ink-mut); }
-  .skill-items { font-size: 0.8rem; line-height: 1.55; }
+  .profile {
+    display: flex; gap: 1.3rem; align-items: flex-start; flex-wrap: wrap;
+    padding-bottom: 1.4rem; border-bottom: 1px solid var(--dk-line);
+  }
+  .profile-body { min-width: 0; flex: 1 1 24rem; }
+  .profile h1 {
+    font-family: var(--font-display); font-size: clamp(1.6rem, 3vw, 2rem);
+    font-weight: 800; letter-spacing: -0.02em; line-height: 1.1;
+  }
+  .profile-role { color: var(--dk-ink-mut); font-size: 0.85rem; margin: 0.25rem 0 0.6rem; }
+  .profile-pill {
+    display: inline-block; background: var(--dk-loz-ok-bg); color: var(--dk-loz-ok-ink);
+    font-size: 0.74rem; font-weight: 700; padding: 0.22rem 0.65rem; border-radius: 999px;
+  }
+  .profile-bio { line-height: 1.6; margin: 0.8rem 0 0.95rem; max-width: 52ch; }
+  .statband-people { margin-top: 1.3rem; }
+  .skillgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 1.1rem 2rem; max-width: 58rem; }
+  .skillcol h3 {
+    font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--dk-ink-mut); margin-bottom: 0.45rem;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+  .skill-chip {
+    font-size: 0.75rem; border: 1px solid var(--dk-line); border-radius: 999px;
+    padding: 0.2rem 0.6rem; background: var(--dk-bg-sub);
+  }
+  .skill-chip-hot {
+    background: var(--dk-loz-info-bg); border-color: #b9d0ff;
+    color: var(--dk-loz-info-ink); font-weight: 600;
+  }
+  .skill-fine { margin-top: 1.1rem; font-size: 0.7rem; color: var(--dk-ink-mut); }
 
   /* ---- footer ---- */
   .desk-foot {
@@ -735,11 +946,20 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
     .side-item { white-space: nowrap; border: 1px solid var(--dk-line); }
     .side-exit { margin-top: 0; }
     .topnav { display: none; }
-    .search input { width: 7rem; }
+    /* the top bar is a single non-wrapping row: on a phone the search field and
+       waffle push it past the viewport, so drop them and let the wordmark clip */
+    .waffle, .search { display: none; }
+    .topbar { gap: 0.7rem; }
+    .wordmark { font-size: 0.82rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+    .create-btn { margin-left: auto; }
     .issue { grid-template-columns: 1fr; }
     .main { padding: 1rem 0.9rem 3rem; }
     .c-type, .c-created, .c-asn { display: none; }
     .queue { min-width: 46rem; }
+    .hero-card { grid-template-columns: 1fr; }
+    .hero-r { border-left: 0; border-top: 1px solid var(--dk-line); }
+    .rep-row { grid-template-columns: 5rem minmax(0, 1fr) 8rem; }
+    .rep-row .rep-met { display: none; }
   }
 </style>
 
@@ -786,18 +1006,26 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
   window.addEventListener('hashchange', () => show(location.hash.slice(1) || 'queue', false));
   show(location.hash.slice(1) || 'queue', false);
 
-  /* ---- queue search ---- */
+  /* ---- queue search: filters the cards and the table together ---- */
   const search = document.getElementById('desk-search') as HTMLInputElement | null;
   const emptyRow = document.getElementById('queue-empty') as HTMLTableRowElement | null;
+  const cardsEmpty = document.getElementById('cards-empty');
+  const heroCard = document.querySelector<HTMLElement>('.hero-card');
+  const cards = [...document.querySelectorAll<HTMLElement>('[data-card]')];
+
   function applySearch() {
     const q = (search?.value ?? '').trim().toLowerCase();
+    const match = (el: HTMLElement) => !q || el.textContent!.toLowerCase().includes(q);
     let visible = 0;
     rows.forEach((r) => {
-      const hit = !q || r.textContent!.toLowerCase().includes(q);
+      const hit = match(r);
       r.hidden = !hit;
       if (hit) visible++;
     });
+    cards.forEach((c) => { c.hidden = !match(c); });
+    if (heroCard) heroCard.hidden = !match(heroCard);
     if (emptyRow) emptyRow.hidden = visible > 0;
+    if (cardsEmpty) cardsEmpty.hidden = visible > 0;
   }
   search?.addEventListener('input', () => {
     show('queue', false);
@@ -806,6 +1034,20 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
   document.getElementById('clear-search')?.addEventListener('click', () => {
     if (search) search.value = '';
     applySearch();
+    search?.focus();
+  });
+
+  /* ---- table view: the dense nine-column queue, one click away ---- */
+  const tableToggle = document.getElementById('table-toggle');
+  const queueTable = document.getElementById('queue-table') as HTMLElement | null;
+  queueTable && (queueTable.hidden = true);
+  tableToggle?.addEventListener('click', () => {
+    if (!queueTable) return;
+    const opening = queueTable.hidden;
+    queueTable.hidden = !opening;
+    tableToggle.setAttribute('aria-expanded', String(opening));
+    tableToggle.textContent = opening ? 'Hide table view' : 'Switch to table view';
+    if (opening) queueTable.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   });
 
   /* ---- keyboard: j/k moves, enter opens, esc back ---- */
@@ -826,7 +1068,7 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
     }
     if (inField) return;
     const queueOpen = !issueFor('queue')!.hidden;
-    if (!queueOpen) return;
+    if (!queueOpen || !queueTable || queueTable.hidden) return;
     if (e.key === 'j') highlight(hi + 1);
     else if (e.key === 'k') highlight(hi - 1);
     else if (e.key === 'Enter') {
@@ -839,20 +1081,7 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
   });
 
   /* ---- raise a request ---- */
-  const cats = [...document.querySelectorAll<HTMLButtonElement>('.cat')];
-  const replyBox = document.getElementById('intake-reply');
-  const replyText = document.getElementById('intake-reply-text');
   const subjectInput = document.getElementById('intake-subject') as HTMLInputElement | null;
-  cats.forEach((c) =>
-    c.addEventListener('click', () => {
-      cats.forEach((x) => x.setAttribute('aria-pressed', String(x === c)));
-      if (subjectInput) subjectInput.value = c.dataset.subject ?? '';
-      if (replyBox && replyText) {
-        replyBox.hidden = false;
-        replyText.textContent = c.dataset.reply ?? '';
-      }
-    }),
-  );
   const intakeForm = document.getElementById('intake-form');
   intakeForm?.addEventListener('submit', (e) => {
     e.preventDefault();
