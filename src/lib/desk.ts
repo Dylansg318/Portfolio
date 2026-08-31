@@ -370,6 +370,49 @@ export const tickets: Ticket[] = [
     },
   },
   {
+    num: '009',
+    subject: 'Build a game, but without arrays, classes or loops over things',
+    requester: 'CS class',
+    via: 'Coursework',
+    opened: 'MAY 2020',
+    type: { icon: '◈', label: 'Coursework' },
+    priority: 'Low',
+    labels: ['javascript', 'blockly', 'canvas', 'game-lab'],
+    timeToRes: { value: 'senior year' },
+    card: { figure: '790 lines', note: 'of block code, and no arrays to loop with' },
+    status: { label: 'ARCHIVED · 2020', tone: 'warn' },
+    thread: [
+      {
+        from: 'customer',
+        name: 'CS CLASS',
+        text:
+          'Build a game in Code.org Game Lab. The environment gives you global variables, one draw loop, and sprites you place by hand — no arrays you can iterate, no classes, no collections of any kind.',
+      },
+      {
+        from: 'agent',
+        name: 'DYLAN (AGENT)',
+        text:
+          'I built an arcade shooter inside that ceiling: five attackers, three destructible bases with eight damage states each, a two-hit boss, a bomb pickup, a charge-based teleport, and a points shop. Where the tooling had no answer I paid for it in volume — every alien-versus-projectile pair is written out by hand because there was no loop to write it in.',
+      },
+      {
+        from: 'agent',
+        name: 'DYLAN (AGENT)',
+        text:
+          'The lesson landed years later: the shape of your code is dictated by what your language refuses to give you. A loop and a collection are not elegance, they are the ability to add a sixth alien without editing fifteen places.',
+      },
+    ],
+    resolution: {
+      headline: 'A full arcade game in block code — playable on this site.',
+      points: [
+        '790 lines of generated JavaScript, 17 sprites placed by hand, zero arrays',
+        'A shop with real prices turned the score into a decision, not a counter',
+        'Ported to plain canvas so it still runs — original source published beside it',
+      ],
+      slug: 'galaxy-defense',
+      linkLabel: 'Play it and read the write-up',
+    },
+  },
+  {
     num: '008',
     subject: 'Start here — a 60-second orientation',
     requester: 'Visitors',
