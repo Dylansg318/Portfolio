@@ -40,6 +40,11 @@ export type Ticket = {
   labels: string[];
   /** "Time to resolution" chip — a real cadence or duration, never a joke value. */
   timeToRes: { value: string; breached?: boolean };
+  /** The single figure the queue card leads with. Must trace to a real number
+   *  in the resolution below or in src/lib/site.ts — never invented for shape. */
+  card: { figure: string; note: string };
+  /** Extra line for the DSG-001 hero card only. */
+  heroNote?: string;
   thread: DeskMessage[];
   resolution: {
     headline: string;
@@ -61,6 +66,9 @@ export const tickets: Ticket[] = [
     priority: 'Highest',
     labels: ['typescript', 'node', 'postgres', 'react'],
     timeToRes: { value: 'live since 2025' },
+    card: { figure: '≈520', note: 'orders a day through one system' },
+    heroNote:
+      '32,000 products · 49,000 channel listings · ≈180 scheduled jobs. Order volume roughly doubled with no added operations headcount.',
     status: { label: 'RESOLVED · IN PRODUCTION', tone: 'ok' },
     thread: [
       {
@@ -109,6 +117,7 @@ export const tickets: Ticket[] = [
     priority: 'High',
     labels: ['repricing', 'scheduling', 'strategy'],
     timeToRes: { value: '1-minute cycle' },
+    card: { figure: '138,000+', note: 'price pushes · a new price every minute' },
     status: { label: 'AUTOMATED', tone: 'ok' },
     thread: [
       {
@@ -151,6 +160,7 @@ export const tickets: Ticket[] = [
     priority: 'High',
     labels: ['catalog', 'sync', 'integrations'],
     timeToRes: { value: 'enforced in code' },
+    card: { figure: '49,000', note: 'listings reconciled to one master' },
     status: { label: 'RESOLVED', tone: 'ok' },
     thread: [
       {
@@ -198,6 +208,7 @@ export const tickets: Ticket[] = [
     priority: 'High',
     labels: ['quickbooks', 'ledger', 'reconciliation'],
     timeToRes: { value: 'hourly checks' },
+    card: { figure: 'Days → a report', note: 'month-end close, rechecked hourly' },
     status: { label: 'RECONCILED', tone: 'ok' },
     thread: [
       {
@@ -240,6 +251,7 @@ export const tickets: Ticket[] = [
     priority: 'Medium',
     labels: ['git', 'ci', 'ai-agents'],
     timeToRes: { value: '6 months in' },
+    card: { figure: '14,000', note: 'commits in six months, no incidents' },
     status: { label: 'RESOLVED', tone: 'ok' },
     thread: [
       {
@@ -287,6 +299,7 @@ export const tickets: Ticket[] = [
     priority: 'Low',
     labels: ['ocr', 'ai', 'mobile-web'],
     timeToRes: { value: 'one weekend' },
+    card: { figure: 'One weekend', note: 'and the lesson that shipped to production' },
     status: { label: 'ARCHIVED · SIDE PROJECT', tone: 'warn' },
     thread: [
       {
@@ -329,6 +342,7 @@ export const tickets: Ticket[] = [
     priority: 'Medium',
     labels: ['selenium', 'cucumber', 'jenkins'],
     timeToRes: { value: 'nightly runs' },
+    card: { figure: '2 days → nightly', note: 'Selenium + Cucumber, team of ten' },
     status: { label: 'ARCHIVED · 2024', tone: 'warn' },
     thread: [
       {
@@ -365,6 +379,7 @@ export const tickets: Ticket[] = [
     priority: 'High',
     labels: ['start-here'],
     timeToRes: { value: '60 seconds' },
+    card: { figure: '60 seconds', note: 'what this is and where to go next' },
     status: { label: 'START HERE', tone: 'info' },
     thread: [
       {
@@ -395,54 +410,6 @@ export const tickets: Ticket[] = [
       slug: 'portfolio-site',
       linkLabel: 'How this site was built',
     },
-  },
-];
-
-/** Raise-a-request categories, each with the auto-response shown before the
- *  visitor sends the real email. Factual and consultative. */
-export type IntakeCategory = {
-  id: string;
-  label: string;
-  /** Prefilled subject for the mail link. */
-  subject: string;
-  autoReply: string;
-};
-
-export const intakeCategories: IntakeCategory[] = [
-  {
-    id: 'import',
-    label: 'Import orders from multiple marketplaces',
-    subject: 'Request: multi-marketplace order import',
-    autoReply:
-      'I have built this at production scale — about 520 orders a day across six channels. The approach that holds up: one database owns the truth, and each marketplace gets its own feed in and out. Describe your marketplaces and rough volumes below.',
-  },
-  {
-    id: 'api',
-    label: 'Integrate a third-party API',
-    subject: 'Request: third-party API integration',
-    autoReply:
-      'I have integrated QuickBooks Desktop, Amazon, eBay, Shopify, Walmart, Net32, and three shipping carriers. The habit that keeps these reliable: store every raw response before parsing it, so changes and disputes always have evidence behind them. Tell me which system you are connecting.',
-  },
-  {
-    id: 'spreadsheet',
-    label: 'Automate a manual spreadsheet process',
-    subject: 'Request: automate a spreadsheet process',
-    autoReply:
-      'A long-lived spreadsheet is usually the most accurate description of a business process, so I treat it as the specification. Describe the routine around it — who updates it, when, and what happens next — and I can outline what the automated version looks like.',
-  },
-  {
-    id: 'agree',
-    label: 'Make two systems agree',
-    subject: 'Request: reconcile two systems',
-    autoReply:
-      'Reconciliation needs two things: one connection that moves every record across with evidence, and a permanent log of investigated discrepancies so nothing gets chased twice. I keep an ERP and QuickBooks agreeing this way. Describe the two systems and where they drift.',
-  },
-  {
-    id: 'other',
-    label: 'Something else',
-    subject: 'Request: project inquiry',
-    autoReply:
-      'Describe the problem in your own words — every ticket in this queue started that way. I will reply with an honest read on scope and whether I am the right person for it.',
   },
 ];
 
