@@ -1,0 +1,174 @@
+---
+title: Galaxy Defense
+blurb: A space shooter built in block code in high school — 790 lines, an economy, and a boss fight, with no arrays or classes available.
+plainBlurb: A game I built in high school using drag-and-drop coding blocks. It has a shop, upgrades, a boss, and a teleport ability — all made without the normal tools programmers use to keep code organised.
+date: 2020-05-20
+featured: 25
+status: archived
+role: solo
+stack: [JavaScript, Code.org Game Lab, Blockly, Canvas]
+
+problem: >-
+  The assignment was a game in Code.org's Game Lab — Blockly blocks that generate
+  JavaScript, aimed at people who have never programmed. The environment gives you
+  global variables, one draw loop, and sprites you place by hand. It does not give
+  you arrays you can loop over, classes, collections, or any way to make one thing
+  and stamp out fifty of it. Most projects that come out of it are one mechanic
+  wide, because the tooling makes anything larger cost linearly more typing.
+
+unique: >-
+  I built a full arcade game inside that ceiling anyway — five attackers, three
+  destructible bases with eight damage states each, a two-hit boss, a bomb pickup,
+  a charge-based teleport, and a points shop — by accepting the repetition instead
+  of fighting it. Every alien-versus-projectile pair is written out by hand because
+  there was no loop to write it in; the projectile system cycles three sprite slots
+  with a counter because there was no array to push into. The interesting judgement
+  was not any single mechanic, it was deciding which constraints to route around
+  and which to simply pay for in volume.
+
+learned:
+  - The shape of your code is dictated by what your language refuses to give you. Without arrays, every "for each alien" became a paragraph of near-identical if-statements — and that experience is exactly why a loop and a collection feel valuable rather than academic.
+  - Game state is the hard part, not rendering. The bugs that survived to the end were all state bugs — a base flickering to the wrong damage sprite, a boss whose health reset in the wrong branch — not drawing bugs.
+  - A shop turns a score into a decision. Adding prices changed the game from "avoid dying" into "is a bomb worth twenty points right now", which is the entire difference between a score counter and an economy.
+
+aiNote: >-
+  None — this predates all of it. It was written in 2020, by hand, in a browser
+  block editor. The only AI involvement is the port on this page: I asked Claude
+  Code to move the original logic onto a plain canvas so it runs here without
+  Code.org's runtime, and reviewed the result against the original line by line.
+  Two things were deliberately changed rather than reproduced, both listed below.
+
+metrics:
+  - { label: Lines of generated JS, value: "790" }
+  - { label: Sprites placed by hand, value: "17" }
+  - { label: Arrays available, value: "0" }
+
+demo:
+  kind: island
+  entry: galaxy-defense
+  label: Play Galaxy Defense
+---
+
+I made this in my senior year of high school, in Code.org's Game Lab. You build by
+dragging blocks; the blocks generate JavaScript. It is designed so that a person who
+has never written code can finish something in an afternoon.
+
+It is not designed for what I did with it.
+
+<Demo demo={frontmatter.demo} title={frontmatter.title} />
+
+## What the constraints actually cost
+
+Game Lab gives you global variables and a `draw()` loop that runs every frame. It does
+not give you arrays you can iterate, classes, or any collection type. So there is no
+way to say "for each alien, check whether it hit a projectile." You write it out.
+
+Five aliens times three projectiles is fifteen collision checks, each four lines long,
+all identical apart from two identifiers:
+
+<CodeFile src="galaxy-defense/snippets/original.js" lines="352-380" title="Fifteen near-identical blocks, because there was no loop to put them in" />
+
+The same pressure shows up in the bases. Each of the three bases has eight damage
+states, and the only way to select one is a comparison per state — twenty-four
+if-statements to express what a single array index would say today:
+
+<CodeFile src="galaxy-defense/snippets/original.js" lines="628-652" title="Eight damage states, one if-statement each" />
+
+That is the whole lesson of the project, and I did not understand it at the time. The
+repetition is not bad style — it is the *only* style available. What a loop and a
+collection buy you is not elegance, it is the ability to add a sixth alien without
+touching fifteen places.
+
+## The parts I'm still glad I built
+
+**The shop.** Hold `T` and the field freezes into a storefront: bombs for 20 points,
+a life for 50, a full repair of all three bases for 200. Adding prices changed what
+the score *was*. Before the shop it was a number that went up. After it, every kill
+was twenty-something percent of a bomb, and dying with 190 unspent points was a
+genuine mistake.
+
+**The FTL drive.** A gauge that fills one percent per frame; at 100 you can press `Q`
+with a direction and jump a hundred pixels. It is an escape ability with a cooldown
+expressed as a resource, and it made the ship feel like it had a gear the aliens
+didn't.
+
+**The boss.** At 30 points an angry alien enters and bounces across the screen taking
+two hits instead of one, and it takes two health off a base instead of one. One
+sprite, a velocity flip at each wall, and a second health variable — a difficulty
+curve out of almost nothing.
+
+## The menus are not a pause. There is no pause.
+
+This is my favourite thing in the file, and I did not design it — it fell out of
+what the environment refused to give me.
+
+Game Lab has no way to stop the draw loop. It runs every frame, forever. So when I
+wanted a help card and a shop, the only move available was to put the world back
+where it started on every single pass while the key is held:
+
+<CodeFile src="galaxy-defense/snippets/original.js" lines="145-167" title="The store &quot;pausing&quot; the game by re-parking every sprite, every frame" />
+
+It looks frozen. Nothing stopped. And once you notice that, four things follow that
+I never wrote down anywhere:
+
+**The shop is a panic button.** Every alien is teleported to the top of the screen
+each frame the menu is open. About to be hit? Hold `T`. The thing about to hit you is
+now four hundred pixels away.
+
+**The menus are the only respawn in the game.** Nothing resets an alien that falls
+off the bottom of the screen — I never wrote that check. The bases only cover part of
+the width, so any alien that drops through a gap is gone permanently. Play without
+ever opening a menu and the game slowly empties out. Hold `T` for one frame and all
+five are back. The pause I built by accident is also the garbage collector I never
+built on purpose.
+
+**The FTL drive charges while you shop.** The movement function runs before the
+store's reset and doesn't care whether a menu is open, so the gauge fills the whole
+time. The shop is a safe place to refuel.
+
+**It costs you your position.** The same reset that saves you also snaps your ship
+back to the centre of the screen and throws the bomb pickup you were three pixels
+from collecting back above the top of the map.
+
+None of that is in the help text, because none of it was intentional. It is what a
+"pause" becomes when the only tool you have is *assignment*, executed thirty times a
+second. I ported it exactly as written — phase order and all — because a version
+that used a real pause would be a different game.
+
+## Porting it here, six years later
+
+The version above is the original logic on a plain canvas, so it runs on this page
+without Code.org's runtime. Field size, speeds, spawn ranges, prices, health totals
+and the FTL charge rate are all the original's numbers.
+
+Reading my own code back, three things stood out.
+
+**A real bug, now fixed.** At `baseHealth2 === 7` the original sets the damage sprite
+on `homeBase` instead of `homeBase2` — so taking the first hit on the middle base
+visibly changed the wrong one. It survived because both bases look identical at a
+glance and the state only lasts until the next hit.
+
+**A typo I kept.** The teleport spends 98 charge going right and 99 in every other
+direction. Jumping right is very slightly cheaper than jumping left, forever. It
+changes nothing, nobody would notice, and removing it would make the port less true
+to the thing I actually shipped.
+
+**A change I made on purpose.** The original redraws its starfield by calling
+`ellipse()` at eighteen random positions *every frame*, so the stars strobe at 60fps.
+On a school assignment that's a quirk. On a public page it's a photosensitivity risk,
+so the field is generated once and held.
+
+**One more, found while wiring the art up.** Game Lab runs `draw()` at 30fps, and
+every speed in the original is written per frame — the ship moves "4", the FTL drive
+charges "1". Dropping that straight into a 60Hz animation loop silently doubles the
+speed of the entire game. The port steps its simulation on a fixed 30Hz clock and
+only draws on the display's schedule, so the ship still crosses the screen in the
+time it used to.
+
+And a small mercy: p5.play collides on a sprite's whole image box, transparent margin
+included, so an alien's real hitbox was the full 50×50 canvas around a 31×19 drawing.
+Shots that visibly missed still counted. Collisions here use the visible art.
+
+The sprites are the ones I drew in Piskel and imported into Code.org — the same
+files, cropped to their artwork and re-hosted. The aliens still have their two-frame
+walk, the bomb still spins through six.
