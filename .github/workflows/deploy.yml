@@ -1,8 +1,15 @@
 name: Deploy
 
 on:
-  push:
-    branches: [main]
+  # There is deliberately NO `push` trigger. Every push used to build here, which
+  # at ~13 pushes/day was spending ~480 Actions minutes a month against a 2,000
+  # allowance. The site now ships on demand from `scripts/deploy-from-mac.sh`,
+  # which builds in a case-sensitive Linux container locally, for zero minutes
+  # and in about the same wall-clock this runner took (81s vs 84s).
+  #
+  # What remains costs nothing in practice. Work lands straight on main, so
+  # `pull_request` almost never fires — it is a free Linux-x64 net for the rare
+  # PR. `workflow_dispatch` is the fallback for when the Mac is unavailable.
   pull_request:
   workflow_dispatch:
 
@@ -46,12 +53,14 @@ jobs:
             echo "::notice::Cloudflare credentials not set — build verified, deploy skipped."
           fi
 
-      # Deploy only from main, and only once credentials exist.
-      # PRs get build + typecheck as a gate.
+      # Deploy only from main, only on a manual dispatch, and only once
+      # credentials exist. This is now the FALLBACK path — the normal one is
+      # `scripts/deploy-from-mac.sh`. Use it when the Mac is unavailable.
+      # PRs still get build + typecheck as a gate, but never deploy.
       - name: Deploy to Cloudflare Workers
         if: >-
           github.ref == 'refs/heads/main'
-          && github.event_name == 'push'
+          && github.event_name == 'workflow_dispatch'
           && steps.cf.outputs.ready == 'true'
         uses: cloudflare/wrangler-action@v3
         with:
