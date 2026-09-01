@@ -3,33 +3,48 @@ import Base from '../layouts/Base.astro';
 import SectionHeading from '../components/ui/SectionHeading.astro';
 import { site } from '../lib/site';
 
-/** The path here, one line per stop. Deliberately short: the résumé carries
- *  the detail, this page only has to make someone want to read it. */
+/** The path here, one stop per line.
+ *
+ *  This used to be three tidy lines that made the retail jobs look like
+ *  something to apologise for. They are the opposite: the same thing happened
+ *  three times in a row — someone watched me work and handed me more than the
+ *  job I was hired for. That is the argument this page is making, so the stops
+ *  say what actually happened rather than compressing it into a title. */
 const path = [
   {
     when: '2020 – 24',
-    what: 'B.S. Computer Science, George Mason',
-    note: 'Paid for it managing a T-Mobile store, then running a restaurant floor.',
+    what: 'Computer Science coursework, George Mason University',
+    note: "Dean's List. Four years of CS alongside a full-time job — everything below happened while I was in it. I left before the degree was conferred, so the work below is the credential.",
   },
   {
-    when: '2024',
-    what: 'CYDEO SDET bootcamp',
-    note: 'Where the testing habits came from. I still write the test before I trust the fix.',
+    when: '2020 – 22',
+    what: 'T-Mobile — sales associate, then store manager',
+    note: 'My first job. When the store manager was getting ready to leave he decided I was working harder than the rest of the floor and spent his last months training me to replace him. I got the job because the team trusted me to run the place, not because I was the best at selling phones.',
+  },
+  {
+    when: '2022 – 25',
+    what: 'The Qui, Korean BBQ & Grill — head server',
+    note: 'Promoted twice within months. I was studying for the CYDEO SDET program between shifts — Selenium, Cucumber, REST Assured. It is where the testing habits came from; I still write the test before I trust the fix.',
   },
   {
     when: '2025',
-    what: 'Hired to fix a pricing spreadsheet',
-    note: 'It became a scraper, then a service, then the ERP the company runs on.',
+    what: 'RMH3 Dental Supply — hired off the restaurant floor',
+    note: 'They were regulars. They watched me work a section, decided I would be a good fit for their company, and offered me a job. I started in inventory to learn the products, then shipping, and made it known that the technical work was what I wanted.',
+  },
+  {
+    when: '2025 – now',
+    what: 'From a customer-service spreadsheet to the ERP',
+    note: 'Customer service was entirely online, so consolidating it meant a spreadsheet — and the spreadsheet turned into a system. Pricing came next, because winning the buy box by hand does not scale. MHLHUB grew out of those two problems and now runs the company.',
   },
 ];
 ---
 <Base title="About" description={`About ${site.name} — ${site.tagline}`}>
-  <section class="ambient">
-    <div class="mx-auto max-w-(--container-wide) px-4 pb-12 pt-16 sm:px-6 sm:pt-24">
-      <p class="eyebrow reveal">About</p>
-      <h1 class="reveal mt-4 max-w-3xl text-4xl font-extrabold tracking-tight text-ink sm:text-6xl" style="--reveal-delay: 60ms">
-        I like the problems where the fix has to{' '}
-        <span class="text-gradient">survive the people using it.</span>
+  <section>
+    <div class="mx-auto max-w-(--container-wide) px-4 pb-12 pt-12 sm:px-6 sm:pt-16">
+      <p class="eyebrow reveal reveal-load">About</p>
+      <h1 class="reveal reveal-load mt-4 max-w-3xl text-4xl font-extrabold tracking-tight text-ink sm:text-6xl" style="--reveal-delay: 60ms">
+        From the restaurant floor to{' '}
+        <span class="text-gradient">the system the company runs on.</span>
       </h1>
     </div>
   </section>
@@ -43,14 +58,15 @@ const path = [
           <h2 class="font-display text-2xl font-bold text-ink">The short version</h2>
           <p class="mt-4 max-w-(--container-reading) text-lg leading-relaxed text-ink-muted">
             I'm the engineer at RMH3 Dental Supply. I designed, built and run{' '}
-            <a class="text-accent hover:underline" href="/projects/mhlhub">MHLHUB</a> — the
-            in-house ERP that replaced off-the-shelf software, a stack of spreadsheets and
-            an inbox somebody sorted by hand. Six sales channels, 32,000 products, orders
-            roughly doubled while I've been here without adding anyone to operations.
+            <a class="text-accent hover:underline" href="/projects/mhlhub">MHLHUB</a>, the
+            in-house ERP that replaced off-the-shelf software, a stack of spreadsheets, and
+            an inbox somebody sorted by hand. It covers six sales channels and 32,000
+            products, and orders have roughly doubled while I've been here without adding
+            anyone to operations.
           </p>
           <p class="mt-4 max-w-(--container-reading) text-lg leading-relaxed text-ink-muted">
             Almost everything I've built started as something a person was doing by hand.
-            Those are the problems I like — where being subtly wrong costs more than being
+            Those are the problems I like, where being subtly wrong costs more than being
             obviously broken.
           </p>
         </section>
@@ -70,6 +86,51 @@ const path = [
             ))}
           </ol>
         </section>
+
+        <!-- The before picture. Without it "I built an ERP" is an unverifiable
+             claim; with it, the size of the change is obvious and the reader
+             can judge it themselves. -->
+        <section class="reveal">
+          <h2 class="font-display text-2xl font-bold text-ink">What it ran on before</h2>
+          <p class="mt-4 max-w-(--container-reading) leading-relaxed text-ink-muted">
+            RMH3 has sold dental supplies since 1993, and it is a family business, not a
+            technical one. When I arrived the work ran on QuickBooks for the books and
+            SellerCloud for inventory, wired together roughly — plus Shopify apps, a stack
+            of Google Sheets in Notion for orders and customer-service cases, CSVs for
+            importing catalogues and product images, and pen and paper on the warehouse
+            floor. No barcodes on the shelves and no scanners.
+          </p>
+          <p class="mt-4 max-w-(--container-reading) leading-relaxed text-ink-muted">
+            It was not for lack of trying. They had paid SellerCloud for custom API
+            connections and hired contractors on and off for a couple of years to build
+            around the gaps. None of it held, partly because Net32 — the channel that
+            matters most to this business — offers very little API for prices or orders,
+            so the hard part was never the part anyone quoted for. That is the situation
+            MHLHUB replaced.
+          </p>
+        </section>
+
+        <!-- The answer to "sole engineer at a small company, so who checks
+             your work?" — the honest version is more interesting than the
+             defensive one. -->
+        <section class="reveal">
+          <h2 class="font-display text-2xl font-bold text-ink">Who I work with</h2>
+          <p class="mt-4 max-w-(--container-reading) leading-relaxed text-ink-muted">
+            I'm the only engineer here, which is not the same as working alone. The owner
+            runs the front of the business — branding, the storefront, the catalogue — and
+            ships changes to it by directing AI agents. My job is to make that safe to do:
+            I own the backend, the environments it all runs on (Shopify, Railway, GitHub,
+            Harness) and the hooks and rules that decide what is allowed to land.
+          </p>
+          <p class="mt-4 max-w-(--container-reading) leading-relaxed text-ink-muted">
+            So most of what I build is for people who don't write code, and a growing part
+            of it is tooling that lets them build too — which is a different job from
+            writing features, and the one I've gotten good at.{' '}
+            <a class="text-accent hover:underline" href="/projects/agent-fleet">
+              How that actually works →
+            </a>
+          </p>
+        </section>
       </div>
 
       <aside class="space-y-6">
@@ -83,7 +144,7 @@ const path = [
           </dl>
           <div class="mt-5 flex flex-wrap gap-2">
             <a href="/contact" class="btn btn-primary text-sm">Get in touch</a>
-            <a href={site.resumeUrl} class="btn btn-ghost text-sm">Résumé</a>
+            <a href={site.resumeUrl} class="btn btn-ghost text-sm">Resume</a>
           </div>
         </div>
 
@@ -123,8 +184,8 @@ const path = [
         <p class="eyebrow">Right now</p>
         <p class="mt-3 leading-relaxed text-ink-muted">
           Running a fleet of AI coding sessions against one codebase without them
-          corrupting each other — the hooks and rules that make the dangerous operations
-          impossible rather than discouraged.{' '}
+          corrupting each other. It's mostly hooks and rules that make the dangerous
+          operations impossible instead of just discouraged.{' '}
           <a class="text-accent hover:underline" href="/projects/agent-fleet">The write-up →</a>
         </p>
       </div>
@@ -138,13 +199,32 @@ const path = [
       </div>
     </section>
 
+    <!-- Moved off the home page, where it sat 300px from a tile saying the same
+         three things in different words. It belongs with the story, not in
+         front of the work. -->
+    <section class="mt-20">
+      <SectionHeading
+        eyebrow="Principles"
+        title="Three things I've learned the expensive way"
+      />
+      <div class="grid gap-4 md:grid-cols-3">
+        {site.principles.map((p, i) => (
+          <article class="tile reveal p-6" style={`--reveal-delay: ${i * 80}ms`}>
+            <span class="font-display text-4xl font-extrabold text-accent/60">0{i + 1}</span>
+            <h3 class="mt-3 font-display text-xl font-bold text-ink">{p.title}</h3>
+            <p class="mt-3 text-sm leading-relaxed text-ink-muted">{p.body}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
     <!-- Skills. The one long list that earns its length — it is scanned, not read. -->
     <section class="mt-20 pb-8">
       <SectionHeading
         eyebrow="Toolkit"
         title="What I work with"
         lead="Ordered by how often I reach for it, not alphabetically."
-        link={{ href: '/resume', label: 'Full résumé' }}
+        link={{ href: '/resume', label: 'Full resume' }}
       />
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {site.skills.map((row, i) => (

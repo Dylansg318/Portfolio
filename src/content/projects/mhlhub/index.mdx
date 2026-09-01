@@ -1,11 +1,15 @@
 ---
-title: MHLHUB — the ERP that runs a dental supply company
-blurb: One system for orders, inventory, repricing, shipping, service and books across six sales channels — built from scratch, about 500 orders a day.
-plainBlurb: The company sold on six websites using six different tools that never agreed. I built the one system that runs it all — about 500 orders a day.
+title: MHLHUB, the ERP that runs a dental supply company
+blurb: One system for orders, inventory, repricing, shipping, service and books across six sales channels, built from scratch, about 500 orders a day.
+plainBlurb: The company sold on six websites using six different tools that never agreed. I built the one system that runs it all, about 500 orders a day.
 date: 2026-08-30
 featured: 100
 status: live
 role: sole engineer · 13 daily users
+cover: ./warehouse-map.png
+coverAlt: >-
+  The MHLHUB warehouse map: a floor plan of two buildings with 119 numbered
+  storage locations, a restock-walk button and a printable map.
 stack: [TypeScript, Node.js, Express, React, PostgreSQL, Railway, GitHub Actions, Docker]
 
 problem: >-
@@ -19,20 +23,20 @@ unique: >-
   I stopped treating it as "a dashboard over the data" and built it as the place the
   work actually happens: the order is picked in the page, the return is decided in
   the page, the bill is matched in the page. Everything is organised around seven
-  daily loops the business runs on — intake, inventory, repricing, service, returns,
-  financials, intelligence — and every job, page and background producer has to
+  daily loops the business runs on: intake, inventory, repricing, service, returns,
+  financials and intelligence. Every job, page and background producer has to
   trace to one of them. Rules that had cost real money became rules in code.
 
 learned:
-  - The most expensive bugs were never crashes. They were plausible numbers — a 30-day revenue figure overstated by 60% because a query windowed on the date we recorded the order instead of the date it happened. I now design the guardrail before the feature.
-  - A background job that reports success while doing nothing is worse than one that fails. Every scheduled job here checkpoints, logs what it touched, and trips a breaker if it keeps failing, because "it ran" is not the same as "it worked".
-  - Writing the operating rules down — 40-plus pages of them — was the single highest-leverage thing I did. It is what let the work scale beyond one pair of hands without the rules leaking out of people's heads.
+  - The most expensive bugs were never crashes. They were plausible numbers, a 30-day revenue figure overstated by 60% because a query windowed on the date we recorded the order instead of the date it happened. I now design the guardrail before the feature.
+  - A background job that reports success while doing nothing is worse than one that fails. Every scheduled job here checkpoints, logs what it touched, and trips a breaker if it keeps failing, because "it ran" isn't the same as "it worked".
+  - Writing the operating rules down (40-plus pages of them) was the single highest-leverage thing I did. It's what let the work scale beyond one pair of hands without the rules leaking out of people's heads.
 
 aiNote: >-
   Built with AI coding agents doing most of the typing and me doing the deciding:
   the schema, the loop model, the invariants, what gets a second-model review and
-  what ships on sight. The interesting engineering was making that safe — hooks,
-  a coordination layer, and rule files that auto-load per area. That is its own
+  what ships on sight. The interesting engineering was making that safe, hooks,
+  a coordination layer, and rule files that auto-load per area. That's its own
   write-up on this site.
 
 metrics:
@@ -46,25 +50,23 @@ metrics:
 
 ## The story
 
-RMH3 Dental sells dental supplies to dentists across the country — on Net32, eBay,
+RMH3 Dental sells dental supplies to dentists across the country, on Net32, eBay,
 Amazon, Shopify, Walmart, and over the phone. When I joined, each of those lived in its
 own tool, plus a dozen spreadsheets and a shared email inbox someone sorted by hand.
 The tools disagreed with each other every single day, and someone had to figure out
 which one was lying before the trucks left.
 
-I was hired to fix one spreadsheet — the one where prices got updated every morning.
+I was hired to fix one spreadsheet, the one where prices got updated every morning.
 Instead, piece by piece, I built the company a single system that does all of it: every
-order from every website lands in one place; the warehouse picks and packs from one
-screen; prices update themselves; shipping labels get bought and printed automatically;
-returns and customer emails live in the same place as the orders they're about; and the
+order from every website lands in one place. The warehouse picks and packs from one
+screen. Prices update themselves. Shipping labels get bought and printed automatically. Returns and customer emails live in the same place as the orders they're about. And the
 accounting matches the sales, with the receipts to prove it.
 
-The result you can measure: the company went from about 270 orders a day to about 520 —
-almost double — **without hiring anyone new in operations**. And when a number looks
+The result you can measure: the company went from about 270 orders a day to about 520, almost double, and **without hiring anyone new in operations**. And when a number looks
 wrong now, there's one system to ask, and it shows its work.
 
-The part I'm proudest of isn't a feature. It's that the expensive mistakes — the ones
-where a number is *believably* wrong and nobody notices for a month — now have guardrails
+The part I'm proudest of isn't a feature. It's that the expensive mistakes, the ones
+where a number is *believably* wrong and nobody notices for a month, now have guardrails
 built in, because each one only ever got to happen once.
 
 </PlainOnly>
@@ -76,7 +78,7 @@ built in, because each one only ever got to happen once.
 A dental supply distributor lives on thin margins and high volume. When I started, about
 270 orders a day came in across five marketplaces and a phone line, and each one passed
 through three or four tools on its way to a box. Inventory was in one place, prices in
-another, the books in a third, and when they disagreed — which was daily — someone
+another, the books in a third, and when they disagreed, which was daily. Someone
 reconciled by hand at the end of the shift.
 
 The brief was small: fix the pricing spreadsheet. The real job turned out to be everything
@@ -84,8 +86,8 @@ around it.
 
 ## How it's shaped
 
-MHLHUB is a single TypeScript codebase — an Express API, a React client, one PostgreSQL
-database — deployed as a container on Railway through GitHub Actions. That part is
+MHLHUB is a single TypeScript codebase, an Express API, a React client, one PostgreSQL
+database, deployed as a container on Railway through GitHub Actions. That part is
 ordinary on purpose. The interesting decisions are in how it's organised.
 
 **Seven loops, not a feature list.** Every screen and every one of the 180 scheduled jobs
@@ -95,13 +97,13 @@ doesn't slot into a loop, that's a signal to stop and ask what it's for. It keep
 system from growing sideways.
 
 **Seams, not pages.** Before building something new, the question is whether an existing
-seam covers it — the job scheduler, the signals feed, the document-ingestion queue, the
+seam covers it, the job scheduler, the signals feed, the document-ingestion queue, the
 audit log. "A page that lists things the user then does something about" almost always
 wants to be a signal producer, not a page.
 
 **Jobs that survive a redeploy.** Every long-running job checkpoints. When Railway swaps
 the container mid-run, the next run resumes from the last checkpoint instead of starting
-over — or worse, silently skipping the tail.
+over, or worse, silently skipping the tail.
 
 ## The rules that stopped the bleeding
 
@@ -111,18 +113,18 @@ The rules that matter most are the ones that cost money before they existed. A f
   to the catalog. Before this rule, a bad feed could rename 20,000 products overnight.
 - **Business date, not record date.** Revenue, velocity and ship-time metrics window on when
   the order happened, never on when it landed in our database. Backfills insert months after
-  the sale; a plain filter once overstated a month of revenue by 60%.
+  the sale. A plain filter once overstated a month of revenue by 60%.
 - **A cart on Net32 is two orders.** Net32 splits one checkout across our two storefronts
   and gives both the same order number. Finance, inventory and customer service treat them
-  as separate; only the shipper may box them together. Every query on that order number
+  as separate. Only the shipper may box them together. Every query on that order number
   must also say which storefront, or refuse.
 - **Humans see the channel's order number, never ours.** An alert that says "order 1323434"
-  is unactionable — nobody can type that into eBay. Every human-facing surface names the
+  is unactionable, nobody can type that into eBay. Every human-facing surface names the
   marketplace's id and the storefront.
 
 <Takeaway>
   None of these are clever. Each exists because its absence produced a specific, expensive
-  mistake, and each is enforced in code — a query helper, a hook, a schema constraint — not
+  mistake, and each is enforced in code, a query helper, a hook, a schema constraint, not
   in a wiki nobody reads.
 </Takeaway>
 
@@ -136,7 +138,7 @@ from carrier polls. A customer-service desk over Gmail and eBay messages, with r
 refund splits. Invoicing, AR and AP, and a two-way QuickBooks Desktop integration. A
 signals feed that surfaces what a human should look at today.
 
-About 520 orders a day go through it now — roughly double where it started — with the same
+About 520 orders a day go through it now, roughly double where it started, with the same
 operations team.
 
 </EngOnly>

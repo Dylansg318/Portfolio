@@ -8,20 +8,32 @@
 /* ---------------------------------------------------------------------------
    DESIGN TOKENS — the entire design system lives in this block.
 
-   Palette: "Meadow Green" — a ten-step ramp from lime to deep navy.
-   Text is only ever near-black or white; the palette drives the furniture
-   (nav bar, active tab, pills, buttons, borders, surfaces).
+   Structure: a NEUTRAL GRAPHITE ground carries the page, and the "Meadow
+   Green" ramp is spent only on highlights — links, the active tab, the
+   headline gradient, focus rings, the eyebrow rule. Nothing large is tinted.
+   That is deliberate: colour reads as emphasis only when most of the page
+   isn't coloured, and a grey ground is what makes a portfolio look like a
+   product rather than a theme demo.
 
-   Contrast rule baked into the assignments below: the ramp FLIPS at step 8.
-   Steps 1-7 are light enough to carry black text; steps 8-10 need white.
-   Never put white text on meadow-1..7 or black text on meadow-8..10.
+   The nav bar is near-black in BOTH themes. Header.astro layers white/10-style
+   borders and hovers on it, which only resolve against a dark bar — so --nav
+   must never become a light colour without rewriting those. Header.astro paints
+   it at 90-95% over a blur, so the light theme composites it slightly UP from
+   this hex — meaning the gate's opaque score is the more forgiving one. Keep
+   that opacity high, or --nav-muted's real contrast drifts below what the gate
+   reports.
+
+   Contrast rule for the ramp: it FLIPS at step 8. Steps 1-7 are light enough
+   to carry black text; steps 8-10 need white. Never put white text on
+   meadow-1..7 or black text on meadow-8..10.
 
    scripts/check-contrast.mjs parses the two blocks below and fails `npm run
    check` if any text/background pair drops under WCAG AA. Keep the hex values
-   in these two blocks; decorative gradients live further down.
+   in these two blocks.
 --------------------------------------------------------------------------- */
 :root {
-  /* the raw ramp — available as bg-meadow-lime, text-meadow-yale, etc. */
+  /* the raw ramp — available as bg-meadow-lime, text-meadow-yale, etc.
+     Highlights only; nothing here paints a page or a card. */
   --meadow-lime: #d9ed92;
   --meadow-light: #b5e48c;
   --meadow-willow: #99d98c;
@@ -35,30 +47,31 @@
 
   color-scheme: light;
 
-  /* page surfaces — a whisper of the teal end, never a wash */
-  --bg: #f6faf8;
+  /* page surfaces — neutral grey, cards lift to white */
+  --bg: #f4f5f7;
   --surface: #ffffff;
-  --surface-raised: #edf5f1;
-  --border: #d7e7df;
-  --border-strong: #6c96a0;
+  --surface-raised: #eceef1;
+  --border: #dcdfe4;
+  --border-strong: #7d8590;
 
   /* text — black only */
-  --ink: #0b1512;
-  --ink-muted: #3c554d;
-  --ink-faint: #4e6a61;
+  --ink: #16191d;
+  --ink-muted: #4a5058;
+  --ink-faint: #5c636c;
 
-  /* the nav bar is the palette's loudest moment */
-  --nav: #184e77;
+  /* the nav bar: near-black chrome, so the lime mark and active tab are the
+     only colour in it */
+  --nav: #1b1f24;
   --nav-ink: #ffffff;
-  --nav-muted: #b7d3e5;
+  --nav-muted: #b8bfc8;
   --tab-active: #b5e48c;
   --tab-active-ink: #0b1512;
 
-  /* accent — deep enough to carry white text */
+  /* accent — the ramp's one job on a grey page */
   --accent: #1a759f;
   --accent-hover: #1e6091;
   --accent-ink: #ffffff;
-  --accent-wash: #e1f0f7;
+  --accent-wash: #dcecf5;
 
   /* status, kept inside the palette where the hue allows */
   --ok: #2f7a55;
@@ -72,47 +85,40 @@
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* ambient glows behind the hero and section headers — decorative only */
-  --glow-a: rgba(82, 182, 154, 0.28);
-  --glow-b: rgba(26, 117, 159, 0.22);
-  --glow-c: rgba(217, 237, 146, 0.35);
-  --grid-line: rgba(24, 78, 119, 0.07);
+  --shadow-cast: rgba(16, 19, 23, 0.28);
 }
 
 [data-theme='dark'] {
   color-scheme: dark;
 
-  /* deep ocean ground, so the green end of the ramp can be the accent */
-  --bg: #071c27;
-  --surface: #0c2734;
-  --surface-raised: #113445;
-  --border: #1b4a5f;
-  --border-strong: #2f6e83;
+  /* graphite ground — dark grey, not black, so cards can sit above it */
+  --bg: #16181c;
+  --surface: #1d2025;
+  --surface-raised: #24282e;
+  --border: #2e333a;
+  --border-strong: #5f6873;
 
   /* text — white only */
   --ink: #ffffff;
-  --ink-muted: #a9ccd9;
-  --ink-faint: #83b3c3;
+  --ink-muted: #b4bcc6;
+  --ink-faint: #98a1ac;
 
-  --nav: #14486a;
+  --nav: #101215;
   --nav-ink: #ffffff;
-  --nav-muted: #b3d3e2;
+  --nav-muted: #aeb6c0;
   --tab-active: #b5e48c;
   --tab-active-ink: #0b1512;
 
   --accent: #b5e48c;
   --accent-hover: #d9ed92;
-  --accent-ink: #071c27;
-  --accent-wash: #113445;
+  --accent-ink: #141619;
+  --accent-wash: #2a3320;
 
   --ok: #76c893;
   --warn: #d9ed92;
   --danger: #ff9d9d;
 
-  --glow-a: rgba(118, 200, 147, 0.22);
-  --glow-b: rgba(22, 138, 173, 0.28);
-  --glow-c: rgba(181, 228, 140, 0.16);
-  --grid-line: rgba(181, 228, 140, 0.06);
+  --shadow-cast: rgba(0, 0, 0, 0.6);
 }
 
 /* `inline` makes the utilities resolve to var(--x) at runtime rather than
@@ -208,41 +214,18 @@
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
     }
-    .reveal { opacity: 1 !important; transform: none !important; }
+    /* A scroll-timeline animation is driven by scroll position, not a clock,
+       so zeroing animation-duration above does nothing to it. It has to be
+       switched off outright. */
+    .reveal, .reveal-load {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
   }
 }
 
 @layer components {
-  /* ---- ambient backdrop: two soft glows + a faint grid, CSS only ---------- */
-  .ambient {
-    position: relative;
-    isolation: isolate;
-  }
-  .ambient::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background:
-      radial-gradient(60rem 30rem at 50% -10%, var(--glow-a), transparent 60%),
-      radial-gradient(45rem 26rem at 12% 10%, var(--glow-b), transparent 60%),
-      radial-gradient(45rem 26rem at 88% 10%, var(--glow-b), transparent 60%),
-      radial-gradient(30rem 20rem at 50% 100%, var(--glow-c), transparent 65%);
-  }
-  .ambient::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background-image:
-      linear-gradient(var(--grid-line) 1px, transparent 1px),
-      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-    background-size: 2.5rem 2.5rem;
-    mask-image: radial-gradient(70rem 40rem at 50% 0%, black 30%, transparent 80%);
-  }
-
   /* ---- gradient headline ink ------------------------------------------- */
   .text-gradient {
     background: linear-gradient(100deg, var(--meadow-light), var(--meadow-mist) 55%, var(--meadow-bondi));
@@ -256,18 +239,57 @@
     background-clip: text;
   }
 
-  /* ---- reveal on scroll: opacity + 12px rise, driven by one observer.
-     The hidden state is gated on html.js (set by the inline theme script),
-     so with JavaScript off every element is simply visible. ---- */
-  .reveal {
+  /* ---- reveal on scroll: opacity + a 12px rise ---------------------------
+     One effect, two implementations, picked once at boot.
+
+     `.reveal-css` (set by the head script when `animation-timeline: view()`
+     is supported) hands the whole thing to the browser: the animation is
+     driven by scroll POSITION off the compositor, so no JavaScript ever runs
+     on the scroll path. That is the entire point — a debounced scroll handler
+     is still a scroll handler, and on a mid-range phone it is the thing that
+     drops frames.
+
+     Without it (Firefox, at the time of writing) the IntersectionObserver in
+     Base.astro adds `.is-in` and CSS transitions do the work, exactly as
+     before. Both paths are gated on `.js`, so with JavaScript off nothing
+     hides in the first place.
+
+     `.reveal-load` is the above-the-fold case. An element already on screen
+     is past the `entry` range before the page is even interactive, so a
+     scroll timeline would just show it with no entrance. Those elements are
+     marked in the markup (never by script — adding the class after first
+     paint would flash) and animate on a clock instead, which is what keeps
+     the staggered hero choreography. ---- */
+  @keyframes reveal-in {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* --- path A: observer + transitions (fallback) --- */
+  .js:not(.reveal-css) .reveal {
     transition:
       opacity var(--dur-slow) var(--ease-out),
       transform var(--dur-slow) var(--ease-out);
     transition-delay: var(--reveal-delay, 0ms);
   }
-  .js .reveal:not(.is-in) {
+  .js:not(.reveal-css) .reveal:not(.is-in) {
     opacity: 0;
     transform: translateY(12px);
+  }
+
+  /* --- path B: CSS scroll timelines --- */
+  .reveal-css .reveal {
+    animation: reveal-in linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 55%;
+  }
+  /* Above the fold: a timed entrance, so the stagger survives. `auto` puts it
+     back on the document clock — without it the rule above still applies. */
+  .reveal-css .reveal-load {
+    animation: reveal-in var(--dur-slow) var(--ease-out) both;
+    animation-delay: var(--reveal-delay, 0ms);
+    animation-timeline: auto;
+    animation-range: normal;
   }
 
   /* ---- bento tile: the shared card surface with a lift on hover --------- */
@@ -295,7 +317,7 @@
   .tile:hover {
     border-color: var(--border-strong);
     transform: translateY(-2px);
-    box-shadow: 0 18px 40px -24px rgba(7, 28, 39, 0.55);
+    box-shadow: 0 18px 40px -24px var(--shadow-cast);
   }
   .tile:hover::before {
     opacity: 1;

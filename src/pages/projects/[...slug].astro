@@ -9,12 +9,13 @@ import Figure from '../../components/mdx/Figure.astro';
 import Takeaway from '../../components/mdx/Takeaway.astro';
 import PlainOnly from '../../components/mdx/PlainOnly.astro';
 import EngOnly from '../../components/mdx/EngOnly.astro';
-import { getProjects, getProjectNeighbours, coverGradient, statusLabel } from '../../lib/content';
+import { getAllProjects, getChildren, getProjectNeighbours, statusLabel } from '../../lib/content';
 
-// Same helper as the index, so the draft exclusion gates ROUTE GENERATION too.
-// Filtering only the listing would leave drafts live at their own URL.
+// Routes come from getAllProjects, not getProjects: subsystems are hidden from
+// LISTINGS, not from the site. The draft exclusion still gates route generation
+// here — filtering only the listing would leave drafts live at their own URL.
 export async function getStaticPaths() {
-  const projects = await getProjects();
+  const projects = await getAllProjects();
   return projects.map((project) => ({
     params: { slug: project.id },
     props: { project },
@@ -25,6 +26,11 @@ const { project } = Astro.props;
 const { data } = project;
 const { Content } = await render(project);
 const { prev, next } = await getProjectNeighbours(project.id);
+
+// A subsystem shows where it belongs; a parent shows what it contains.
+const all = await getAllProjects();
+const parent = data.parent ? all.find((p) => p.id === data.parent) : undefined;
+const children = await getChildren(project.id);
 
 // Components available inside the MDX body.
 const components = { Demo, CodeFile, Video, Figure, Takeaway, PlainOnly, EngOnly };
@@ -37,14 +43,32 @@ const components = { Demo, CodeFile, Video, Figure, Takeaway, PlainOnly, EngOnly
 >
   <article>
     <!-- Hero -->
-    <header class="ambient border-b border-border">
+    <header class="border-b border-border">
       <div class="mx-auto max-w-(--container-wide) px-4 py-12 sm:px-6 sm:py-16">
-        <a
-          href="/projects"
-          class="mb-8 inline-flex items-center gap-1.5 text-sm text-ink-muted transition-colors hover:text-ink"
-        >
-          <span aria-hidden="true">←</span> All projects
-        </a>
+        <!-- A subsystem says what it is part of. Landing on the repricing
+             write-up from a search result should never leave a reader unsure
+             whether they are looking at a standalone tool or one organ of
+             something larger. -->
+        {parent ? (
+          <nav class="mb-8 flex flex-wrap items-center gap-1.5 text-sm text-ink-muted" aria-label="Breadcrumb">
+            <a href="/projects" class="transition-colors hover:text-ink">All projects</a>
+            <span aria-hidden="true" class="text-ink-faint">/</span>
+            <a href={`/projects/${parent.id}`} class="transition-colors hover:text-ink">
+              {parent.data.title.split(',')[0]}
+            </a>
+            <span aria-hidden="true" class="text-ink-faint">/</span>
+            <span class="text-ink-faint">
+              {project.id.split('/').pop()!.replace(/-/g, ' ').replace(/^./, (c: string) => c.toUpperCase())}
+            </span>
+          </nav>
+        ) : (
+          <a
+            href="/projects"
+            class="mb-8 inline-flex items-center gap-1.5 text-sm text-ink-muted transition-colors hover:text-ink"
+          >
+            <span aria-hidden="true">←</span> All projects
+          </a>
+        )}
 
         <div class="flex flex-wrap items-center gap-3 text-sm">
           <span
@@ -113,14 +137,12 @@ const components = { Demo, CodeFile, Video, Figure, Takeaway, PlainOnly, EngOnly
           sizes="(max-width: 1152px) 100vw, 1152px"
         />
       </div>
-    ) : (
-      <div class="mx-auto max-w-(--container-wide) px-4 sm:px-6">
-        <div
-          class="cover-art -mt-8 h-24 w-full rounded-xl border border-border shadow-xl sm:h-32"
-          style={`background: ${coverGradient(project.id)}`}
-        />
-      </div>
-    )}
+    ) : null}
+    <!-- A project without cover art gets NO band. The generated gradient still
+         earns its place on a card, where a thumbnail slot has to hold
+         something — but stretched full-width here it was a saturated slab
+         carrying no information, and on the grey ground it read as the loudest
+         thing on the page. Colour is for highlights; this was wallpaper. -->
 
     <!-- THE CONTRACT: rendered identically on every project, so a reader
          comparing two projects finds the same answers in the same place. -->
@@ -146,6 +168,39 @@ const components = { Demo, CodeFile, Video, Figure, Takeaway, PlainOnly, EngOnly
             <p class="mt-1.5 text-sm leading-relaxed text-ink-muted">{data.aiNote}</p>
           </div>
         </aside>
+      )}
+
+      <!-- The parts of the system, before the long read rather than after it.
+           Someone who came for "how does the repricing work" should not have
+           to finish 1,300 words about the whole ERP to find out that there is
+           a dedicated write-up for it. -->
+      {children.length > 0 && (
+        <section class="mt-12">
+          <h2 class="eyebrow mb-4 !font-sans text-xs !tracking-[0.12em]">Inside it</h2>
+          <div class="grid gap-3 sm:grid-cols-3">
+            {children.map((child) => (
+              <a
+                href={`/projects/${child.id}`}
+                class="tile group flex flex-col p-5 transition-colors hover:border-border-strong"
+              >
+                <h3 class="font-display text-base font-bold leading-snug text-ink transition-colors group-hover:text-accent">
+                  {child.data.title}
+                </h3>
+                {child.data.metrics[0] && (
+                  <p class="mt-3 font-display text-2xl font-extrabold tracking-tight text-ink">
+                    {child.data.metrics[0].value}{' '}
+                    <span class="font-sans text-xs font-medium uppercase tracking-wide text-ink-faint">
+                      {child.data.metrics[0].label}
+                    </span>
+                  </p>
+                )}
+                <span class="mt-auto pt-4 text-sm font-medium text-accent transition-transform group-hover:translate-x-0.5">
+                  Read it →
+                </span>
+              </a>
+            ))}
+          </div>
+        </section>
       )}
 
       <div class="prose-portfolio mt-12">

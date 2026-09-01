@@ -1,17 +1,23 @@
 ---
 title: Repricing every minute without a race to the bottom
-blurb: Replaced a morning pricing spreadsheet with an engine that reprices every minute — with cooldowns, floors, and a rule to never chase the lowest price.
-plainBlurb: Prices used to be a spreadsheet someone updated every morning. Now a robot checks every product once a minute — and knows better than to start a price war.
+blurb: Replaced a morning pricing spreadsheet with an engine that reprices every minute, with cooldowns, floors, and a rule to never chase the lowest price.
+plainBlurb: Prices used to be a spreadsheet someone updated every morning. Now a robot checks every product once a minute, and knows better than to start a price war.
 date: 2026-06-15
 featured: 90
+parent: mhlhub
 status: live
 role: sole engineer
+cover: ./repricer-dashboard.png
+coverAlt: >-
+  The repricer dashboard: buy-box win/loss counts, push success rates, a
+  breakdown of why listings are losing, and the safety rails including a
+  15% margin floor. A second storefront's name is blurred.
 stack: [TypeScript, Node.js, PostgreSQL, Python, Flask, Web scraping, Net32 API]
 
 problem: >-
   Prices on Net32 were set from a spreadsheet someone updated every morning by looking
-  at competitors. By noon it was stale; by the next morning we'd either lost the buy
-  box or given away margin overnight. The first automation — a Python scraper — helped,
+  at competitors. By noon it was stale. By the next morning we'd either lost the buy
+  box or given away margin overnight. The first automation, a Python scraper, helped,
   but it created a second problem: two pricing paths that could disagree, so the
   "optimal price" the dashboard showed wasn't always the price the job pushed.
 
@@ -19,19 +25,19 @@ unique: >-
   Two decisions carry the whole thing. First, never chase the lowest price: the tiered
   strategy targets the buy-box winner in the chosen mode, holds when undercutting would
   breach the floor, and pushes only when a competitor has actually moved and the
-  12-hour cooldown has cleared. Second, one engine everywhere — the manual button, the
+  12-hour cooldown has cleared. Second, one engine everywhere, the manual button, the
   bulk push, the auto mode, the post-scrape recompute and the "next run" preview all
   call the same function, so the preview can never lie about what the job will do.
 
 learned:
-  - Two engines that "should" agree will diverge, and you find out from a customer. The fix isn't syncing them; it's deleting one.
-  - A cooldown is a feature, not a limitation. Repricing on every scrape turns two sellers into a price war with a one-minute tick; a per-product anchor with a 12-hour hold made prices stable enough for the buyer to trust.
+  - Two engines that "should" agree will diverge, and you find out from a customer. The fix isn't syncing them. It's deleting one.
+  - A cooldown is a feature, not a limitation. Repricing on every scrape turns two sellers into a price war with a one-minute tick. A per-product anchor with a 12-hour hold made prices stable enough for the buyer to trust.
   - Log every attempt, including the ones that decided not to push. When margin drops, the question is always "why didn't it move?", and "it ran and chose to hold" is an answer only if you wrote it down.
 
 aiNote: >-
   The first version was hand-written Python and XPath. The rewrite into the ERP was
-  agent-assisted, but the strategy — what counts as a competitor, when to hold, why
-  one engine — was worked out on paper with the owner first. The agent's most useful
+  agent-assisted, but the strategy, what counts as a competitor, when to hold, why
+  one engine, was worked out on paper with the owner first. The agent's most useful
   contribution was the diagnostic that proves the preview and the push agree.
 
 metrics:
@@ -41,24 +47,26 @@ metrics:
   - { label: pricing engines, value: "1" }
 ---
 
+import logShot from './repricer-log.png';
+
 <PlainOnly>
 
 ## The story
 
-On a marketplace like Net32, the seller with the right price wins the sale — and
+On a marketplace like Net32, the seller with the right price wins the sale, and
 competitors change their prices all day long. Ours were set from a spreadsheet someone
 updated every morning by eyeballing the competition. By lunchtime it was stale. By the
 next morning we'd either lost sales overnight or quietly given margin away.
 
 So I built the robot version of that morning routine. Every minute it looks at the
 products that are due for a check, sees what competitors are charging right now, and
-decides: move, or hold. It has manners built in — it never drops below the floor price a
+decides: move, or hold. It has manners built in. It never drops below the floor price a
 human set, it waits twelve hours before touching the same product twice, and it never
 plays "match the lowest," because two robots doing that race each other to zero profit
 in an afternoon.
 
 It has made over **138,000 price changes** so far, and every single one is written down
-with the reason — so when someone asks "why is this listed at $41.20?", the answer takes
+with the reason, so when someone asks "why is this listed at $41.20?", the answer takes
 one look, not an argument.
 
 </PlainOnly>
@@ -69,7 +77,7 @@ one look, not an argument.
 
 The first thing I built at RMH3 was a Python and Flask tool that scraped competitor prices
 with XPath and pushed updates through the marketplace API. It replaced the spreadsheet and
-it worked — but it lived beside the rest of the business rather than inside it, and as the
+it worked, but it lived beside the rest of the business rather than inside it, and as the
 ERP grew it became the second place prices were decided.
 
 ## The schedule
@@ -77,8 +85,8 @@ ERP grew it became the second place prices were decided.
 Every product/vendor pair gets its own row in a schedule table: an anchor time, a 12-hour
 cooldown, and the last price we pushed. A sweep runs every minute and only touches the rows
 that are due. For each one it scrapes the live market, runs the strategy, and pushes to the
-marketplace only if the answer changed *and* the cooldown has cleared. Every attempt — push
-or hold — lands in a log with the reason.
+marketplace only if the answer changed *and* the cooldown has cleared. Every attempt, push
+or hold, lands in a log with the reason.
 
 That log is the most-read table in the system. When someone asks "why is this listing at
 $41.20?", the answer is one query away, with the competitor prices the engine saw when it
@@ -91,7 +99,7 @@ running it against each other converge on zero margin in an afternoon. The tiere
 instead:
 
 1. Identifies the buy-box winner in the mode we care about (authorised sellers by default).
-2. Undercuts them by a configured step — but only down to the product's floor.
+2. Undercuts them by a configured step, but only down to the product's floor.
 3. Holds if the floor would be breached, or if the winner is us, or if nothing has moved
    since the last push.
 
@@ -99,7 +107,7 @@ Floors and ceilings are per product and set by a person. The engine never invent
 
 ## One engine
 
-The rule that prevents the most bugs is boring: there is exactly one function that computes
+The rule that prevents the most bugs is boring: there's exactly one function that computes
 a price, and every path calls it. The manual "Execute" button, the bulk push, the ⚡ Auto
 toggle, the recompute that runs after a scrape, and the "next run preview" card on the
 listing page all go through the same code. If the preview says $41.20, the job will push
@@ -108,15 +116,29 @@ $41.20.
 <Takeaway>
   Before this rule the dashboard showed an "optimal price" computed one way and the job
   pushed a price computed another way. They agreed most of the time, which is the worst
-  possible amount — often enough to be trusted, rarely enough to be caught.
+  possible amount, often enough to be trusted, rarely enough to be caught.
 </Takeaway>
 
 ## Health, not just price
 
 The same engine feeds a buy-box analysis every five minutes, so the intelligence feed can
 say which listings lost the box, which competitors are new, and where our floor is what's
-holding us back. Pricing overrides — contract pricing, temporary promos — stay manual on
-purpose. Those are judgment calls; the engine's job is to make them visible, not to make
+holding us back. Pricing overrides, contract pricing, temporary promos, stay manual on
+purpose. Those are judgment calls. The engine's job is to make them visible, not to make
 them.
 
 </EngOnly>
+
+## Every push, with its reason
+
+<Figure
+  src={logShot}
+  alt="The repricing log: 8,592 pushes over seven days, each row showing the product, the old and new price, the percentage change, the trigger source and the reason the engine moved."
+  caption="Seven days of the log — 8,592 pushes across 172 pages. Each row carries the reason it moved, including the cases the engine declined to chase: 'sibling_reserve bypassed — primary out of stock on Net32; reserve takes the box'. The second storefront's name is blurred."
+  wide
+/>
+
+Nothing moves a price without writing down why it moved. That is what turns a wrong price
+into a five-minute question instead of an afternoon, and it is why the log is a screen you
+can open rather than a table someone digs through after something has already gone wrong.
+

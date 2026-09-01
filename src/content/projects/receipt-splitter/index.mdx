@@ -1,6 +1,6 @@
 ---
 title: Split the check from a photo
-blurb: A small Java tool that OCRs a receipt photo with Tesseract and asks a language model to split it between friends — my first AI-as-a-component build.
+blurb: A small Java tool that OCRs a receipt photo with Tesseract and asks a language model to split it between friends, my first AI-as-a-component build.
 plainBlurb: Photograph the dinner receipt, say who ate what, and it tells everyone what they owe. A weekend project that taught me a lot about where AI actually breaks.
 date: 2025-02-28
 featured: 40
@@ -14,19 +14,18 @@ problem: >-
   who had what, get the split.
 
 unique: >-
-  OCR first, model second. The language model never sees the image — Tesseract turns the
+  OCR first, model second. The language model never sees the image, Tesseract turns the
   photo into text, and the model's only job is assignment and arithmetic on that text.
   That keeps the expensive, unpredictable part small and makes its output easy to check
   against the receipt total.
 
 learned:
   - The cheapest way to make an LLM reliable is to give it less to do. Narrowing the task from "read this receipt" to "split these lines" removed most of the wrong answers.
-  - Real receipts are the test set. Thermal prints, folds, and a coffee stain broke the OCR long before the model did — the fragile part of an "AI" feature is usually the part before the AI.
+  - Real receipts are the test set. Thermal prints, folds, and a coffee stain broke the OCR long before the model did, the fragile part of an "AI" feature is usually the part before the AI.
   - I'd add a check that the split sums to the printed total before showing it. A confident wrong split is worse than an error message, and this project is where I first learned that.
 
 aiNote: >-
-  Hand-written, pre-agent. The model is a runtime component here, not a coding tool —
-  which turned out to be a useful way to learn where models are dependable (structured
+  Hand-written, pre-agent. The model is a runtime component here, not a coding tool, which turned out to be a useful way to learn where models are dependable (structured
   arithmetic over clean text) and where they aren't (reading a crumpled receipt).
 ---
 
@@ -35,14 +34,14 @@ aiNote: >-
 ## The story
 
 Every group dinner ends the same way: one person holding the receipt, reading line items
-out loud, while everyone does phone math. I wanted the lazy version — take a photo, say
+out loud, while everyone does phone math. I wanted the lazy version, take a photo, say
 who had what, get the split.
 
 So I built it. The computer reads the text off the receipt photo, then an AI does the
-assigning and the arithmetic — tax and tip split fairly. What actually broke, over and
+assigning and the arithmetic, tax and tip split fairly. What actually broke, over and
 over, wasn't the AI: it was the receipts. Thermal paper fades, people fold them, a
 coffee ring turns an 8 into a 3. The unglamorous step before the clever step is where
-these things really fail — a lesson I've reused constantly since.
+these things really fail, a lesson I've reused constantly since.
 
 The other keeper: a confident wrong answer is worse than an error message. Today I'd
 make it re-add the split and refuse to show one that doesn't match the printed total.
@@ -55,14 +54,13 @@ make it re-add the split and refuse to show one that doesn't match the printed t
 
 Point it at a receipt photo. Tesseract (through Tess4J) extracts the text. The text goes to
 an OpenAI chat completion with an instruction to split the items between the named people
-and return the totals, including tax and tip proportionally. A console program, deliberately
-— the point was the pipeline, not the UI.
+and return the totals, including tax and tip proportionally. A console program, deliberately, the point was the pipeline, not the UI.
 
 ## Why OCR first
 
 The obvious build is to hand the photo straight to a multimodal model and ask for the split.
 I didn't, for two reasons. The model was the expensive and least-predictable step, so I
-wanted it to do as little as possible. And I wanted a text intermediate I could read — when
+wanted it to do as little as possible. And I wanted a text intermediate I could read, when
 the split was wrong, I could see whether the OCR misread a price or the model mis-assigned
 an item, instead of staring at one opaque answer.
 
@@ -77,6 +75,6 @@ fails.
 
 Validate the output against the printed total and refuse to show a split that doesn't add up.
 Keep the OCR-first shape. And wrap it in something my friends would actually open at the
-table — which is a different project.
+table, which is a different project.
 
 </EngOnly>

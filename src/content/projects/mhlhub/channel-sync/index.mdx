@@ -4,6 +4,7 @@ blurb: Order intake and listing sync for six channels, with the identity rules t
 plainBlurb: Six websites, each with its own version of the truth about our 32,000 products. One catalog, owned by people, that none of them is allowed to overwrite.
 date: 2026-07-20
 featured: 80
+parent: mhlhub
 status: live
 role: sole engineer
 stack: [TypeScript, PostgreSQL, eBay API, Amazon SP-API, Shopify, Walmart, Net32, Gmail API]
@@ -13,11 +14,11 @@ problem: >-
   per-transaction. Net32 splits one cart into two orders under our two storefronts and
   gives them the same number. Amazon closes access to the buyer's address after thirty
   days. The old setup let each feed write straight into the catalog, so a bad sync could
-  rename thousands of products overnight — and did.
+  rename thousands of products overnight, and did.
 
 unique: >-
   The master catalog is sacred: a channel sync may create or update a listing row, never
-  a product. Listings bind to products; humans own the products. Order identity is the
+  a product. Listings bind to products. Humans own the products. Order identity is the
   channel's own id plus the storefront, never our internal number. And every payload from
   every marketplace is stored raw before it's parsed, so when the question changes next
   quarter the answer is already in the database instead of behind an API that has since
@@ -26,13 +27,12 @@ unique: >-
 learned:
   - A join against a vendor's mirror that matches zero rows is almost always your key format, not their data. A non-breaking space in a SKU cost a day.
   - Failing open is the default failure mode of a filter. A status check written as `<> 'void'` matched everything because the value was `'voided'`. Every list now has a canonical filter helper, and the helper has a test.
-  - Storing the raw payload is the cheapest insurance there is. Three separate features were shipped months later from data we'd already captured and never had to re-fetch.
+  - Storing the raw payload is the cheapest insurance there's. Three separate features were shipped months later from data we'd already captured and never had to re-fetch.
 
 aiNote: >-
-  The channel APIs were documented into the repo first — endpoints, quirks, the traps
-  we'd hit — and the agents worked from those docs. The rules (master is sacred,
-  identity is channel id + storefront, store raw) were mine, written before the code;
-  the agents' job was to make the code obey them, and hooks enforce that they still do.
+  The channel APIs were documented into the repo first (endpoints, quirks, the traps
+  we'd hit), and the agents worked from those docs. The rules (master is sacred,
+  identity is channel id + storefront, store raw) were mine, written before the code. The agents' job was to make the code obey them, and hooks enforce that they still do.
 
 metrics:
   - { label: sales channels, value: "6" }
@@ -45,19 +45,19 @@ metrics:
 
 ## The story
 
-Selling on six websites at once sounds like six copies of the same job. It isn't — each
+Selling on six websites at once sounds like six copies of the same job. It isn't. Each
 site has its own opinion about what a product is, what an order is, even what our company
 is. One of them splits a single customer checkout into *two* orders under our two store
 names and gives both the same order number. Get that wrong and you refund the wrong one.
 
 The old setup let each website write its own opinions straight into our product catalog.
-One bad update could rename thousands of products overnight — and once, it did.
+One bad update could rename thousands of products overnight, and once, it did.
 
 The fix was a house rule: **the catalog belongs to people.** The websites each get their
 own copy to scribble on, and a person approves anything before it touches the real thing.
 Now when a marketplace sends something weird, it becomes a ten-minute review for a human
 instead of a week-long cleanup. And every scrap of paper the marketplaces send us gets
-kept — which has quietly answered three "can we find out…?" questions months later, for
+kept, which has quietly answered three "can we find out…?" questions months later, for
 free.
 
 Today that's about **300,000 orders** and **49,000 listings** flowing through one set of
@@ -69,13 +69,13 @@ rules.
 
 ## The shape of the problem
 
-A dental distributor's catalog is big — 32,000 products — and every marketplace wants a
+A dental distributor's catalog is big: 32,000 products, and every marketplace wants a
 slightly different version of it. Titles are capped at 80 characters on one, banned words
 suspend a listing on another, and the same physical item may be listed three times under
 shadow SKUs so each storefront can price it independently.
 
 The old approach was to let the sync tool own the catalog: whatever the marketplace said,
-that's what the product became. It's the intuitive design and it is wrong, because the
+that's what the product became. It's the intuitive design and it’s wrong, because the
 marketplace is downstream of the catalog, not upstream of it.
 
 ## Master is sacred
@@ -92,20 +92,20 @@ minutes, instead of a hundred corrupted products that take a week to find.
 ## Identity
 
 Our internal order number exists nowhere outside this app. Nobody can type it into Seller
-Hub. So every human-facing surface — alerts, emails, printed documents, log lines — names
+Hub. So every human-facing surface (alerts, emails, printed documents, log lines) names
 the order the way the marketplace does, with the storefront:
 
 > Net32 #65046596 (RMH3 Dental)
 
 The storefront is part of the identity because Net32 splits one checkout across our two
-storefronts and gives both halves the same number. They are **two orders** — separate money,
+storefronts and gives both halves the same number. They're **two orders**, separate money,
 separate stock, separate status. The one thing they may share is a box: the shipper can
 co-box them to save postage, the way a warehouse would notice two orders going to one
 address. That coupling lives in shipping and nowhere else.
 
 <Takeaway>
   Most of the bugs in a multi-channel system are identity bugs wearing a costume. The fix
-  is rarely in the sync code; it's in deciding, once, what a thing *is* and refusing to let
+  is rarely in the sync code. It's in deciding, once, what a thing *is* and refusing to let
   any path answer differently.
 </Takeaway>
 
@@ -113,14 +113,13 @@ address. That coupling lives in shipping and nowhere else.
 
 Every response from every marketplace is stored as received, next to the parsed row. This
 looks like waste until the first time it isn't. Amazon closes access to a buyer's address
-after about thirty days; when a feature needed those addresses months later, they were
-already in the database. Carrier invoices, eBay finance transactions, Net32 payout reports —
-all kept raw, all mined later for things nobody asked for at ingest time.
+after about thirty days. When a feature needed those addresses months later, they were
+already in the database. Carrier invoices, eBay finance transactions, Net32 payout reports, all kept raw, all mined later for things nobody asked for at ingest time.
 
 ## Pushing back
 
 The other direction matters too. Stock levels push to every channel so we stop selling
-what we don't have; a marketplace that suppressed us for cancelling too many orders was the
+what we don't have. A marketplace that suppressed us for cancelling too many orders was the
 lesson there. Prices push from the repricing engine. Tracking pushes on ship. Each push is a
 job with a checkpoint, so a redeploy mid-run resumes rather than restarts.
 

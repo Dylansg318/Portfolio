@@ -18,7 +18,7 @@ import { site } from '../lib/site';
 import { tickets, cannedReplies } from '../lib/desk';
 
 const description =
-  'The help desk. Every project started as a request like these — describe the problem, it leaves as software. Raise a ticket.';
+  'The help desk. Every project started as a request like these, describe the problem, it leaves as software. Raise a ticket.';
 
 /** Reporter avatar hue — deterministic per ticket so it doesn't shuffle. */
 const hue = (i: number) => ['av-a', 'av-b', 'av-c', 'av-d', 'av-e'][i % 5];
@@ -69,7 +69,7 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
         <button type="button" data-nav="queue">Queues</button>
         <button type="button" data-nav="reports">Reports</button>
         <button type="button" data-nav="people">About</button>
-        <a href="/resume">Résumé</a>
+        <a href="/resume">Resume</a>
       </nav>
       <button type="button" class="create-btn" data-nav="new">Create</button>
       <label class="search">
@@ -98,7 +98,7 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
           <button type="button" data-nav="reports" class="side-item" data-side="reports">▥ Reports</button>
           <p class="side-h">Channels &amp; people</p>
           <button type="button" data-nav="people" class="side-item" data-side="people">☺ About me</button>
-          <a class="side-item" href="/resume">⎙ Résumé</a>
+          <a class="side-item" href="/resume">⎙ Resume</a>
           <a class="side-item side-exit" href="/">⏻ Exit help desk mode</a>
         </nav>
         <p class="side-fine">
@@ -123,7 +123,7 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
             </div>
             <div class="cta-row">
               <a class="cta cta-hot" href="#DSG-001" data-nav="DSG-001">Start with DSG-001 →</a>
-              <a class="cta" href="/resume">Résumé</a>
+              <a class="cta" href="/resume">Resume</a>
             </div>
           </div>
 
@@ -428,12 +428,12 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
               <p class="profile-role">{site.role} · {site.location}</p>
               <p class="profile-pill">{site.availability}</p>
               <p class="profile-bio">
-                The only agent on this desk — I also built the desk itself, along with the
+                The only agent on this desk. I also built the desk itself, along with the
                 company systems these tickets describe.
               </p>
               <div class="cta-row">
-                <a class="cta cta-hot" href={site.resumeUrl}>Résumé →</a>
-                <a class="cta" href={site.links.github} rel="me noopener">GitHub</a>
+                <a class="cta cta-hot" href={site.resumeUrl}>Resume →</a>
+                {site.links.github && <a class="cta" href={site.links.github} rel="me noopener">GitHub</a>}
                 <a class="cta" href={`mailto:${site.email}`}>{site.email}</a>
                 <a class="cta" href="/">Standard site</a>
               </div>
@@ -469,8 +469,8 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
     </div>
 
     <footer class="desk-foot">
-      <span>DSG SERVICE MANAGEMENT — the portfolio in help desk mode</span>
-      <span><a href="/">Standard site</a> · <a href="/resume">Résumé</a> · <a href="/projects/portfolio-site">How this site was built</a></span>
+      <span>DSG SERVICE MANAGEMENT, the portfolio in help desk mode</span>
+      <span><a href="/">Standard site</a> · <a href="/resume">Resume</a> · <a href="/projects/portfolio-site">How this site was built</a></span>
     </footer>
 
     <noscript>

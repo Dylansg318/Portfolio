@@ -23,6 +23,16 @@ export default defineConfig({
   trailingSlash: 'never',
   build: { format: 'file' },
 
+  // The three ERP subsystems used to be top-level projects. They are now
+  // children of MHLHUB and live under its path. Anything already linking to
+  // the old URLs — a sent résumé, a search result, a message — must still land
+  // on the write-up rather than a 404.
+  redirects: {
+    '/projects/repricer': '/projects/mhlhub/repricing',
+    '/projects/channel-sync': '/projects/mhlhub/channel-sync',
+    '/projects/quickbooks': '/projects/mhlhub/quickbooks',
+  },
+
   // Everything prerenders by default. Only routes that explicitly opt out
   // (`export const prerender = false`) invoke the Worker at request time.
   output: 'static',

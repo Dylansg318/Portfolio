@@ -7,14 +7,26 @@ export const site = {
   shortName: 'Dylan',
   title: 'Dylan San Gabriel — Software Engineer',
   role: 'Software engineer · Operations Technology Manager',
-  tagline: 'I build the software that runs a dental supply company.',
+  /** Descriptive, not a claim. Feeds /about's meta description and the default
+   *  OG card, both of which are read by people who have not met me. */
+  tagline:
+    'Software engineer in Northern Virginia. Builds and runs the ERP a dental distributor operates on.',
   description:
     'Order intake across six sales channels, inventory sync, automated repricing, ' +
-    'shipping, and the integrations that keep it all in agreement — about 500 orders ' +
+    'shipping, and the integrations that keep it all in agreement. About 500 orders ' +
     'a day, 32,000 products, one codebase. Write-ups of what the problem actually was ' +
     'and what came out of solving it.',
   location: 'Chantilly, VA',
   timezone: 'US Eastern',
+
+  /** The nameplate sentence is assembled from these, not hard-coded in the
+   *  page, so the one place that states where I work is also the only place
+   *  that has to change when that stops being true. */
+  employer: {
+    name: 'RMH3 Dental Supply',
+    kind: 'a family-run dental distributor',
+    site: 'https://rmh3dental.com',
+  },
 
   /** Shown as a pill in the hero. Empty string hides it. */
   availability: 'Open to backend / full-stack roles',
@@ -30,16 +42,24 @@ export const site = {
    *  src/pages/resume.astro for the print button. */
   resumeUrl: '/resume',
 
+  /** Empty string hides the link EVERYWHERE. Every surface guards on these, so
+   *  turning one back on is a one-line change here, not a hunt through pages.
+   *
+   *  github is deliberately off: the public profile is two repos, one of them
+   *  empty, because the real work is private or in the company's org. A link
+   *  from "I built the ERP a distributor runs on" to an empty account subtracts
+   *  credibility rather than adding it. Paste the URL back the day there is
+   *  something public worth opening. */
   links: {
-    github: 'https://github.com/Dylansg318',
-    linkedin: '', // TODO: paste the profile URL and it appears in the footer + hero
+    github: '', // was https://github.com/Dylansg318
+    linkedin: '', // TODO: paste the profile URL and it appears in the footer + contact
   },
 
   nav: [
     { href: '/', label: 'Home' },
     { href: '/projects', label: 'Work' },
     { href: '/about', label: 'About' },
-    { href: '/resume', label: 'Résumé' },
+    { href: '/resume', label: 'Resume' },
   ],
 
   /** The numbers a recruiter should see in the first ten seconds. Measured on
@@ -78,7 +98,7 @@ export const site = {
     },
     {
       group: 'Ops & tooling',
-      items: ['GitHub Actions', 'Docker', 'Railway', 'Cloudflare Workers', 'Jenkins', 'Jira', 'Claude Code'],
+      items: ['GitHub Actions', 'Docker', 'Railway', 'Harness', 'Cloudflare Workers', 'Jenkins', 'Jira', 'Claude Code'],
     },
   ],
 
@@ -92,11 +112,12 @@ export const site = {
       start: 'Jun 2025',
       end: 'Present',
       summary:
-        'Built and run MHLHUB, the in-house ERP that replaced off-the-shelf ERP software, spreadsheets and inbox triage for a six-channel dental distributor.',
+        'The only engineer at a family-run dental distributor. Built and run MHLHUB, the in-house ERP that replaced off-the-shelf software, spreadsheets and inbox triage across six sales channels.',
       bullets: [
-        'Designed and shipped the ERP the business runs on: order intake from six channels, inventory and lots, shipping labels, customer service, returns, and QuickBooks integration — one PostgreSQL database, ~180 scheduled jobs.',
+        'Only engineer on the team, and the one who makes it safe for people who are not engineers to ship: the owner directs AI agents at product and catalog work, and I own the backend, the environments (Shopify, Railway, GitHub, Harness) and the guardrails that decide what is allowed to land.',
+        'Designed and shipped the ERP the business runs on: order intake from six channels, inventory and lots, shipping labels, customer service, returns, and QuickBooks integration, all on one PostgreSQL database with ~180 scheduled jobs.',
         'Daily orders roughly doubled (≈270 → ≈520/day) on a 32,000-product catalog without adding ops headcount.',
-        'Replaced a morning repricing spreadsheet with a repricing engine that runs every minute per product/vendor with cooldowns and a tiered strategy — 138,000+ logged price pushes.',
+        'Replaced a morning repricing spreadsheet with a repricing engine that runs every minute per product/vendor with cooldowns and a tiered strategy, with 138,000+ logged price pushes so far.',
         'Integrated QuickBooks Desktop, eBay, Amazon, Shopify, Walmart, Net32 and three carriers, storing every raw payload so new fields never require a re-fetch.',
         'Ran a fleet of parallel AI coding sessions against one repo with hooks and a coordination layer that made the unsafe operations impossible instead of discouraged.',
       ],
@@ -108,7 +129,7 @@ export const site = {
       start: 'Aug 2022',
       end: 'Jun 2025',
       summary:
-        'Ran front-of-house and trained staff; promoted twice within months. Studied for the SDET bootcamp on the side.',
+        'Ran front-of-house and trained staff. Promoted twice within months. Studied for the SDET bootcamp on the side.',
       bullets: [
         'Managed front-of-house operations and server training while completing the CYDEO SDET program.',
       ],
@@ -120,10 +141,10 @@ export const site = {
       start: 'Jan 2020',
       end: 'Aug 2022',
       summary:
-        'Promoted from associate to store manager inside a year; beat performance targets by 30% with perfect customer-satisfaction scores.',
+        'Promoted from associate to store manager inside a year. Beat performance targets by 30% with perfect customer-satisfaction scores.',
       bullets: [
         'Owned the whole store: opening, closing, staffing, cash and inventory.',
-        'Exceeded organisational and individual targets by 30% for multiple months; raised customer satisfaction from 8.0/10 to 10/10.',
+        'Exceeded organisational and individual targets by 30% for multiple months. Raised customer satisfaction from 8.0/10 to 10/10.',
       ],
     },
   ],
@@ -135,14 +156,22 @@ export const site = {
       place: 'Tysons, VA',
       when: 'Feb – Oct 2024',
       detail:
-        'Selenium, Cucumber/Gherkin BDD, REST Assured, JDBC, Jenkins. Capstone: automating a modern ERP with a team of ten.',
+        'Java, UI test automation (Selenium, Cucumber/Gherkin), API testing (REST Assured), \
+SQL and database testing, Git and Jenkins. Two ten-person sprint teams automating live web \
+applications end to end: BriteERP by hand, then TryCloud with Selenium and Cucumber. Retains \
+alumni access to CYDEO\'s current AI QA Engineer curriculum.',
     },
     {
-      title: 'B.S. Computer Science',
+      /** Coursework, not a conferred degree, and said plainly. Degree claims
+       *  are verified by routine background checks; a credential a check can
+       *  disprove costs far more than the credential was ever worth. */
+      title: 'Computer Science coursework',
       org: 'George Mason University',
       place: 'Fairfax, VA',
       when: '2020 – 2024',
-      detail: "Dean's List. Object-oriented programming, game design, essentials of CS.",
+      detail:
+        "Dean's List. Object-oriented programming, game design, essentials of CS. \
+Coursework only — I left before the degree was conferred.",
     },
   ],
 
@@ -156,12 +185,12 @@ export const site = {
     {
       title: 'Subtly wrong is worse than obviously broken.',
       body:
-        'A page that crashes gets fixed the same day. A number that is plausibly wrong gets trusted for a month. I build for the second case.',
+        "A page that crashes gets fixed the same day. A number that's plausibly wrong gets trusted for a month. I build for the second case.",
     },
     {
       title: 'The app is the work, not a view of it.',
       body:
-        'If someone has to export to a spreadsheet to finish their job, the feature is not done. The screen is where the work happens.',
+        "If someone has to export to a spreadsheet to finish their job, the feature isn't done. The screen is where the work happens.",
     },
     {
       title: 'Store the raw thing, parse it after.',

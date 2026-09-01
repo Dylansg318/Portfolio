@@ -7,19 +7,19 @@ import { site } from '../lib/site';
 // the form from git history if a structured form is ever wanted again.
 const subject = encodeURIComponent('Hello from your portfolio');
 ---
-<Base title="Contact" description={`Get in touch with ${site.name} — email, GitHub, résumé.`}>
-  <section class="ambient">
-    <div class="mx-auto max-w-(--container-reading) px-4 py-16 sm:px-6 sm:py-24">
-      <p class="eyebrow reveal">Contact</p>
-      <h1 class="reveal mt-4 text-4xl font-extrabold tracking-tight text-ink sm:text-6xl" style="--reveal-delay: 60ms">
+<Base title="Contact" description={`Get in touch with ${site.name} — email, GitHub, resume.`}>
+  <section>
+    <div class="mx-auto max-w-(--container-reading) px-4 py-12 sm:px-6 sm:py-16">
+      <p class="eyebrow reveal reveal-load">Contact</p>
+      <h1 class="reveal reveal-load mt-4 text-4xl font-extrabold tracking-tight text-ink sm:text-6xl" style="--reveal-delay: 60ms">
         Say hello.
       </h1>
-      <p class="reveal mt-5 max-w-prose text-lg leading-relaxed text-ink-muted" style="--reveal-delay: 120ms">
-        Email is the whole system — no form, no ticket queue. It lands in my inbox and
-        I reply within a day, usually sooner. {site.timezone}.
+      <p class="reveal reveal-load mt-5 max-w-prose text-lg leading-relaxed text-ink-muted" style="--reveal-delay: 120ms">
+        Email is the whole system. There's no form and no ticket queue, it just lands in
+        my inbox. I reply within a day, usually sooner. {site.timezone}.
       </p>
 
-      <div class="reveal mt-9 flex flex-wrap items-center gap-3" style="--reveal-delay: 180ms">
+      <div class="reveal reveal-load mt-9 flex flex-wrap items-center gap-3" style="--reveal-delay: 180ms">
         <a href={`mailto:${site.email}?subject=${subject}`} class="btn btn-primary">
           Email {site.shortName}
           <span aria-hidden="true">→</span>
@@ -42,11 +42,13 @@ const subject = encodeURIComponent('Hello from your portfolio');
         <div class="tile p-5">
           <h2 class="eyebrow mb-3 text-xs">Elsewhere</h2>
           <ul class="space-y-2 text-sm leading-relaxed">
-            <li><a class="text-accent hover:underline" href={site.links.github} rel="me noopener">GitHub</a></li>
+            {site.links.github && (
+              <li><a class="text-accent hover:underline" href={site.links.github} rel="me noopener">GitHub</a></li>
+            )}
             {site.links.linkedin && (
               <li><a class="text-accent hover:underline" href={site.links.linkedin} rel="me noopener">LinkedIn</a></li>
             )}
-            <li><a class="text-accent hover:underline" href={site.resumeUrl}>Résumé</a></li>
+            <li><a class="text-accent hover:underline" href={site.resumeUrl}>Resume</a></li>
           </ul>
         </div>
       </div>
@@ -55,15 +57,20 @@ const subject = encodeURIComponent('Hello from your portfolio');
 </Base>
 
 <script>
-  const btn = document.getElementById('copy-email');
-  const status = document.getElementById('copy-status');
-  btn?.addEventListener('click', async () => {
-    const email = (btn as HTMLElement).dataset.email ?? '';
-    try {
-      await navigator.clipboard.writeText(email);
-      if (status) status.textContent = 'Copied to clipboard.';
-    } catch {
-      if (status) status.textContent = email;
-    }
+  // Re-run on every View Transitions navigation: a bundled module
+  // executes once, so top-level setup would go dead after the first
+  // soft navigation. astro:page-load also fires on the initial load.
+  document.addEventListener('astro:page-load', () => {
+    const btn = document.getElementById('copy-email');
+    const status = document.getElementById('copy-status');
+    btn?.addEventListener('click', async () => {
+      const email = (btn as HTMLElement).dataset.email ?? '';
+      try {
+        await navigator.clipboard.writeText(email);
+        if (status) status.textContent = 'Copied to clipboard.';
+      } catch {
+        if (status) status.textContent = email;
+      }
+    });
   });
 </script>

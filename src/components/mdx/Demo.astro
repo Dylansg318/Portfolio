@@ -123,6 +123,24 @@ const { demo, title, slug } = Astro.props;
     }
   };
 
+  // A mounted demo owns a requestAnimationFrame loop. Under View Transitions
+  // the DOM is swapped but the JS context survives — so without this, leaving
+  // a project page would leave its game running forever, burning frames and
+  // battery on a page nobody is looking at.
+  document.addEventListener('astro:before-swap', () => {
+    document.querySelectorAll<HTMLElement>('[data-demo-island]').forEach((el) => {
+      const holder = el as HTMLElement & { _demoCleanup?: () => void };
+      try {
+        holder._demoCleanup?.();
+      } catch (err) {
+        console.error('[demo] cleanup failed', err);
+      }
+      delete holder._demoCleanup;
+    });
+  });
+
+  // Re-run on every navigation; astro:page-load also fires on initial load.
+  document.addEventListener('astro:page-load', () => {
   const islands = document.querySelectorAll<HTMLElement>('[data-demo-island]');
   if (islands.length > 0) {
     const io = new IntersectionObserver(
@@ -163,5 +181,6 @@ const { demo, title, slug } = Astro.props;
       },
       { once: true },
     );
+  });
   });
 </script>

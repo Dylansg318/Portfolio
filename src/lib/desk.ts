@@ -81,7 +81,7 @@ export const tickets: Ticket[] = [
         from: 'agent',
         name: 'DYLAN (AGENT)',
         text:
-          'Yes — not a dashboard on top of the existing tools, but a replacement for them. One database owns the truth, and each website becomes a feed into and out of it: orders, inventory, shipping labels, returns, customer service, and the accounting connection in one place.',
+          'Yes, not a dashboard on top of the existing tools, but a replacement for them. One database owns the truth, and each website becomes a feed into and out of it: orders, inventory, shipping labels, returns, customer service, and the accounting connection in one place.',
       },
       {
         from: 'customer',
@@ -96,7 +96,7 @@ export const tickets: Ticket[] = [
       },
     ],
     resolution: {
-      headline: 'Built MHLHUB — the ERP the company now runs on.',
+      headline: 'Built MHLHUB, the ERP the company now runs on.',
       points: [
         '≈520 orders a day through one system, up from ≈270',
         '32,000 products · 49,000 channel listings · one PostgreSQL database',
@@ -124,13 +124,13 @@ export const tickets: Ticket[] = [
         from: 'customer',
         name: 'PRICING TEAM',
         text:
-          'Every morning someone opens a spreadsheet, checks competitor prices by hand, and retypes ours. By 9am the prices are already stale. And when we drop a price, a competitor follows within the hour — by the end of the week the margin is gone.',
+          'Every morning someone opens a spreadsheet, checks competitor prices by hand, and retypes ours. By 9am the prices are already stale. And when we drop a price, a competitor follows within the hour, and by the end of the week the margin is gone.',
       },
       {
         from: 'agent',
         name: 'DYLAN (AGENT)',
         text:
-          'There are two problems here. The retyping is straightforward to automate — an engine can reprice every product on a schedule. The harder problem is strategy: if the engine simply chases the lowest price, it automates the race to the bottom instead of ending it.',
+          'There are two problems here. The retyping is straightforward to automate, since an engine can reprice every product on a schedule. The harder problem is strategy: if the engine simply chases the lowest price, it automates the race to the bottom instead of ending it.',
       },
       {
         from: 'agent',
@@ -140,7 +140,7 @@ export const tickets: Ticket[] = [
       },
     ],
     resolution: {
-      headline: 'A repricing engine that runs every minute — with guardrails against price wars.',
+      headline: 'A repricing engine that runs every minute, with guardrails against price wars.',
       points: [
         '138,000+ logged price pushes',
         'Per-product, per-vendor decisions with cooldowns and hard floors',
@@ -167,7 +167,7 @@ export const tickets: Ticket[] = [
         from: 'customer',
         name: 'CATALOG TEAM',
         text:
-          'We fixed a product title on Monday. By Wednesday it was wrong again — one of the marketplace syncs writes its own version back over ours. We have 32,000 products and six websites doing this to each other.',
+          'We fixed a product title on Monday. By Wednesday it was wrong again, since one of the marketplace syncs writes its own version back over ours. We have 32,000 products and six websites doing this to each other.',
       },
       {
         from: 'agent',
@@ -191,7 +191,7 @@ export const tickets: Ticket[] = [
       headline: 'One product master, with every storefront downstream of it.',
       points: [
         '49,000 channel listings reconciled against one 32,000-product master',
-        'No sync job can insert or update the master — enforced in code, not policy',
+        'No sync job can insert or update the master. Enforced in code, not policy',
         'Manual corrections now persist instead of being overwritten',
       ],
       slug: 'channel-sync',
@@ -215,23 +215,23 @@ export const tickets: Ticket[] = [
         from: 'customer',
         name: 'ACCOUNTING',
         text:
-          'The sales system says one number and QuickBooks says another. Every month I spend days finding out which one is wrong — and the answer is usually both, a little.',
+          'The sales system says one number and QuickBooks says another. Every month I spend days finding out which one is wrong, and the answer is usually both, a little.',
       },
       {
         from: 'agent',
         name: 'DYLAN (AGENT)',
         text:
-          'The disagreement is a symptom. The fix is one connection that pushes every transaction across with supporting evidence, plus a permanent record of every discrepancy anyone has investigated — so the same false alarm never costs an afternoon twice.',
+          'The disagreement is a symptom. The fix is one connection that pushes every transaction across with supporting evidence, plus a permanent record of every discrepancy anyone has investigated, so the same false alarm never costs an afternoon twice.',
       },
       {
         from: 'agent',
         name: 'DYLAN (AGENT)',
         text:
-          'A rule I build these systems around: a number that is plausibly wrong is more dangerous than a page that is obviously broken. The reconciliation is designed to fail loudly rather than drift quietly.',
+          'A rule I build these systems around: a number that’s plausibly wrong is more dangerous than a page that’s obviously broken. The reconciliation is designed to fail loudly rather than drift quietly.',
       },
     ],
     resolution: {
-      headline: 'The app and the books agree — with a ledger of every settled claim.',
+      headline: 'The app and the books agree, with a ledger of every settled claim.',
       points: [
         'Hourly, self-rechecking links between orders and accounting entries',
         'Every investigated discrepancy recorded as confirmed, refuted, or open',
@@ -264,7 +264,7 @@ export const tickets: Ticket[] = [
         from: 'agent',
         name: 'DYLAN (AGENT)',
         text:
-          'All three happened — once each. The answer is not hoping for better-behaved agents; it is making the unsafe operations impossible. Guard hooks block dangerous git and test commands, a coordination layer lets sessions see each other and queue instead of colliding, and each session works in its own isolated checkout by default.',
+          'All three happened, once each. The answer isn’t hoping for better-behaved agents; it’s making the unsafe operations impossible. Guard hooks block dangerous git and test commands, a coordination layer lets sessions see each other and queue instead of colliding, and each session works in its own isolated checkout by default.',
       },
       {
         from: 'customer',
@@ -306,7 +306,7 @@ export const tickets: Ticket[] = [
         from: 'customer',
         name: 'PERSONAL PROJECT',
         text:
-          'Photograph a restaurant receipt, say who ordered what, and get per-person totals — with tax and tip split by each person’s share rather than evenly.',
+          'Photograph a restaurant receipt, say who ordered what, and get per-person totals, with tax and tip split by each person’s share rather than evenly.',
       },
       {
         from: 'agent',
@@ -322,7 +322,7 @@ export const tickets: Ticket[] = [
       },
     ],
     resolution: {
-      headline: 'A working split-from-a-photo app — and a lesson that shipped into production systems.',
+      headline: 'A working split-from-a-photo app, and a lesson that shipped into production systems.',
       points: [
         'Receipt OCR plus plain-language "who ordered what" → per-person totals',
         'Tax and tip weighted by each person’s share of the bill',
@@ -355,11 +355,11 @@ export const tickets: Ticket[] = [
         from: 'agent',
         name: 'DYLAN (AGENT)',
         text:
-          'Yes — after a human has tested it first. A team of ten of us automated a modern ERP with Selenium and Cucumber: readable Given/When/Then specifications, run nightly in Jenkins. The manual exploratory pass stays, because it finds the bugs no script was told to look for.',
+          'Yes, after a human has tested it first. A team of ten of us automated a modern ERP with Selenium and Cucumber: readable Given/When/Then specifications, run nightly in Jenkins. The manual exploratory pass stays, because it finds the bugs no script was told to look for.',
       },
     ],
     resolution: {
-      headline: 'A nightly regression suite; manual testing refocused on finding new bugs.',
+      headline: 'A nightly regression suite. Manual testing refocused on finding new bugs.',
       points: [
         'Selenium + Cucumber BDD over a modern ERP, built by a team of ten',
         'Jenkins ran the suite nightly and reported by morning',
@@ -386,27 +386,27 @@ export const tickets: Ticket[] = [
         from: 'customer',
         name: 'CS CLASS',
         text:
-          'Build a game in Code.org Game Lab. The environment gives you global variables, one draw loop, and sprites you place by hand — no arrays you can iterate, no classes, no collections of any kind.',
+          'Build a game in Code.org Game Lab. The environment gives you global variables, one draw loop, and sprites you place by hand. No arrays you can iterate, no classes, no collections of any kind.',
       },
       {
         from: 'agent',
         name: 'DYLAN (AGENT)',
         text:
-          'I built an arcade shooter inside that ceiling: five attackers, three destructible bases with eight damage states each, a two-hit boss, a bomb pickup, a charge-based teleport, and a points shop. Where the tooling had no answer I paid for it in volume — every alien-versus-projectile pair is written out by hand because there was no loop to write it in.',
+          'I built an arcade shooter inside that ceiling: five attackers, three destructible bases with eight damage states each, a two-hit boss, a bomb pickup, a charge-based teleport, and a points shop. Where the tooling had no answer I paid for it in volume. Every alien-versus-projectile pair is written out by hand because there was no loop to write it in.',
       },
       {
         from: 'agent',
         name: 'DYLAN (AGENT)',
         text:
-          'The lesson landed years later: the shape of your code is dictated by what your language refuses to give you. A loop and a collection are not elegance, they are the ability to add a sixth alien without editing fifteen places.',
+          'The lesson landed years later: the shape of your code is dictated by what your language refuses to give you. A loop and a collection aren’t elegance, they’re the ability to add a sixth alien without editing fifteen places.',
       },
     ],
     resolution: {
-      headline: 'A full arcade game in block code — playable on this site.',
+      headline: 'A full arcade game in block code, playable on this site.',
       points: [
         '790 lines of generated JavaScript, 17 sprites placed by hand, zero arrays',
         'A shop with real prices turned the score into a decision, not a counter',
-        'Ported to plain canvas so it still runs — original source published beside it',
+        'Ported to plain canvas so it still runs, original source published beside it',
       ],
       slug: 'galaxy-defense',
       linkLabel: 'Play it and read the write-up',
@@ -414,7 +414,7 @@ export const tickets: Ticket[] = [
   },
   {
     num: '008',
-    subject: 'Start here — a 60-second orientation',
+    subject: 'Start here, a 60-second orientation',
     requester: 'Visitors',
     via: 'This page',
     opened: 'AUG 2026',
@@ -434,21 +434,21 @@ export const tickets: Ticket[] = [
         from: 'agent',
         name: 'DYLAN (AGENT)',
         text:
-          'My portfolio, presented as a service desk — because that is how the work actually arrives. Every project here began as a request from someone, described in their own words, and ended as running software. Each ticket shows the original problem, the working conversation, and the measured result.',
+          'My portfolio, presented as a service desk, because that’s how the work actually arrives. Every project here began as a request from someone, described in their own words, and ended as running software. Each ticket shows the original problem, the working conversation, and the measured result.',
       },
       {
         from: 'agent',
         name: 'DYLAN (AGENT)',
         text:
-          'If you are short on time: DSG-001 is the main body of work (an ERP handling ≈520 orders a day), DSG-002 is the most interesting engineering problem (repricing strategy), and DSG-005 shows how I work with AI tooling. The Résumé link in the top bar is the fast path, and "Exit help desk mode" returns to the standard site.',
+          'If you are short on time: DSG-001 is the main body of work (an ERP handling ≈520 orders a day), DSG-002 is the most interesting engineering problem (repricing strategy), and DSG-005 shows how I work with AI tooling. The Resume link in the top bar is the fast path, and "Exit help desk mode" returns to the standard site.',
       },
     ],
     resolution: {
       headline: 'Where to go next.',
       points: [
-        'DSG-001 — the ERP that runs a dental supply company',
-        'DSG-002 — repricing every minute without a race to the bottom',
-        'DSG-005 — running a dozen AI coding sessions on one repo',
+        'DSG-001, the ERP that runs a dental supply company',
+        'DSG-002, repricing every minute without a race to the bottom',
+        'DSG-005, running a dozen AI coding sessions on one repo',
       ],
       slug: 'portfolio-site',
       linkLabel: 'How this site was built',
@@ -468,18 +468,18 @@ export const cannedReplies: CannedReply[] = [
     code: 'KB-01',
     title: 'Subtly wrong is worse than obviously broken',
     body:
-      'A page that crashes gets fixed the same day. A number that is plausibly wrong gets trusted for a month. I design for the second case: hard filters, ledgers with evidence, and jobs that fail loudly rather than report success while doing nothing.',
+      'A page that crashes gets fixed the same day. A number that’s plausibly wrong gets trusted for a month. I design for the second case: hard filters, ledgers with evidence, and jobs that fail loudly rather than report success while doing nothing.',
   },
   {
     code: 'KB-02',
     title: 'The app is the work, not a view of it',
     body:
-      'If someone has to export to a spreadsheet to finish the job, the feature is not done. Every screen I build is where the task actually happens — the order ships there, the return gets decided there.',
+      'If someone has to export to a spreadsheet to finish the job, the feature isn’t done. Every screen I build is where the task actually happens. The order ships there, the return gets decided there.',
   },
   {
     code: 'KB-03',
     title: 'Store the raw thing, parse it after',
     body:
-      'Every external payload — a carrier invoice, a marketplace order, an accounting response — is stored as received before it is interpreted. When the question changes later, the answer is already on file instead of behind an API that has expired the data.',
+      'Every external payload (a carrier invoice, a marketplace order, an accounting response) is stored as received before it’s interpreted. When the question changes later, the answer is already on file instead of behind an API that has expired the data.',
   },
 ];
