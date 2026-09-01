@@ -1,0 +1,10 @@
+{
+  "name": "server-utils-excerpts",
+  "private": true,
+  "type": "commonjs",
+  "description": "Readable excerpts from a private production ERP (sanitized). CommonJS scope marker so the .js files and node:test suites run under a parent ESM package.",
+  "scripts": {
+    "test": "node --test __tests__/savepoint.test.js __tests__/orderedRelease.test.js",
+    "test:ts": "node --import tsx --test __tests__/"
+  }
+}

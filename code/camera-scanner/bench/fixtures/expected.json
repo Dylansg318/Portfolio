@@ -1,0 +1,83 @@
+[
+  {
+    "id": "slip-m2",
+    "file": "slip-m2.png",
+    "note": "packing-slip barcode, old geometry: Code 128 order number, module 2, 8mm — the fabrication case",
+    "pxPerModule": 2,
+    "band": [
+      1.9,
+      3.7
+    ],
+    "formatSets": [
+      "all",
+      "shipping",
+      "universal"
+    ],
+    "expectedPayload": "12345678",
+    "expectedFormat": "code_128"
+  },
+  {
+    "id": "slip-m3",
+    "file": "slip-m3.png",
+    "note": "packing-slip barcode, current geometry: module 3, 10mm — what prints today",
+    "pxPerModule": 3,
+    "band": [
+      1.9,
+      3.7
+    ],
+    "formatSets": [
+      "shipping",
+      "universal"
+    ],
+    "expectedPayload": "12345678",
+    "expectedFormat": "code_128"
+  },
+  {
+    "id": "postal-impb",
+    "file": "postal-impb.png",
+    "note": "postal GS1-128: AI(420) ZIP9 + FNC1 + package identifier — the ]C1/GS wire-contract fixture (synthetic digits)",
+    "pxPerModule": 2,
+    "band": [
+      1.9,
+      3.7
+    ],
+    "formatSets": [
+      "shipping",
+      "universal"
+    ],
+    "expectedPayload": "]C1420123456789\u001d9200123456789012345675",
+    "expectedFormat": "code_128"
+  },
+  {
+    "id": "upca-retail",
+    "file": "upca-retail.png",
+    "note": "UPC-A retail box code (textbook example digits) — the class the first bench missed; zxing-cpp reports it as EAN-13 with a leading zero, the js engine as 12-digit UPC-A, so comparison runs through payloadKey GTIN padding",
+    "pxPerModule": 2,
+    "band": [
+      1.9,
+      3.7
+    ],
+    "formatSets": [
+      "product",
+      "universal"
+    ],
+    "expectedPayload": "012345678905",
+    "expectedFormat": "upc_a"
+  },
+  {
+    "id": "dm-udi",
+    "file": "dm-udi.png",
+    "note": "GS1 DataMatrix UDI (synthetic GTIN+serial) — the weak spot of the js engine",
+    "pxPerModule": 2,
+    "band": [
+      2.5,
+      6
+    ],
+    "formatSets": [
+      "product",
+      "universal"
+    ],
+    "expectedPayload": "\u001d010001234567890521DEMO123456",
+    "expectedFormat": "data_matrix"
+  }
+]
