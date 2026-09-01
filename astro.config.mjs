@@ -55,8 +55,15 @@ export default defineConfig({
 
   fonts: [
     {
+      // Body copy. This was Inter until 2026-09-01. Inter is the default face of
+      // the AI/SaaS era — competent, and so ubiquitous that the page reads as a
+      // template before a word of it is read. Plex was drawn for IBM, a company
+      // that builds industrial systems, and it shows: squared terminals, a
+      // mechanical rhythm, a distinctive `a` and `g`. This site is barcodes,
+      // thermal printers, carrier invoices and a warehouse floor plan, so the
+      // body face should read as the manual for a machine, not as a pitch deck.
       provider: fontProviders.fontsource(),
-      name: 'Inter',
+      name: 'IBM Plex Sans',
       cssVariable: '--font-sans',
       weights: [400, 500, 600, 700],
       styles: ['normal'],
@@ -64,18 +71,24 @@ export default defineConfig({
       fallbacks: ['system-ui', 'sans-serif'],
     },
     {
-      // Display face for headlines only — body copy stays in Inter.
+      // Display face for headlines only — body copy is Plex Sans. Deliberately
+      // kept when the body face changed: Bricolage is uncommon and is the one
+      // place this site shows personality, so it was never the thing that made
+      // the page look generic.
       provider: fontProviders.fontsource(),
       name: 'Bricolage Grotesque',
       cssVariable: '--font-display',
       weights: [600, 700, 800],
       styles: ['normal'],
       subsets: ['latin'],
-      fallbacks: ['Inter', 'system-ui', 'sans-serif'],
+      fallbacks: ['IBM Plex Sans', 'system-ui', 'sans-serif'],
     },
     {
+      // Moved off JetBrains Mono with the body face, so code and prose come from
+      // one superfamily and the page reads as a single system rather than an
+      // assembly of tastes.
       provider: fontProviders.fontsource(),
-      name: 'JetBrains Mono',
+      name: 'IBM Plex Mono',
       cssVariable: '--font-mono',
       weights: [400, 700],
       styles: ['normal'],

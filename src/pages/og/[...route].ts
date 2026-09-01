@@ -30,9 +30,28 @@ export const { getStaticPaths, GET } = await OGImageRoute({
       [36, 40, 46],
     ],
     border: { color: [181, 228, 140], width: 12, side: 'inline-start' },
+    // Vendored rather than fetched. Left to itself this library pulls Noto Sans
+    // from api.fontsource.org at BUILD time — a face used nowhere else on the
+    // site, over a network call that has already failed a deploy with ECONNRESET.
+    // These two files are in the repo, so the build touches no third party and
+    // the cards are set in the same two faces as the pages they advertise.
+    fonts: [
+      './src/fonts/bricolage-grotesque-700.ttf',
+      './src/fonts/ibm-plex-sans-400.ttf',
+    ],
     font: {
-      title: { size: 64, weight: 'Bold', color: [255, 255, 255] },
-      description: { size: 30, color: [180, 188, 198], lineHeight: 1.4 },
+      title: {
+        size: 64,
+        weight: 'Bold',
+        families: ['Bricolage Grotesque', 'IBM Plex Sans'],
+        color: [255, 255, 255],
+      },
+      description: {
+        size: 30,
+        families: ['IBM Plex Sans'],
+        color: [180, 188, 198],
+        lineHeight: 1.4,
+      },
     },
   }),
 });

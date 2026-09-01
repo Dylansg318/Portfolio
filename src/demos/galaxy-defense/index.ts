@@ -299,7 +299,7 @@ export function mount(el: HTMLElement): () => void {
 
   const text = (str: string, x: number, y: number, size = 17, color = 'white') => {
     ctx.fillStyle = color;
-    ctx.font = `${size}px "JetBrains Mono", ui-monospace, monospace`;
+    ctx.font = `${size}px "IBM Plex Mono", ui-monospace, monospace`;
     ctx.fillText(str, x, y);
   };
 
