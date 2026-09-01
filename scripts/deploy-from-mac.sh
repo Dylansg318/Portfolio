@@ -3,11 +3,13 @@
 # deploy-from-mac.sh — build and deploy the portfolio from this Mac, on demand.
 #
 # WHY THIS EXISTS
-#   GitHub Actions no longer builds on every push (see .github/workflows/deploy.yml —
-#   the `push` trigger is deliberately gone). Nothing is automatic any more: the site
-#   goes live when you run THIS, and at no other time. That trade buys back the
-#   Actions minutes that ~13 pushes/day were spending, at the cost of having to say
-#   "ship it" out loud.
+#   This is NO LONGER the primary path. The repository went public on 2026-09-01,
+#   which makes Actions free on standard runners, so .github/workflows/deploy.yml
+#   builds and deploys every push to main — `git push` is the deploy button.
+#
+#   Keep this for what a push cannot express: shipping a commit that is not on main
+#   (--ref), redeploying with no new commit, running the full gates locally before
+#   you push (--build-only), or shipping while Actions is degraded.
 #
 #   Modelled on MHLHUB's scripts/deploy-from-mac.sh, which does the same thing for
 #   the same reason. Same discipline: build a CLEAN WORKTREE at the pushed commit,

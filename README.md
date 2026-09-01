@@ -125,14 +125,19 @@ never a literal colour — so a redesign is one file, and dark mode already work
 
 ## Deploying
 
-**Pushing does not deploy.** The site ships when you run:
+**Pushing to `main` deploys.** GitHub Actions builds and ships every push — free
+since the repo went public, because GitHub doesn't bill standard runners on public
+repositories. Nothing prompts and nothing confirms: `git push` is the deploy button.
+
+For what a push can't express — a non-`main` ref, a redeploy with no new commit,
+gates run locally before pushing, or shipping while Actions is degraded:
 
 ```bash
 ./scripts/deploy-from-mac.sh
 ```
 
 It resolves `origin/main`, asks for confirmation, builds that commit in a clean
-worktree inside a `linux/amd64` container, deploys with Wrangler, and checks the
+worktree inside a `linux/arm64` container, deploys with Wrangler, and checks the
 live URL answers 200. Useful flags: `--build-only` (gates only, never touches the
 live site), `--amd64` (exact CI parity, ~2.3x slower), `--yes`, `--ref <ref>`.
 
@@ -171,19 +176,23 @@ security add-generic-password -U -s portfolio-cf-account -a CF_Account -w
 
 The first read pops a macOS dialog — choose "Always Allow".
 
-### Why not GitHub Actions
+### Why the script still exists
 
-It was ~480 Actions minutes a month against a 2,000 allowance, because billing
-rounds **up to a whole minute per job** and a 50-second build costs a full one.
-The workflow keeps `pull_request` (a free Linux-x64 net that rarely fires, since
-work lands straight on `main`) and `workflow_dispatch` — the fallback when this
-Mac is unavailable. Run it from the Actions tab; it deploys the same way.
+Deploys moved off Actions in Aug 2026 because they cost ~480 minutes a month
+against a 2,000 allowance — billing rounds **up to a whole minute per job**, so a
+50-second build cost a full one. Going public on 2026-09-01 removed the charge
+entirely (GitHub doesn't bill standard runners on public repos; measured on this
+repo's own runs, `billable.UBUNTU` is 0ms), so `push` went back on.
+
+The script stays because a push can only ever ship `main` exactly as pushed. It
+still owns `--build-only`, `--ref`, redeploying without a new commit, and the case
+where Actions itself is the thing that's broken.
 
 The Linux VM is its own colima profile, `portfolio`. MHLHUB's break-glass script
 reuses whatever VM is already running, so sharing `default` would let one project
 silently resize the other's.
 
-Repository secrets (for the `workflow_dispatch` fallback only):
+Repository secrets, used by every CI deploy:
 
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
