@@ -74,6 +74,25 @@ const isActive = (href: string) =>
   </div>
 </header>
 
+<!-- First-visit hint for the reading-mode switch. It sits beside the theme
+     toggle and looks like one, so most visitors never learn the site has two
+     registers. Shown once, dismissed by the button or by using the switch,
+     remembered in localStorage. Hidden by default so a no-JS visitor and a
+     returning one see nothing. -->
+<div
+  id="mode-hint"
+  hidden
+  class="no-print border-b border-border bg-surface text-sm text-ink-muted"
+>
+  <div class="mx-auto flex max-w-(--container-wide) flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-2.5 sm:px-6">
+    <p>
+      Two ways to read this site: <strong class="font-semibold text-ink">Plain English</strong> for
+      what the work did, <strong class="font-semibold text-ink">Engineer</strong> for how. The switch is in the top bar.
+    </p>
+    <button type="button" id="mode-hint-dismiss" class="btn btn-ghost !px-3 !py-1 text-xs">Got it</button>
+  </div>
+</div>
+
 <script>
   // Re-run on every View Transitions navigation: a bundled module
   // executes once, so top-level setup would go dead after the first
@@ -110,5 +129,18 @@ const isActive = (href: string) =>
     );
 
     paint();
+
+    // The one-time hint. Any interaction with the switch counts as having seen it.
+    const hint = document.getElementById('mode-hint');
+    const seen = () => {
+      try { return localStorage.getItem('modeHintSeen') === '1'; } catch { return true; }
+    };
+    const dismiss = () => {
+      if (hint) hint.hidden = true;
+      try { localStorage.setItem('modeHintSeen', '1'); } catch { /* fine */ }
+    };
+    if (hint && !seen()) hint.hidden = false;
+    document.getElementById('mode-hint-dismiss')?.addEventListener('click', dismiss);
+    buttons.forEach((b) => b.addEventListener('click', dismiss));
   });
 </script>

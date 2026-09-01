@@ -139,9 +139,16 @@ const { demo, title, slug } = Astro.props;
     });
   });
 
-  // Re-run on every navigation; astro:page-load also fires on initial load.
-  document.addEventListener('astro:page-load', () => {
-  const islands = document.querySelectorAll<HTMLElement>('[data-demo-island]');
+  // Re-run on every navigation; astro:page-load also fires on initial load —
+  // but ONLY on pages that include <ClientRouter>. /play/* is `bare` and opts
+  // out of the router, so on the fullscreen page this event never fired and
+  // the demo sat on "Loading demo…" forever. Bind once per element so the
+  // DOMContentLoaded path and the router path cannot double-mount.
+  const init = () => {
+  const islands = Array.from(document.querySelectorAll<HTMLElement>('[data-demo-island]')).filter(
+    (el) => !el.dataset.demoBound,
+  );
+  islands.forEach((el) => (el.dataset.demoBound = '1'));
   if (islands.length > 0) {
     const io = new IntersectionObserver(
       (entries) => {
@@ -160,6 +167,8 @@ const { demo, title, slug } = Astro.props;
   // --- iframe lane -------------------------------------------------------
   // Vanilla, so a prebuilt engine export costs zero framework JS.
   document.querySelectorAll<HTMLElement>('[data-demo-frame]').forEach((frame) => {
+    if (frame.dataset.demoBound) return;
+    frame.dataset.demoBound = '1';
     const btn = frame.querySelector<HTMLButtonElement>('[data-demo-start]');
     btn?.addEventListener(
       'click',
@@ -182,5 +191,13 @@ const { demo, title, slug } = Astro.props;
       { once: true },
     );
   });
-  });
+  };
+
+  document.addEventListener('astro:page-load', init);
+  // No router on `bare` pages: bind on plain DOM readiness as well.
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, { once: true });
+  } else {
+    init();
+  }
 </script>
