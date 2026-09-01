@@ -109,6 +109,22 @@ site's build graph and never loads for someone who only came to read.
 > Cloudflare caps a single static asset at **25 MiB**. Large engine builds need
 > chunking or an external origin.
 
+## The résumé and its PDF
+
+`/resume` is rendered from `src/lib/site.ts` (`experience`, `resumeSummary`,
+`resumeProjects`, `skills`, `education`). `public/resume.pdf` is a Chrome print
+of that page, not a separate document:
+
+```bash
+npm run build && npm run resume:pdf   # writes public/resume.pdf, fails if it exceeds one page
+```
+
+Edit the data, rebuild, regenerate, commit the PDF with the change. The print
+rules live under `@media print` in `src/styles/global.css`; the script checks the
+page count with `pdfinfo` and that the text survives extraction, which is what an
+applicant-tracking system reads. Neither the page nor the PDF carries a phone
+number or street address — both are public.
+
 ## Media rules
 
 - **Never commit video.** GitHub rejects files over 100 MB; Cloudflare caps

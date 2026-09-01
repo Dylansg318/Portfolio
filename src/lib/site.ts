@@ -6,7 +6,10 @@ export const site = {
   /** Short form for the nav bar, where the full name is too wide on mobile. */
   shortName: 'Dylan',
   title: 'Dylan San Gabriel — Software Engineer',
-  role: 'Software engineer · Operations Technology Manager',
+  /** The job title, everywhere it appears. "Operations Technology Manager" was
+   *  never an official title, and a title a reference check can't confirm is
+   *  worth less than the plain one the work supports. */
+  role: 'Software Engineer',
   /** Descriptive, not a claim. Feeds /about's meta description and the default
    *  OG card, both of which are read by people who have not met me. */
   tagline:
@@ -34,13 +37,15 @@ export const site = {
   /** Professional contact. The contact form is the primary route; this is the
    *  fallback for people who prefer their own mail client.
    *  NOTE: deliberately NOT the phone number or home address from the résumé —
-   *  neither belongs on a public page. */
+   *  neither belongs on a public page, and the PDF below is public too. */
   email: 'dylansg0318@gmail.com',
   locale: 'en',
 
-  /** The web résumé. A PDF can sit next to it at public/resume.pdf — see
-   *  src/pages/resume.astro for the print button. */
+  /** The web résumé, and the one-page PDF generated from it. The PDF is a
+   *  build artefact of the page — `npm run resume:pdf` regenerates it — so the
+   *  two can't say different things. */
   resumeUrl: '/resume',
+  resumePdf: '/resume.pdf',
 
   /** Empty string hides the link EVERYWHERE. Every surface guards on these, so
    *  turning one back on is a one-line change here, not a hunt through pages.
@@ -58,6 +63,8 @@ export const site = {
   links: {
     github: 'https://github.com/Dylansg318',
     linkedin: 'https://www.linkedin.com/in/dylan-san-gabriel/',
+    /** The public, readable proof behind the private ERP. */
+    code: 'https://github.com/Dylansg318/Portfolio/tree/main/code',
   },
 
   nav: [
@@ -78,8 +85,46 @@ export const site = {
   ],
   statsAsOf: 'August 2026',
 
+  /** The résumé summary. Three sentences: what I do, what I'm strongest at,
+   *  what I'm looking for. Names the target role because a screener decides
+   *  in seconds whether this page is for the job they are filling. */
+  resumeSummary:
+    'Software engineer who designed, built and runs the ERP a six-channel dental distributor ' +
+    'operates on, as its only engineer. Strongest on integrations and data correctness: ' +
+    'order pipelines, marketplace and carrier APIs, accounting sync. ' +
+    'SDET-trained, so the tests arrive with the feature. Looking for a backend or ' +
+    'full-stack role, remote or in Northern Virginia.',
+
+  /** The three things a one-page résumé links to. The ERP is private, so the
+   *  second entry is the public evidence — the sanitized production modules
+   *  a reviewer can actually read. */
+  resumeProjects: [
+    {
+      title: 'MHLHUB — the ERP',
+      href: '/projects/mhlhub',
+      stack: 'TypeScript, Express, React, PostgreSQL',
+      blurb:
+        'How the system is shaped, the rules that stopped the expensive mistakes, screenshots of it running.',
+    },
+    {
+      title: 'Production code excerpts',
+      href: 'https://github.com/Dylansg318/Portfolio/tree/main/code',
+      stack: 'GitHub · 13 modules with tests and READMEs',
+      blurb:
+        'Sanitized production modules: GS1 parsing, a ZPL renderer, carrier-invoice parsers, a device agent, session locks.',
+    },
+    {
+      title: 'Guardrails for a fleet of AI coding sessions',
+      href: '/projects/agent-fleet',
+      stack: 'Claude Code, Git hooks, Node.js',
+      blurb:
+        'Locks, hooks and consequence-triggered review that let 5–10 coding agents share one repository safely.',
+    },
+  ],
+
   /** Skills grouped the way a hiring manager scans them. Order inside each row
-   *  is "most used first", not alphabetical. */
+   *  is "most used first", not alphabetical. Every item is something I have
+   *  shipped with, not something I have read about. */
   skills: [
     {
       group: 'Languages',
@@ -87,15 +132,15 @@ export const site = {
     },
     {
       group: 'Backend & data',
-      items: ['Node.js', 'Express', 'PostgreSQL', 'REST APIs', 'Flask', 'JDBC / Oracle / MySQL'],
+      items: ['Node.js', 'Express', 'PostgreSQL', 'REST APIs', 'SOAP', 'Flask', 'MySQL'],
     },
     {
       group: 'Frontend',
-      items: ['React', 'Tailwind CSS', 'Astro', 'Vite'],
+      items: ['React', 'Vite', 'Tailwind CSS', 'Astro'],
     },
     {
       group: 'Integrations',
-      items: ['QuickBooks Desktop', 'eBay', 'Amazon SP-API', 'Shopify', 'Walmart', 'USPS / UPS / FedEx', 'Gmail API'],
+      items: ['QuickBooks Desktop', 'Amazon SP-API', 'eBay', 'Shopify', 'Walmart', 'Net32', 'USPS / UPS / FedEx', 'Gmail API', 'ZPL'],
     },
     {
       group: 'Testing',
@@ -103,15 +148,16 @@ export const site = {
     },
     {
       group: 'Ops & tooling',
-      items: ['GitHub Actions', 'Docker', 'Railway', 'Harness', 'Cloudflare Workers', 'Jenkins', 'Jira', 'Claude Code'],
+      items: ['GitHub Actions', 'Docker', 'Railway', 'Cloudflare Workers', 'Harness', 'Jenkins', 'Jira', 'Claude Code'],
     },
   ],
 
   /** Reverse-chronological. `summary` is one sentence a recruiter can skim;
-   *  `bullets` are for the résumé page. */
+   *  `bullets` are for the résumé page — each one opens with what changed,
+   *  carries a number where one exists, and fits in two printed lines. */
   experience: [
     {
-      title: 'Operations Technology Manager',
+      title: 'Software Engineer',
       org: 'RMH3 Dental Supply',
       place: 'Chantilly, VA',
       start: 'Jun 2025',
@@ -119,12 +165,13 @@ export const site = {
       summary:
         'The only engineer at a family-run dental distributor. Built and run MHLHUB, the in-house ERP that replaced off-the-shelf software, spreadsheets and inbox triage across six sales channels.',
       bullets: [
-        'Only engineer on the team, and the one who makes it safe for people who are not engineers to ship: the owner directs AI agents at product and catalog work, and I own the backend, the environments (Shopify, Railway, GitHub, Harness) and the guardrails that decide what is allowed to land.',
-        'Designed and shipped the ERP the business runs on: order intake from six channels, inventory and lots, shipping labels, customer service, returns, and QuickBooks integration — ~1.4M lines across 6,000 files, 2,449 HTTP endpoints, 636 tables, 1,226 migrations, 2,721 automated tests and ~180 scheduled jobs on one PostgreSQL database.',
-        'Daily orders roughly doubled (≈270 → ≈520/day) on a 32,000-product catalog without adding ops headcount.',
-        'Replaced a morning repricing spreadsheet with a repricing engine that runs every minute per product/vendor with cooldowns and a tiered strategy, with 138,000+ logged price pushes so far.',
-        'Integrated QuickBooks Desktop, eBay, Amazon, Shopify, Walmart, Net32 and three carriers, storing every raw payload so new fields never require a re-fetch.',
-        'Ran a fleet of parallel AI coding sessions against one repo with hooks and a coordination layer that made the unsafe operations impossible instead of discouraged.',
+        'Sole engineer for MHLHUB, the in-house ERP that replaced SellerCloud, spreadsheets and a hand-sorted inbox: order intake from six sales channels, inventory, shipping, customer service, returns, invoicing and a two-way QuickBooks Desktop sync. TypeScript, Express, React, PostgreSQL.',
+        'Daily orders grew from about 270 to about 520 on a 32,000-product catalog with no added operations headcount; 13 people work in the system daily.',
+        'Replaced a morning pricing spreadsheet with a repricing engine that re-evaluates every product every 60 seconds with cooldowns, floors and a no-price-war rule; 138,000+ price changes, each logged with its reason.',
+        'Integrated eBay, Amazon SP-API, Shopify, Walmart, Net32 and three carriers: 300,000+ orders ingested, every raw payload stored before parsing, and a source-scan guard so channel code can never write the product catalog.',
+        'Put barcodes and scanners on a pen-and-paper warehouse: GS1 parsing, a browser camera scanner, a JSON-to-ZPL label renderer and a self-updating Windows print agent with crash-loop rollback.',
+        'Reconcile the ERP against QuickBooks at line level and settle each discrepancy once in a claims ledger; 2,721 automated tests and ~180 checkpointed scheduled jobs keep app and books in agreement through redeploys.',
+        'Run 5–10 parallel Claude Code sessions on one repository behind file locks, hooks that block unrecoverable git operations, and second-model review of consequential changes.',
       ],
     },
     {
@@ -136,20 +183,22 @@ export const site = {
       summary:
         'Ran front-of-house and trained staff. Promoted twice within months. Studied for the SDET bootcamp on the side.',
       bullets: [
-        'Managed front-of-house operations and server training while completing the CYDEO SDET program.',
+        'Ran front-of-house operations and trained new servers; promoted twice within the first months. Completed the CYDEO SDET program alongside full-time shifts.',
       ],
     },
     {
+      /** Dates confirmed against the Wireless Vision welcome email of
+       *  2021-01-24 (training began 2021-01-25). Earlier drafts said Jan 2020;
+       *  that was wrong. */
       title: 'Store Manager',
       org: 'Wireless Vision (T-Mobile)',
       place: 'Vienna, VA',
-      start: 'Jan 2020',
+      start: 'Jan 2021',
       end: 'Aug 2022',
       summary:
-        'Promoted from associate to store manager inside a year. Beat performance targets by 30% with perfect customer-satisfaction scores.',
+        'Promoted from sales associate to store manager in ten months. Beat performance targets by 30% with perfect customer-satisfaction scores.',
       bullets: [
-        'Owned the whole store: opening, closing, staffing, cash and inventory.',
-        'Exceeded organisational and individual targets by 30% for multiple months. Raised customer satisfaction from 8.0/10 to 10/10.',
+        'Hired as a sales associate in January 2021 and promoted to store manager that November; ran staffing, cash and inventory, beat targets by 30% over multiple months and raised customer satisfaction from 8.0 to 10 out of 10.',
       ],
     },
   ],
@@ -161,10 +210,7 @@ export const site = {
       place: 'Tysons, VA',
       when: 'Feb – Oct 2024',
       detail:
-        'Java, UI test automation (Selenium, Cucumber/Gherkin), API testing (REST Assured), \
-SQL and database testing, Git and Jenkins. Two ten-person sprint teams automating live web \
-applications end to end: BriteERP by hand, then TryCloud with Selenium and Cucumber. Retains \
-alumni access to CYDEO\'s current AI QA Engineer curriculum.',
+        'Java, Selenium, Cucumber/Gherkin, REST Assured, SQL, Jenkins; two ten-person sprint teams automating live web apps.',
     },
     {
       /** Coursework, not a conferred degree, and said plainly. Degree claims
@@ -175,8 +221,7 @@ alumni access to CYDEO\'s current AI QA Engineer curriculum.',
       place: 'Fairfax, VA',
       when: '2020 – 2024',
       detail:
-        "Dean's List. Object-oriented programming, game design, essentials of CS. \
-Coursework only — I left before the degree was conferred.",
+        "Dean's List. Object-oriented programming, game design, essentials of CS. Left before the degree was conferred.",
     },
   ],
 
