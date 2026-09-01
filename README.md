@@ -3,6 +3,17 @@
 Project write-ups and interactive demos. Astro 7, TypeScript, Tailwind 4,
 deployed to Cloudflare Workers.
 
+**Live:** <https://portfolio.dylansg0318.workers.dev>
+
+Two things live in here. `src/` is the site itself. [`code/`](code/) is a
+separate tree of thirteen sanitized excerpts from the production ERP and the
+agent-fleet tooling the write-ups describe — barcode grammar, thermal-print
+layout, a self-updating device agent, carrier-invoice parsers, the session-lock
+layer. Readable excerpts, not installable packages; each folder has its own
+README. Identifiers, fixtures, endpoints and customer data were replaced, and
+the tree was copied out clean rather than pruned from a private repo, because
+git history keeps everything ever committed.
+
 ## Run it
 
 ```bash

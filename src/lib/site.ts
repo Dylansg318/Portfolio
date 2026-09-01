@@ -45,17 +45,18 @@ export const site = {
   /** Empty string hides the link EVERYWHERE. Every surface guards on these, so
    *  turning one back on is a one-line change here, not a hunt through pages.
    *
-   *  github stays off until there is a repo worth opening: the public profile is
-   *  two repos, one of them empty, because the real work is private or in the
-   *  company's org, and a link from "I built the ERP a distributor runs on" to an
-   *  empty account subtracts credibility rather than adding it.
+   *  github was off for as long as the profile was two repos, one of them empty:
+   *  the real work is private or in the company's org, and a link from "I built
+   *  the ERP a distributor runs on" to an empty account subtracts credibility
+   *  rather than adding it.
    *
-   *  The calculus is tighter now than it was. With the degree line corrected to
-   *  coursework, and the ERP behind a private repo, public code is the only
-   *  remaining third-party evidence that this person can build. One real,
-   *  reusable repo turns this on; an empty profile still does not. */
+   *  On 2026-09-01 that stopped being true. This repository went public carrying
+   *  `code/` — thirteen sanitized excerpts from the ERP and the agent fleet, with
+   *  their tests and their reasoning. With the degree line corrected to
+   *  coursework and the ERP itself still private, that tree is the third-party
+   *  evidence this link now points at. */
   links: {
-    github: '', // ON once there is one real public repo — https://github.com/Dylansg318
+    github: 'https://github.com/Dylansg318',
     linkedin: 'https://www.linkedin.com/in/dylan-san-gabriel/',
   },
 

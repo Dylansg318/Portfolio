@@ -37,11 +37,12 @@ metrics:
   - { label: Hosting, value: "$0/mo" }
   - { label: Demo lanes, value: "2" }
 
-# NO `links:` BLOCK ON PURPOSE. It used to carry
-#   source: https://github.com/Dylansg318/Portfolio
-# but that repository is private, so the Source button 404'd for every visitor.
-# Restore the block the day the repo is made public — an empty `links:` key is
-# not the same thing, it parses as null and fails the schema.
+# Restored 2026-09-01, the day the repository went public. It was held back
+# while the repo was private, because the Source button 404'd for every visitor.
+# (An empty `links:` key is not the same as omitting it — it parses as null and
+# fails the schema.)
+links:
+  source: https://github.com/Dylansg318/Portfolio
 
 demo:
   kind: island
