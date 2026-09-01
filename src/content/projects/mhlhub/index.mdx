@@ -30,7 +30,7 @@ unique: >-
 learned:
   - The most expensive bugs were never crashes. They were plausible numbers, a 30-day revenue figure overstated by 60% because a query windowed on the date we recorded the order instead of the date it happened. I now design the guardrail before the feature.
   - A background job that reports success while doing nothing is worse than one that fails. Every scheduled job here checkpoints, logs what it touched, and trips a breaker if it keeps failing, because "it ran" isn't the same as "it worked".
-  - Writing the operating rules down (40-plus pages of them) was the single highest-leverage thing I did. It's what let the work scale beyond one pair of hands without the rules leaking out of people's heads.
+  - Writing the operating rules down (300-plus documents, 130,000 lines) was the single highest-leverage thing I did. It's what let the work scale beyond one pair of hands without the rules leaking out of people's heads.
 
 aiNote: >-
   Built with AI coding agents doing most of the typing and me doing the deciding:
@@ -44,6 +44,10 @@ metrics:
   - { label: products, value: "32K" }
   - { label: scheduled jobs, value: "180" }
   - { label: database tables, value: "636" }
+  - { label: API endpoints, value: "2,449" }
+  - { label: automated tests, value: "2,721" }
+  - { label: migrations, value: "1,226" }
+  - { label: lines of code, value: "1.4M" }
 ---
 
 <PlainOnly>
@@ -88,7 +92,9 @@ around it.
 
 MHLHUB is a single TypeScript codebase, an Express API, a React client, one PostgreSQL
 database, deployed as a container on Railway through GitHub Actions. That part is
-ordinary on purpose. The interesting decisions are in how it's organised.
+ordinary on purpose. The size is less ordinary: about 1.4 million lines across 6,000
+files, 2,449 HTTP endpoints, 636 tables, 1,226 migrations and 2,721 test files, built
+and operated by one person. The interesting decisions are in how it's organised.
 
 **Seven loops, not a feature list.** Every screen and every one of the 180 scheduled jobs
 belongs to one of seven daily loops: order intake → fulfilment, inventory and procurement,

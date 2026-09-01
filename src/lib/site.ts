@@ -45,14 +45,18 @@ export const site = {
   /** Empty string hides the link EVERYWHERE. Every surface guards on these, so
    *  turning one back on is a one-line change here, not a hunt through pages.
    *
-   *  github is deliberately off: the public profile is two repos, one of them
-   *  empty, because the real work is private or in the company's org. A link
-   *  from "I built the ERP a distributor runs on" to an empty account subtracts
-   *  credibility rather than adding it. Paste the URL back the day there is
-   *  something public worth opening. */
+   *  github stays off until there is a repo worth opening: the public profile is
+   *  two repos, one of them empty, because the real work is private or in the
+   *  company's org, and a link from "I built the ERP a distributor runs on" to an
+   *  empty account subtracts credibility rather than adding it.
+   *
+   *  The calculus is tighter now than it was. With the degree line corrected to
+   *  coursework, and the ERP behind a private repo, public code is the only
+   *  remaining third-party evidence that this person can build. One real,
+   *  reusable repo turns this on; an empty profile still does not. */
   links: {
-    github: '', // was https://github.com/Dylansg318
-    linkedin: '', // TODO: paste the profile URL and it appears in the footer + contact
+    github: '', // ON once there is one real public repo — https://github.com/Dylansg318
+    linkedin: 'https://www.linkedin.com/in/dylan-san-gabriel/',
   },
 
   nav: [
@@ -115,7 +119,7 @@ export const site = {
         'The only engineer at a family-run dental distributor. Built and run MHLHUB, the in-house ERP that replaced off-the-shelf software, spreadsheets and inbox triage across six sales channels.',
       bullets: [
         'Only engineer on the team, and the one who makes it safe for people who are not engineers to ship: the owner directs AI agents at product and catalog work, and I own the backend, the environments (Shopify, Railway, GitHub, Harness) and the guardrails that decide what is allowed to land.',
-        'Designed and shipped the ERP the business runs on: order intake from six channels, inventory and lots, shipping labels, customer service, returns, and QuickBooks integration, all on one PostgreSQL database with ~180 scheduled jobs.',
+        'Designed and shipped the ERP the business runs on: order intake from six channels, inventory and lots, shipping labels, customer service, returns, and QuickBooks integration — ~1.4M lines across 6,000 files, 2,449 HTTP endpoints, 636 tables, 1,226 migrations, 2,721 automated tests and ~180 scheduled jobs on one PostgreSQL database.',
         'Daily orders roughly doubled (≈270 → ≈520/day) on a 32,000-product catalog without adding ops headcount.',
         'Replaced a morning repricing spreadsheet with a repricing engine that runs every minute per product/vendor with cooldowns and a tiered strategy, with 138,000+ logged price pushes so far.',
         'Integrated QuickBooks Desktop, eBay, Amazon, Shopify, Walmart, Net32 and three carriers, storing every raw payload so new fields never require a re-fetch.',
