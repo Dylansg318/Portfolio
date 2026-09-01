@@ -1,36 +1,42 @@
 ---
-title: Automating an ERP with Cucumber and Selenium
-blurb: Team BDD test suite for a modern ERP during the CYDEO SDET program — manual test plan first, then feature files, page objects and Jenkins.
-plainBlurb: Ten of us taught robots to re-test a business app every night — after testing it by hand first, which is how we found the bugs the robots would have missed.
+title: Testing an ERP by hand, then automating a cloud app
+blurb: Two sprints on the CYDEO SDET program — fourteen user stories tested by hand against an ERP, then a Cucumber and Selenium suite against a cloud app.
+plainBlurb: Ten of us taught robots to re-test a business app every night, after testing it by hand first, which is how we found the bugs the robots would have missed.
 date: 2024-07-15
 featured: 30
 status: archived
 role: contributor · team of 10
-stack: [Java, Selenium, Cucumber, Gherkin, JUnit, Maven, Jenkins, Jira]
+stack: [Java, Selenium, Cucumber, Gherkin, REST Assured, JUnit, Maven, Jenkins, Jira]
 
 problem: >-
-  A modern ERP with fourteen user stories — login, messaging channels, note cards,
-  calendar, contacts, point-of-sale orders, manufacturing, expenses, role-based module
-  access — and a regression pass that took a team a full day by hand. The project was
-  the capstone for a ten-person sprint team: plan it, automate it, run it in CI.
+  Sprint 1 was BriteERP, an Odoo-based ERP, and fourteen user stories covering login,
+  logout, messaging channels, note cards, calendars, contacts, point-of-sale orders,
+  manufacturing orders, expenses and role-based module access — a POS manager sees 22
+  modules, a sales manager 19, inventory 16, events 15, expenses 12. There was no
+  automation in that sprint at all: the deliverable was a test plan, a test strategy and
+  a regression pass that took the team a full day by hand. Sprint 2 moved to TryCloud, a
+  Nextcloud-style collaboration suite, and turned that discipline into a Cucumber and
+  Selenium suite. Ten-person teams both times.
 
 unique: >-
   We wrote the manual test plan before a line of automation. Acceptance criteria per user
   story, executed by hand, bugs logged as we went: a missing word in the login error, an
   idle-logout timer that never fired, an Import option absent from a menu. Only then did
-  the Gherkin get written — so the scenarios described behaviour we'd actually observed,
+  the Gherkin get written, so the scenarios described behaviour we'd actually observed,
   not behaviour we assumed.
 
 learned:
-  - Manual first is not the slow way. Every scenario we automated blind in the first sprint had to be rewritten; every one we automated after running it by hand passed on the first try.
-  - Page objects are a team contract. With ten people, the value wasn't reuse — it was that a locator changed in one place and nobody's step definitions broke.
-  - Green in CI is not the same as tested. A suite that always passes because a wait is too generous is worse than a red one; we learned to make waits explicit and fail fast.
+  - Manual first isn't the slow way. Every scenario we automated blind in the first sprint had to be rewritten. Every one we automated after running it by hand passed on the first try.
+  - Page objects are a team contract. With ten people, the value wasn't reuse. It was that a locator changed in one place and nobody's step definitions broke.
+  - Green in CI isn't the same as tested. A suite that always passes because a wait is too generous is worse than a red one. We learned to make waits explicit and fail fast.
 
 aiNote: >-
-  None. 2024, pre-agent — every locator, step definition and hook was typed by hand,
+  None. 2024, pre-agent, every locator, step definition and hook was typed by hand,
   which is a good way to learn why page objects exist.
 
 links:
+  # Sprint 2 (TryCloud) only. Sprint 1 was manual testing against BriteERP, so it has
+  # a test plan and a strategy document but no repository.
   source: https://github.com/drwekilowa/B34_G11_Sprint_2CloudAuto
 ---
 
@@ -38,13 +44,13 @@ links:
 
 ## The story
 
-The capstone of my testing program: a team of ten, two sprints, and a business app —
-logins, calendars, contacts, sales orders, expenses — that took a whole day to re-check
-by hand after every change.
+The capstone of my testing program: teams of ten, two sprints, and a business app with
+logins, calendars, contacts, sales orders and expenses. Re-checking it by hand after every
+change took a whole day.
 
 We did something that felt slow and turned out to be the fastest path: before writing
 any automation, we tested everything by hand and wrote down exactly what "working"
-means. That hand pass caught real bugs a robot would have sailed past — an error message
+means. That hand pass caught real bugs a robot would have sailed past, an error message
 missing a word, an automatic logout that never happened, a menu missing an option. Then
 we taught the robots to repeat those checks, every night, in minutes instead of a day.
 
@@ -57,24 +63,28 @@ trust it, write down what "correct" means, and never trust a test that has never
 
 ## The setup
 
-Ten people, two sprints, one ERP to cover. We split the user stories by module — I owned
-part of the file and folder functionality — and shared a single framework: a
-configuration-driven WebDriver factory, a hooks class for setup and teardown, browser
-utilities, and page objects per screen.
+Ten people, two sprints, two applications. Sprint 1 was BriteERP and it was entirely
+manual — fourteen user stories, acceptance criteria written out, executed by hand, bugs
+logged. Sprint 2 was TryCloud, and there we split the stories by module and shared one
+framework: a configuration-driven WebDriver factory, a hooks class for setup and
+teardown, browser utilities, and page objects per screen. I owned the Deck module end to
+end — the feature file, the page object and the step definitions. A third sprint covered
+API testing with REST Assured against a library system, where I took the create-a-user
+endpoint.
 
 ## Manual before automated
 
 The instinct on a test-automation course is to start automating. We didn't. Each user story
 got acceptance criteria, and each criterion was executed by hand first. That surfaced real
-defects — the login error read "Wrong username password" with the "or" missing; the
-three-minute idle logout never fired; a Point-of-Sale action menu was missing its Import
-option — and it meant the feature files that followed described behaviour we had watched,
-not behaviour we hoped for.
+defects: the login error read "Wrong username password" with the "or" missing, the
+three-minute idle logout never fired, and the Point-of-Sale action menu was missing its
+Import option. It meant the feature files that followed described behaviour we had
+watched, not behaviour we hoped for.
 
 ## The framework
 
 Cucumber scenarios in Gherkin, step definitions in Java, Selenium underneath. Page objects
-held the locators — XPath and CSS — so a UI change was one edit. A properties file chose
+held the locators (XPath and CSS), so a UI change was one edit. A properties file chose
 the browser and the environment. Jenkins ran the suite on a schedule and on demand, with
 Cucumber's HTML report as the artefact.
 

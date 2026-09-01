@@ -6,27 +6,22 @@ const path = Astro.url.pathname.replace(/\.html$/, '');
 const isActive = (href: string) =>
   href === '/' ? path === '/' || path === '/index' : path.startsWith(href);
 ---
+<!-- Opacity is deliberately high: --nav is near-black, and at /80 the light
+     theme composited it up to a mid-slate where the inactive nav labels landed
+     at 4.82:1 — passing, but below what the contrast gate reports, since the
+     gate scores the opaque token (8.93:1). At /90 the rendered bar scores
+     6.71:1, so the gate is no longer the looser number. -->
 <header
-  class="sticky top-0 z-40 border-b border-white/10 bg-nav/90 text-nav-ink backdrop-blur-md supports-[backdrop-filter]:bg-nav/80"
+  class="sticky top-0 z-40 border-b border-white/10 bg-nav/95 text-nav-ink backdrop-blur-md supports-[backdrop-filter]:bg-nav/90"
 >
   <div class="mx-auto flex h-16 max-w-(--container-wide) items-center gap-1.5 px-3 md:gap-4 md:px-6">
-    <a
-      href="/"
-      class="flex shrink-0 items-center gap-2.5 font-semibold tracking-tight text-nav-ink transition-opacity hover:opacity-80"
-    >
-      <span
-        class="grid size-8 place-items-center rounded-lg bg-tab-active font-display text-sm font-bold text-tab-active-ink"
-        aria-hidden="true"
-      >
-        D
-      </span>
-      <span class="hidden md:inline">{site.name}</span>
-      <span class="sr-only">{site.shortName}</span>
-    </a>
+    <!-- No wordmark. The home page opens with the name at full size, so a
+         second copy of it in the bar was the same fact twice — and "Home" is
+         already in the nav, which is what the wordmark was for. -->
 
     <!-- Four short links, so they stay visible on mobile. A hamburger for four
          items is a tap the visitor should not have to make. -->
-    <nav class="ml-auto flex items-center gap-0.5 md:gap-1" aria-label="Main">
+    <nav class="mr-auto flex items-center gap-0.5 md:gap-1" aria-label="Main">
       {
         site.nav.map((item) => (
           <a
@@ -80,35 +75,40 @@ const isActive = (href: string) =>
 </header>
 
 <script>
-  const buttons = document.querySelectorAll<HTMLButtonElement>('[data-mode-btn]');
-  const ACTIVE = ['bg-tab-active', 'text-tab-active-ink', 'font-semibold'];
+  // Re-run on every View Transitions navigation: a bundled module
+  // executes once, so top-level setup would go dead after the first
+  // soft navigation. astro:page-load also fires on the initial load.
+  document.addEventListener('astro:page-load', () => {
+    const buttons = document.querySelectorAll<HTMLButtonElement>('[data-mode-btn]');
+    const ACTIVE = ['bg-tab-active', 'text-tab-active-ink', 'font-semibold'];
 
-  const paint = () => {
-    const mode = document.documentElement.dataset.mode === 'eng' ? 'eng' : 'plain';
-    buttons.forEach((b) => {
-      const on = b.dataset.modeBtn === mode;
-      b.classList.toggle('text-nav-muted', !on);
-      ACTIVE.forEach((c) => b.classList.toggle(c, on));
-      b.setAttribute('aria-pressed', String(on));
-    });
-  };
+    const paint = () => {
+      const mode = document.documentElement.dataset.mode === 'eng' ? 'eng' : 'plain';
+      buttons.forEach((b) => {
+        const on = b.dataset.modeBtn === mode;
+        b.classList.toggle('text-nav-muted', !on);
+        ACTIVE.forEach((c) => b.classList.toggle(c, on));
+        b.setAttribute('aria-pressed', String(on));
+      });
+    };
 
-  buttons.forEach((b) =>
-    b.addEventListener('click', () => {
-      const mode = b.dataset.modeBtn === 'eng' ? 'eng' : 'plain';
-      document.documentElement.dataset.mode = mode;
-      try {
-        localStorage.setItem('mode', mode);
-      } catch {
-        /* storage blocked — still flips for this page view */
-      }
-      // Copy hidden by the previous mode was display:none, so the scroll
-      // observer never revealed it. Reveal everything on flip or the newly
-      // shown variant sits at opacity 0 forever.
-      document.querySelectorAll('.reveal').forEach((el) => el.classList.add('is-in'));
-      paint();
-    }),
-  );
+    buttons.forEach((b) =>
+      b.addEventListener('click', () => {
+        const mode = b.dataset.modeBtn === 'eng' ? 'eng' : 'plain';
+        document.documentElement.dataset.mode = mode;
+        try {
+          localStorage.setItem('mode', mode);
+        } catch {
+          /* storage blocked — still flips for this page view */
+        }
+        // Copy hidden by the previous mode was display:none, so the scroll
+        // observer never revealed it. Reveal everything on flip or the newly
+        // shown variant sits at opacity 0 forever.
+        document.querySelectorAll('.reveal').forEach((el) => el.classList.add('is-in'));
+        paint();
+      }),
+    );
 
-  paint();
+    paint();
+  });
 </script>

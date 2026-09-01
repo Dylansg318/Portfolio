@@ -7,6 +7,14 @@ import { coverGradient, statusLabel, type Project } from '../../lib/content';
 interface Props { project: Project }
 const { project } = Astro.props;
 const { data, id } = project;
+/** Shown in the generated cover when there is no screenshot yet. The
+ *  placeholder used to print the project TITLE in large type, directly above
+ *  the heading that prints it again; the headline number says something the
+ *  title does not, so the card carries two facts instead of one fact twice. */
+const headline = data.metrics[0];
+/** The cover already shows the first metric when it is standing in for a
+ *  screenshot, so the row below skips it rather than printing it twice. */
+const inlineMetrics = data.cover ? data.metrics.slice(0, 4) : data.metrics.slice(1, 4);
 ---
 <article class="tile reveal group grid overflow-hidden md:grid-cols-[1.1fr_1fr]">
   <div class="relative min-h-56 overflow-hidden bg-surface-raised md:min-h-full">
@@ -20,10 +28,17 @@ const { data, id } = project;
       />
     ) : (
       <div class="cover-art size-full" style={`background: ${coverGradient(id)}`}>
-        <div class="absolute inset-0 grid place-items-center p-8">
-          <p class="font-display text-center text-3xl font-bold leading-tight text-white/90 drop-shadow sm:text-4xl">
-            {data.title}
-          </p>
+        <div class="absolute inset-0 flex flex-col justify-end p-8">
+          {headline && (
+            <>
+              <p class="font-display text-6xl font-extrabold leading-none text-white drop-shadow sm:text-7xl">
+                {headline.value}
+              </p>
+              <p class="mt-2 text-sm font-medium uppercase tracking-[0.14em] text-white/85">
+                {headline.label}
+              </p>
+            </>
+          )}
         </div>
       </div>
     )}
@@ -63,9 +78,18 @@ const { data, id } = project;
     )}
     <p class="only-eng mt-3 line-clamp-3 text-sm leading-relaxed text-ink-muted/90">{data.problem}</p>
 
-    {data.metrics.length > 0 && (
-      <dl class="mt-5 grid grid-cols-3 gap-3">
-        {data.metrics.slice(0, 3).map((m) => (
+    <!-- These are the numbers that used to sit in the page hero. They belong
+         to the system, not to a paragraph about me. -->
+    {inlineMetrics.length > 0 && (
+      <dl
+        class:list={[
+          'mt-5 grid gap-3',
+          // Four metrics in a three-column grid leaves an orphan on the second
+          // row. The count varies with whether a cover is carrying the first one.
+          inlineMetrics.length === 4 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3',
+        ]}
+      >
+        {inlineMetrics.map((m) => (
           <div class="rounded-xl border border-border bg-bg/60 p-3">
             <dd class="font-display text-xl font-bold text-ink">{m.value}</dd>
             <dt class="mt-0.5 text-[11px] uppercase tracking-wide text-ink-faint">{m.label}</dt>

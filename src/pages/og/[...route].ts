@@ -1,13 +1,14 @@
 import { OGImageRoute } from 'astro-og-canvas';
 import { site } from '../../lib/site';
-import { getProjects } from '../../lib/content';
+import { getAllProjects } from '../../lib/content';
 
 /**
  * Generated social preview images. Without these, a link to this site pasted
  * into LinkedIn or Slack renders as a bare grey box.
  */
-// Same helper as every other surface, so drafts never get an OG card either.
-const projects = await getProjects();
+// Every published page gets a card, subsystems included — they have their own
+// URLs, so a link to one would otherwise paste as a grey box.
+const projects = await getAllProjects();
 
 const pages: Record<string, { title: string; description: string }> = Object.fromEntries(
   projects.map((p) => [`projects/${p.id}`, { title: p.data.title, description: p.data.blurb }]),
@@ -22,15 +23,16 @@ export const { getStaticPaths, GET } = await OGImageRoute({
     title: page.title,
     description: page.description,
     padding: 70,
-    // Meadow Green — the same ocean ground and lime accent as the dark theme.
+    // Graphite ground with a lime edge — the dark theme's own palette, where
+    // the only colour on the card is the accent stripe.
     bgGradient: [
-      [7, 28, 39],
-      [20, 72, 106],
+      [22, 24, 28],
+      [36, 40, 46],
     ],
     border: { color: [181, 228, 140], width: 12, side: 'inline-start' },
     font: {
       title: { size: 64, weight: 'Bold', color: [255, 255, 255] },
-      description: { size: 30, color: [169, 204, 217], lineHeight: 1.4 },
+      description: { size: 30, color: [180, 188, 198], lineHeight: 1.4 },
     },
   }),
 });

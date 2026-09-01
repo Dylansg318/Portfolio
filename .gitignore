@@ -34,3 +34,6 @@ public/demos/**/*.data
 *.mp4
 *.mov
 *.webm
+
+# Playwright MCP scratch output (screenshots, snapshots, console logs)
+.playwright-mcp/

@@ -17,15 +17,20 @@
 </button>
 
 <script>
-  const btn = document.getElementById('theme-toggle');
-  btn?.addEventListener('click', () => {
-    const root = document.documentElement;
-    const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
-    root.dataset.theme = next;
-    try {
-      localStorage.setItem('theme', next);
-    } catch {
-      /* storage blocked — the toggle still works for this page view */
-    }
+  // Re-run on every View Transitions navigation: a bundled module
+  // executes once, so top-level setup would go dead after the first
+  // soft navigation. astro:page-load also fires on the initial load.
+  document.addEventListener('astro:page-load', () => {
+    const btn = document.getElementById('theme-toggle');
+    btn?.addEventListener('click', () => {
+      const root = document.documentElement;
+      const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+      root.dataset.theme = next;
+      try {
+        localStorage.setItem('theme', next);
+      } catch {
+        /* storage blocked — the toggle still works for this page view */
+      }
+    });
   });
 </script>

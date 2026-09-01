@@ -1,7 +1,7 @@
 ---
 title: This Portfolio
-blurb: A content site that can also run games — built so the writing stays easy and the demos stay cheap.
-plainBlurb: This website. It has two voices — plain English and engineer — and a whole second mode where the portfolio becomes a help desk. Also it can run games.
+blurb: A content site that can also run games, built so the writing stays easy and the demos stay cheap.
+plainBlurb: This website. It has two voices, plain English and engineer, and a whole second mode where the portfolio becomes a help desk. Also it can run games.
 date: 2026-08-30
 featured: 10
 status: live
@@ -10,7 +10,7 @@ stack: [Astro, TypeScript, Tailwind, Cloudflare Workers, MDX]
 
 problem: >-
   A portfolio has two jobs that pull in opposite directions. It has to be a fast,
-  readable, mostly-text site — and it also has to run interactive things like games,
+  readable, mostly-text site, and it also has to run interactive things like games,
   which are the heaviest thing a browser can be asked to do. Optimise for one and
   you compromise the other.
 
@@ -21,8 +21,8 @@ unique: >-
   in one frontmatter field, and neither costs a reader anything until they click.
 
 learned:
-  - Making the write-up fields required in the schema — rather than merely conventional — turns "explain what you learned" from a habit into a build error. The tooling does the remembering.
-  - The cheapest performance win is not optimising the heavy thing, it's not loading the heavy thing. Click-to-start on every demo and video removes the cost entirely for the majority of visitors who only came to read.
+  - Making the write-up fields required in the schema, rather than merely conventional, turns "explain what you learned" from a habit into a build error. The tooling does the remembering.
+  - The cheapest performance win isn't optimising the heavy thing, it's not loading the heavy thing. Click-to-start on every demo and video removes the cost entirely for the majority of visitors who only came to read.
   - Committing to design tokens before designing anything means the eventual visual pass is one file, not an audit of every component.
 
 aiNote: >-
@@ -37,8 +37,11 @@ metrics:
   - { label: Hosting, value: "$0/mo" }
   - { label: Demo lanes, value: "2" }
 
-links:
-  source: https://github.com/Dylansg318/Portfolio
+# NO `links:` BLOCK ON PURPOSE. It used to carry
+#   source: https://github.com/Dylansg318/Portfolio
+# but that repository is private, so the Source button 404'd for every visitor.
+# Restore the block the day the repo is made public — an empty `links:` key is
+# not the same thing, it parses as null and fails the schema.
 
 demo:
   kind: island
@@ -47,18 +50,18 @@ demo:
 ---
 
 This page is the template. Everything below demonstrates a component you can use in
-your own write-ups — delete the prose, keep the shapes.
+your own write-ups, delete the prose, keep the shapes.
 
 ## The demo seam
 
 The frontmatter above declares `demo.kind: island`, which mounts a component from
-`src/demos/galaxy-defense/`. It is a real game — a Code.org project of mine ported to
-canvas — not a placeholder, and it is the same island the
+`src/demos/galaxy-defense/`. It's a real game, a Code.org project of mine ported to
+canvas, not a placeholder, and it's the same island the
 [Galaxy Defense](/projects/galaxy-defense) write-up mounts. One folder, two pages:
 
 <Demo demo={frontmatter.demo} title={frontmatter.title} />
 
-The important part isn't the game — it's that switching this to a Godot export is a
+The important part isn't the game, it's that switching this to a Godot export is a
 frontmatter change:
 
 ```yaml
@@ -80,17 +83,17 @@ sits in `public/` and gets a sandboxed iframe injected on click.
 ## Code that can't go stale
 
 `<CodeFile>` reads a real file off disk at build time and highlights it. The snippet
-below isn't a copy — it's the file:
+below isn't a copy, it's the file:
 
 <CodeFile src="portfolio-site/snippets/contract.ts" title="The narrative contract" />
 
-Pasted code drifts from the code it describes; this can't, because there's only one
+Pasted code drifts from the code it describes. This can't, because there's only one
 copy. If the file moves or gets deleted, the build fails instead of quietly showing
 you something that used to be true.
 
 ## Video
 
-Video is never committed here — GitHub rejects files over 100MB and Cloudflare caps a
+Video is never committed here, GitHub rejects files over 100MB and Cloudflare caps a
 static asset at 25MiB, so a three-minute screen capture breaks both. `<Video>` takes a
 provider and an id, renders a poster, and only injects the real player on click:
 

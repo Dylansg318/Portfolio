@@ -23,6 +23,16 @@ export default defineConfig({
   trailingSlash: 'never',
   build: { format: 'file' },
 
+  // The three ERP subsystems used to be top-level projects. They are now
+  // children of the ERP and live under its path. Anything already linking to
+  // the old URLs — a sent résumé, a search result, a message — must still land
+  // on the write-up rather than a 404.
+  redirects: {
+    '/projects/repricer': '/projects/internal-erp/repricing',
+    '/projects/channel-sync': '/projects/internal-erp/channel-sync',
+    '/projects/quickbooks': '/projects/internal-erp/quickbooks',
+  },
+
   // Everything prerenders by default. Only routes that explicitly opt out
   // (`export const prerender = false`) invoke the Worker at request time.
   output: 'static',

@@ -1,0 +1,47 @@
+---
+import { statusLabel, type Project } from '../../lib/content';
+
+/** A project as a text row, not a card.
+ *
+ *  The homepage shows one project as a full card (with a real screenshot) and
+ *  the rest as rows. That asymmetry is deliberate: a grid of cards demands a
+ *  thumbnail for every entry, and a generated gradient standing in for a
+ *  screenshot is what makes a portfolio look padded. A row promises nothing it
+ *  cannot show — a title, what kind of work it was, a year, one sentence. */
+interface Props { project: Project; delay?: number }
+const { project, delay = 0 } = Astro.props;
+const { data, id } = project;
+
+const year = data.date.getFullYear();
+---
+<a
+  href={`/projects/${id}`}
+  class="reveal group grid grid-cols-[1fr_auto] items-baseline gap-x-6 gap-y-1 border-b border-border py-5 transition-colors hover:border-border-strong"
+  style={`--reveal-delay: ${delay}ms`}
+>
+  <h3 class="font-display text-lg font-semibold tracking-tight text-ink transition-colors group-hover:text-accent sm:text-xl">
+    {data.title}
+  </h3>
+  <p class="text-sm tabular-nums text-ink-faint">{year}</p>
+
+  <p class="col-span-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] uppercase tracking-[0.12em] text-ink-faint">
+    {data.role && <span>{data.role}</span>}
+    {data.role && <span aria-hidden="true">·</span>}
+    <span>{statusLabel[data.status]}</span>
+  </p>
+
+  {data.plainBlurb ? (
+    <>
+      <p class="only-plain col-span-2 max-w-(--container-reading) text-[0.95rem] leading-relaxed text-ink-muted">
+        {data.plainBlurb}
+      </p>
+      <p class="only-eng col-span-2 max-w-(--container-reading) text-[0.95rem] leading-relaxed text-ink-muted">
+        {data.blurb}
+      </p>
+    </>
+  ) : (
+    <p class="col-span-2 max-w-(--container-reading) text-[0.95rem] leading-relaxed text-ink-muted">
+      {data.blurb}
+    </p>
+  )}
+</a>

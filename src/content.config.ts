@@ -25,6 +25,19 @@ const projectSchema = ({ image }: SchemaContext) =>
     /** Manual ordering on the index; higher sorts first, then by date. */
     featured: z.number().default(0),
 
+    /**
+     * The id of the project this one is a part of, if any.
+     *
+     * A project with a parent is a SUBSYSTEM: it keeps its own full write-up
+     * and its own URL, but it never appears in a top-level listing — it is
+     * reached through its parent's page instead. Five sibling cards describing
+     * one codebase read as "this person has had one job"; one system with
+     * named parts reads as a system. The nesting is real, not cosmetic: the
+     * file lives at <parent>/<slug>/index.mdx, so the id and the URL say the
+     * same thing the listing does.
+     */
+    parent: z.string().optional(),
+
     // --- the contract ------------------------------------------------
     /** What was actually wrong or needed. Not "I built an X". */
     problem: z.string(),

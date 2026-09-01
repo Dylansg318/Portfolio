@@ -69,31 +69,36 @@ const posterSrc = poster ?? fallbackPoster;
 </figure>
 
 <script>
-  document.querySelectorAll<HTMLElement>('[data-video]').forEach((wrap) => {
-    const btn = wrap.querySelector<HTMLButtonElement>('[data-video-play]');
-    btn?.addEventListener(
-      'click',
-      () => {
-        const src = wrap.dataset.src;
-        if (!src) return;
-        const el =
-          wrap.dataset.provider === 'file'
-            ? Object.assign(document.createElement('video'), {
-                src,
-                controls: true,
-                autoplay: true,
-                className: 'absolute inset-0 size-full',
-              })
-            : Object.assign(document.createElement('iframe'), {
-                src,
-                className: 'absolute inset-0 size-full border-0',
-                allow:
-                  'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen',
-              });
-        wrap.innerHTML = '';
-        wrap.appendChild(el);
-      },
-      { once: true },
-    );
+  // Re-run on every View Transitions navigation: a bundled module
+  // executes once, so top-level setup would go dead after the first
+  // soft navigation. astro:page-load also fires on the initial load.
+  document.addEventListener('astro:page-load', () => {
+    document.querySelectorAll<HTMLElement>('[data-video]').forEach((wrap) => {
+      const btn = wrap.querySelector<HTMLButtonElement>('[data-video-play]');
+      btn?.addEventListener(
+        'click',
+        () => {
+          const src = wrap.dataset.src;
+          if (!src) return;
+          const el =
+            wrap.dataset.provider === 'file'
+              ? Object.assign(document.createElement('video'), {
+                  src,
+                  controls: true,
+                  autoplay: true,
+                  className: 'absolute inset-0 size-full',
+                })
+              : Object.assign(document.createElement('iframe'), {
+                  src,
+                  className: 'absolute inset-0 size-full border-0',
+                  allow:
+                    'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen',
+                });
+          wrap.innerHTML = '';
+          wrap.appendChild(el);
+        },
+        { once: true },
+      );
+    });
   });
 </script>
