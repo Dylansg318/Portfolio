@@ -39,15 +39,18 @@ aiNote: >-
   a coordination layer, and rule files that auto-load per area. That's its own
   write-up on this site.
 
+# Outcome and scale metrics only. Lines of code, endpoint, table and migration
+# counts used to sit here too; they say how big the system is, not how well it
+# works, and a reader who knows that discounts the numbers around them.
 metrics:
   - { label: orders / day, value: "~520" }
   - { label: products, value: "32K" }
-  - { label: scheduled jobs, value: "180" }
-  - { label: database tables, value: "636" }
-  - { label: API endpoints, value: "2,449" }
+  - { label: sales channels, value: "6" }
+  - { label: daily users, value: "13" }
+  - { label: orders ingested, value: "300K+" }
+  - { label: price changes logged, value: "138K+" }
   - { label: automated tests, value: "2,721" }
-  - { label: migrations, value: "1,226" }
-  - { label: lines of code, value: "1.4M" }
+  - { label: scheduled jobs, value: "180" }
 ---
 
 <PlainOnly>
@@ -92,9 +95,10 @@ around it.
 
 MHLHUB is a single TypeScript codebase, an Express API, a React client, one PostgreSQL
 database, deployed as a container on Railway through GitHub Actions. That part is
-ordinary on purpose. The size is less ordinary: about 1.4 million lines across 6,000
-files, 2,449 HTTP endpoints, 636 tables, 1,226 migrations and 2,721 test files, built
-and operated by one person. The interesting decisions are in how it's organised.
+ordinary on purpose. What is less ordinary is the surface area one person operates:
+every order, price, label, return and invoice for the company passes through it, 13
+people work in it all day, and 2,721 automated tests stand between a change and
+production. The interesting decisions are in how it's organised.
 
 **Seven loops, not a feature list.** Every screen and every one of the 180 scheduled jobs
 belongs to one of seven daily loops: order intake → fulfilment, inventory and procurement,

@@ -91,9 +91,8 @@ export const site = {
   resumeSummary:
     'Software engineer who designed, built and runs the ERP a six-channel dental distributor ' +
     'operates on, as its only engineer. Strongest on integrations and data correctness: ' +
-    'order pipelines, marketplace and carrier APIs, accounting sync. ' +
-    'SDET-trained, so the tests arrive with the feature. Looking for a backend or ' +
-    'full-stack role, remote or in Northern Virginia.',
+    'order pipelines, marketplace and carrier APIs, accounting sync, and the tests that ' +
+    'prove them. Looking for a backend or full-stack role, remote or in Northern Virginia.',
 
   /** The three things a one-page résumé links to. The ERP is private, so the
    *  second entry is the public evidence — the sanitized production modules
@@ -114,9 +113,9 @@ export const site = {
         'Sanitized production modules: GS1 parsing, a ZPL renderer, carrier-invoice parsers, a device agent, session locks.',
     },
     {
-      title: 'Guardrails for a fleet of AI coding sessions',
+      title: 'AI coding-fleet guardrails',
       href: '/projects/agent-fleet',
-      stack: 'Claude Code, Git hooks, Node.js',
+      stack: 'Claude Code, Git hooks',
       blurb:
         'Locks, hooks and consequence-triggered review that let 5–10 coding agents share one repository safely.',
     },
@@ -165,11 +164,12 @@ export const site = {
       summary:
         'The only engineer at a family-run dental distributor. Built and run MHLHUB, the in-house ERP that replaced off-the-shelf software, spreadsheets and inbox triage across six sales channels.',
       bullets: [
-        'Sole engineer for MHLHUB, the in-house ERP that replaced SellerCloud, spreadsheets and a hand-sorted inbox: order intake from six sales channels, inventory, shipping, customer service, returns, invoicing and a two-way QuickBooks Desktop sync. TypeScript, Express, React, PostgreSQL.',
-        'Daily orders grew from about 270 to about 520 on a 32,000-product catalog with no added operations headcount; 13 people work in the system daily.',
+        'Sole engineer for MHLHUB, the in-house ERP that replaced SellerCloud and a stack of spreadsheets: order intake from six sales channels, inventory, shipping, customer service, returns, invoicing and a two-way QuickBooks Desktop sync.',
+        'Daily orders grew from about 270 to about 520 on a 32,000-product catalog with no added operations headcount.',
         'Replaced a morning pricing spreadsheet with a repricing engine that re-evaluates every product every 60 seconds with cooldowns, floors and a no-price-war rule; 138,000+ price changes, each logged with its reason.',
         'Integrated eBay, Amazon SP-API, Shopify, Walmart, Net32 and three carriers: 300,000+ orders ingested, every raw payload stored before parsing, and a source-scan guard so channel code can never write the product catalog.',
         'Put barcodes and scanners on a pen-and-paper warehouse: GS1 parsing, a browser camera scanner, a JSON-to-ZPL label renderer and a self-updating Windows print agent with crash-loop rollback.',
+        'Parsed a year of UPS and FedEx invoices into the ERP and surfaced about $26K a year in avoidable address-correction, re-weigh, printer-rental and late fees.',
         'Reconcile the ERP against QuickBooks at line level and settle each discrepancy once in a claims ledger; 2,721 automated tests and ~180 checkpointed scheduled jobs keep app and books in agreement through redeploys.',
         'Run 5–10 parallel Claude Code sessions on one repository behind file locks, hooks that block unrecoverable git operations, and second-model review of consequential changes.',
       ],
@@ -183,7 +183,7 @@ export const site = {
       summary:
         'Ran front-of-house and trained staff. Promoted twice within months. Studied for the SDET bootcamp on the side.',
       bullets: [
-        'Ran front-of-house operations and trained new servers; promoted twice within the first months. Completed the CYDEO SDET program alongside full-time shifts.',
+        'Ran front-of-house and trained new servers; promoted twice within months. Completed the CYDEO SDET program alongside full-time shifts.',
       ],
     },
     {
@@ -198,7 +198,7 @@ export const site = {
       summary:
         'Promoted from sales associate to store manager in ten months. Beat performance targets by 30% with perfect customer-satisfaction scores.',
       bullets: [
-        'Hired as a sales associate in January 2021 and promoted to store manager that November; ran staffing, cash and inventory, beat targets by 30% over multiple months and raised customer satisfaction from 8.0 to 10 out of 10.',
+        'Sales associate promoted to store manager in ten months; ran staffing, cash and inventory, beat targets by 30% over multiple months and raised customer satisfaction from 8.0 to 10/10.',
       ],
     },
   ],
@@ -221,7 +221,7 @@ export const site = {
       place: 'Fairfax, VA',
       when: '2020 – 2024',
       detail:
-        "Dean's List. Object-oriented programming, game design, essentials of CS. Left before the degree was conferred.",
+        "Dean's List. Object-oriented programming, game design, essentials of CS; left before the degree was conferred.",
     },
   ],
 

@@ -30,11 +30,37 @@ const subject = encodeURIComponent('Hello from your portfolio');
       </div>
       <p id="copy-status" role="status" aria-live="polite" class="mt-2 min-h-5 text-sm text-ok"></p>
 
-      <div class="reveal mt-12 grid gap-4 sm:grid-cols-2" style="--reveal-delay: 240ms">
+      <!-- The non-technical visitor's path. A recruiter knows what to do with a
+           résumé; an owner or office manager needs to hear, in their terms,
+           what kind of problem I take on and what happens after they write. -->
+      <section class="reveal mt-12 rounded-2xl border border-border bg-surface p-6 sm:p-7" style="--reveal-delay: 210ms">
+        <h2 class="font-display text-xl font-bold text-ink">Running a business on spreadsheets and six logins?</h2>
+        <p class="mt-3 leading-relaxed text-ink-muted">
+          That is the problem I have spent the last year solving for a dental distributor:
+          orders from six websites that never agreed, prices updated by hand every morning,
+          books that had to be reconciled at the end of every shift, a warehouse on pen and
+          paper. It now runs in{' '}
+          <a class="text-accent hover:underline" href="/projects/mhlhub">one system</a>, orders
+          have roughly doubled, and nobody was added to operations to handle it.
+        </p>
+        <p class="mt-3 leading-relaxed text-ink-muted">
+          If your company has a version of that, describe it in an email the way you would to a
+          colleague. I will tell you plainly whether it is a software problem, what I would
+          build first, and what it would take. No forms, no sales call.
+        </p>
+        <ul class="mt-4 grid gap-2 text-sm text-ink-muted sm:grid-cols-2">
+          <li class="rounded-lg bg-surface-raised px-3 py-2">Marketplace and storefront orders in one place</li>
+          <li class="rounded-lg bg-surface-raised px-3 py-2">Pricing, inventory and shipping that update themselves</li>
+          <li class="rounded-lg bg-surface-raised px-3 py-2">QuickBooks that agrees with the sales system</li>
+          <li class="rounded-lg bg-surface-raised px-3 py-2">Barcodes, scanners and label printing on the floor</li>
+        </ul>
+      </section>
+
+      <div class="reveal mt-8 grid gap-4 sm:grid-cols-2" style="--reveal-delay: 240ms">
         <div class="tile p-5">
           <h2 class="eyebrow mb-3 text-xs">Useful to include</h2>
           <ul class="space-y-2 text-sm leading-relaxed text-ink-muted">
-            <li>What you're hiring for, or what you're building</li>
+            <li>What you're hiring for, or what your business is stuck on</li>
             <li>Timeline, and remote / hybrid / on-site</li>
             <li>A link to the role or the company</li>
           </ul>
