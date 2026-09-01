@@ -35,9 +35,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      # `cache: npm` stays explicit. setup-node v5 added automatic caching, but
+      # only when package.json carries a `packageManager` field — this one does
+      # not, so without this line there would be no cache at all.
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -76,7 +79,12 @@ jobs:
           github.ref == 'refs/heads/main'
           && github.event_name != 'pull_request'
           && steps.cf.outputs.ready == 'true'
-        uses: cloudflare/wrangler-action@v3
+        # v4 changed the action's DEFAULT wrangler to v4, which does not apply
+        # here: the action probes for an existing install first, and `npm ci`
+        # above has already put this repo's pinned wrangler (4.127.1) on disk.
+        # CI therefore deploys with the exact version `npx wrangler deploy` uses
+        # in scripts/deploy-from-mac.sh, and a bump in package.json moves both.
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
