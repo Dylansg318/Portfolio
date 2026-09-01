@@ -1,0 +1,13 @@
+{
+  "name": "carrier-invoice-parsers",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pure parsers for carrier billing files: UPS Billing Data File v2.1 (headerless 250-field CSV) and the emailed FedEx invoice PDF",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test __tests__/orderReference.test.js __tests__/fedexInvoicePdf.test.js"
+  },
+  "dependencies": {
+    "csv-parse": "^5.5.0"
+  }
+}

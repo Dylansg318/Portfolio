@@ -1,0 +1,97 @@
+---
+title: The toolbox, published
+blurb: Nine self-contained pieces of the ERP, sanitized and published — barcode parsing, thermal-print layout, a self-updating device agent, invoice parsers, more.
+plainBlurb: The system itself must stay private, but its cleverest parts don't have to. Nine pieces are now public where anyone can read them — the real warehouse code, scrubbed of anything private.
+date: 2026-09-01
+parent: mhlhub
+status: live
+role: sole engineer
+stack: [TypeScript, Node.js, React, PostgreSQL, ZPL, zxing-wasm]
+
+problem: >-
+  A one-company ERP can't be open-sourced, so a portfolio built on it asks to be
+  taken on faith. But most of what's interesting in the codebase isn't the
+  business at all — it's barcode grammar, thermal-printer geometry, self-updating
+  field devices, defensive SQL helpers. The problem was proving the work is real
+  without leaking a single customer, order number or vendor account.
+
+unique: >-
+  Extraction as a contract, not a copy-paste. Each piece was lifted along its
+  natural seam (the app-coupled imports cut and replaced with injected config),
+  sanitized against a hard deny-list enforced by grep, and published with its
+  load-bearing comments intact — the "why" documentation is the point. Fixtures
+  were regenerated, not scrubbed: a test barcode literally encodes a real order
+  number, and a print-preview fixture carries a real name and address, so
+  copying them was never an option.
+
+learned:
+  - The dangerous leaks aren't passwords, they're fixtures. Credentials live in env vars and never touch the repo; the real customer data hides in test barcodes, sample labels and invoice PDFs. Regenerate, never redact.
+  - How cleanly a module lifts out is a code-quality metric. The pieces that took minutes were the ones already built with the seams in the right place — pure functions, injected config, zero app imports. The ones that fought back were telling me where the design is tangled.
+  - Never publish by pruning a private repo. Git history keeps everything ever committed, including what you deleted. Public code gets copied out into a tree that never contained the private material.
+
+aiNote: >-
+  The extraction itself was run by a fleet of AI agents, one per piece, each
+  briefed with the same hard sanitization contract and a grep-enforced deny
+  list, working in parallel into disjoint folders. I wrote the contract, chose
+  the seams, and audited the output — including a second-model review pass —
+  before anything was committed.
+
+metrics:
+  - { label: pieces published, value: "9" }
+  - { label: customer records included, value: "0" }
+
+links:
+  source: https://github.com/Dylansg318/Portfolio/tree/main/code
+---
+
+<PlainOnly>
+
+## What's here
+
+Nine working parts of the warehouse system, published where anyone can read
+them. The barcode reader that turns a scan into "which product is this". The
+converter that stopped labels printing as blank pages. The layout engine that
+decides how a packing slip fits on a 4-inch thermal label. The little program
+that keeps the warehouse printer PC updating itself safely — and rolls itself
+back if an update goes bad. The parsers that read what the shipping carriers
+actually billed us, line by line.
+
+Before any of it went public, every name, address, order number and account
+number was replaced. The test data was rebuilt from scratch, because a barcode
+in a test file is a real barcode — it literally contains a real order.
+
+</PlainOnly>
+
+<EngOnly>
+
+## The pieces
+
+All of it lives under [`code/`](https://github.com/Dylansg318/Portfolio/tree/main/code)
+in this site's own repo — readable excerpts with their tests and the production
+reasoning kept in the comments:
+
+- **[barcode-parsers](https://github.com/Dylansg318/Portfolio/tree/main/code/barcode-parsers)** — a pure-function GS1 Application Identifier parser (GTIN-8/12/13/14 equivalence, FNC1 ambiguity, code-ID prefixes) and carrier-label extraction for USPS IMpb, FedEx "96" and UPS 1Z barcodes.
+- **[camera-scanner](https://github.com/Dylansg318/Portfolio/tree/main/code/camera-scanner)** — a zxing-wasm decode loop with an N-frame agreement policy, and a bench that models hand tremor as an AR(1) walk so the gate measures repeatability rather than amplitude.
+- **[zpl-layout-kit](https://github.com/Dylansg318/Portfolio/tree/main/code/zpl-layout-kit)** — glyph-advance text metrics (replacing a `fontSize × 0.6` guess), barcode module-width fitting, Floyd–Steinberg 1-bit dithering, and a render-and-look preview loop.
+- **[epl-to-zpl](https://github.com/Dylansg318/Portfolio/tree/main/code/epl-to-zpl)** — 184 lines that fix "the printer under a ZPL driver prints EPL as a blank page".
+- **[device-agent](https://github.com/Dylansg318/Portfolio/tree/main/code/device-agent)** — a self-updating Windows agent whose supervisor verifies sha256 + syntax before hot-swapping, runs a probation window, and rolls back and blacklists a crash-looping version. The rollback executor never updates itself.
+- **[carrier-invoice-parsers](https://github.com/Dylansg318/Portfolio/tree/main/code/carrier-invoice-parsers)** — the UPS 250-column billing file and FedEx PDF invoices, with column semantics derived empirically against invoice totals instead of trusted from a spec.
+- **[server-utils](https://github.com/Dylansg318/Portfolio/tree/main/code/server-utils)** — `withSavepoint` (why catching a unique-violation inside a Postgres transaction is a trap), an SQL-shape guard for an LLM-driven write endpoint, AES-256-GCM secret storage, zero-dep TOTP, concurrency primitives.
+- **[client-utils](https://github.com/Dylansg318/Portfolio/tree/main/code/client-utils)** — list-state hooks with URL + localStorage persistence and TTL expiry, a freeform US-address parser, a unified browser CSV/XLSX/XML reader.
+- **[arch-guard](https://github.com/Dylansg318/Portfolio/tree/main/code/arch-guard)** — a source-scan invariant engine for the rules an import graph can't see.
+
+<Takeaway>
+  A test fixture is production data wearing a costume. The barcodes in the
+  original test suite decode to a real order; the label fixtures print a real
+  customer's address. Sanitization that only greps for the company name would
+  have missed every one of them.
+</Takeaway>
+
+## What stayed behind
+
+The order pipeline, the repricing strategy, the channel syncs and the books —
+anything that *is* the business rather than engineering around it. Where a
+published piece had one foot in that territory, the README says exactly which
+seam was cut and why.
+
+</EngOnly>
