@@ -11,6 +11,7 @@
     "build": "astro build && pagefind --site dist/client",
     "preview": "astro preview",
     "check": "wrangler types && astro check && node scripts/check-contrast.mjs",
+    "resume:pdf": "./scripts/build-resume-pdf.sh",
     "astro": "astro",
     "cf:dev": "wrangler dev",
     "cf:deploy": "wrangler deploy",
