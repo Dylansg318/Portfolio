@@ -1,19 +1,32 @@
 name: Deploy
 
 on:
-  # There is deliberately NO `push` trigger. Every push used to build here, which
-  # at ~13 pushes/day was spending ~480 Actions minutes a month against a 2,000
-  # allowance. The site now ships on demand from `scripts/deploy-from-mac.sh`,
-  # which builds in a case-sensitive Linux container locally, for zero minutes
-  # and in about the same wall-clock this runner took (81s vs 84s).
+  # A push to main builds AND deploys. The `push` trigger was removed in Aug 2026
+  # because ~13 pushes/day cost ~480 Actions minutes a month against a 2,000
+  # allowance — billing rounds up to a whole minute per job, so a 50-second build
+  # cost a full one. The repository went public on 2026-09-01, and GitHub does not
+  # bill standard runners on public repositories, so that reason is gone: measured
+  # on this repo's own runs, `billable.UBUNTU` is 0ms against a ~60s duration.
   #
-  # What remains costs nothing in practice. Work lands straight on main, so
-  # `pull_request` almost never fires — it is a free Linux-x64 net for the rare
-  # PR. `workflow_dispatch` is the fallback for when the Mac is unavailable.
+  # The trade this re-accepts, deliberately: `git push` IS the deploy button.
+  # Nothing prompts, nothing confirms. `scripts/deploy-from-mac.sh` is no longer
+  # the normal path but still owns what a push cannot express — a non-main ref, a
+  # redeploy with no new commit, gates run locally before pushing, or shipping
+  # while Actions is degraded.
+  #
+  # `pull_request` stays a build-only gate. The repo is public, so anyone may open
+  # one; the deploy step below excludes the event explicitly so a fork's PR has no
+  # path to Cloudflare. `workflow_dispatch` redeploys current main on demand.
+  push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
-# Cancel an in-flight run when a newer commit lands on the same ref.
+# Cancel an in-flight run when a newer commit lands on the same ref. Now that a
+# run deploys, this also means a rapid second push cancels the first run's deploy
+# — which is what you want: the newer commit wins the race, rather than an older
+# build landing on top of it. Wrangler activates a version atomically, so a
+# cancelled deploy either happened or did not; it cannot half-ship.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -53,14 +66,15 @@ jobs:
             echo "::notice::Cloudflare credentials not set — build verified, deploy skipped."
           fi
 
-      # Deploy only from main, only on a manual dispatch, and only once
-      # credentials exist. This is now the FALLBACK path — the normal one is
-      # `scripts/deploy-from-mac.sh`. Use it when the Mac is unavailable.
-      # PRs still get build + typecheck as a gate, but never deploy.
+      # Deploy on any push to main, and on manual dispatch, once credentials
+      # exist. `pull_request` is excluded by name rather than by inference: on
+      # that event `github.ref` is the PR merge ref and would not match main
+      # anyway, but this repository is public and a fork's PR must never have a
+      # route to Cloudflare, so the condition says so out loud.
       - name: Deploy to Cloudflare Workers
         if: >-
           github.ref == 'refs/heads/main'
-          && github.event_name == 'workflow_dispatch'
+          && github.event_name != 'pull_request'
           && steps.cf.outputs.ready == 'true'
         uses: cloudflare/wrangler-action@v3
         with:
