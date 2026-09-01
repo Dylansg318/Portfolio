@@ -1,0 +1,10 @@
+{
+  "name": "device-agent",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Windows print agent + self-updating supervisor with sha256-verified hot-swap, probation, and rollback",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test __tests__/agentLib.test.js __tests__/bidiChannel.test.js supervisor/__tests__/lib.test.js"
+  }
+}

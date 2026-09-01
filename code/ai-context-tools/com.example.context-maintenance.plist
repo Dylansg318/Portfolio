@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  launchd job: run the local context-maintenance script Mon + Thu at 05:10 local time.
+  Install:   bash install-launchd.sh
+  Uninstall: launchctl bootout gui/$(id -u)/com.example.context-maintenance
+  Logs:      ~/Library/Logs/context-maintenance.{out,err}.log
+
+  NOTE: install-launchd.sh substitutes the REPLACE_WITH_* placeholders for your
+  checkout path and $HOME; adjust the two StartCalendarInterval entries to change
+  the cadence. ProgramArguments assumes the scripts live at scripts/memory/ in
+  the repo — adjust the path if you keep them elsewhere.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.example.context-maintenance</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>-lc</string>
+    <string>exec "$CONTEXT_REPO/scripts/memory/nightly-context-maintenance.sh"</string>
+  </array>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>CONTEXT_REPO</key>
+    <string>REPLACE_WITH_REPO_PATH</string>
+  </dict>
+
+  <!-- Mon (Weekday 1) and Thu (Weekday 4) at 05:10 local time -->
+  <key>StartCalendarInterval</key>
+  <array>
+    <dict>
+      <key>Weekday</key><integer>1</integer>
+      <key>Hour</key><integer>5</integer>
+      <key>Minute</key><integer>10</integer>
+    </dict>
+    <dict>
+      <key>Weekday</key><integer>4</integer>
+      <key>Hour</key><integer>5</integer>
+      <key>Minute</key><integer>10</integer>
+    </dict>
+  </array>
+
+  <key>StandardOutPath</key>
+  <string>REPLACE_WITH_HOME/Library/Logs/context-maintenance.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>REPLACE_WITH_HOME/Library/Logs/context-maintenance.err.log</string>
+</dict>
+</plist>

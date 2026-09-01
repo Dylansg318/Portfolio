@@ -1,0 +1,77 @@
+---
+title: The guardrails, published
+blurb: The session-lock layer, fleet scripts, context tooling and review-agent configs behind the fleet write-up are now public, sanitized, in this site's repo.
+plainBlurb: The safety system I describe in the fleet write-up is now something you can read for yourself — the actual traffic-cop code, with everything company-specific taken out.
+date: 2026-09-01
+parent: agent-fleet
+status: live
+role: sole engineer
+stack: [Node.js, Git hooks, Claude Code, Shell, launchd]
+
+problem: >-
+  The fleet write-up makes claims — hooks that block dangerous git operations,
+  a lock on the shared index, review triggered by consequence. Claims about
+  guardrails are cheap. And the underlying problem is no longer niche: anyone
+  running multiple coding agents against one repository hits the same failure
+  modes, usually without noticing until a commit sweeps in someone else's
+  staged files. The proof, and the useful part, is the code.
+
+unique: >-
+  The design choices are the story. The lock is keyed on `git rev-parse
+  --git-path index` — the file that is actually shared — so worktrees, which
+  have their own index, never block each other and the lock serializes exactly
+  the sessions that can hurt each other. Stale locks are stolen by PID
+  liveness and TTL, so the coordinator can't deadlock the thing it
+  coordinates. And every guard fails open: a crashed hook exits clean, because
+  a safety layer that can take the fleet down is a worse hazard than the ones
+  it guards against.
+
+learned:
+  - Lock the resource, not the concept. "One session per repo" would have serialized work that can't conflict; locking the physical index file encodes the sharing boundary exactly and let parallelism stay free.
+  - A guard that fails closed becomes the outage. The first draft blocked on its own errors; the rewrite treats guard failure as no-op and logs it, and that decision is documented at every exit path.
+  - Publishing forces clean architecture. The mechanism sanitized in an afternoon; the embedded rule text took the longest, and the tangle of policy and mechanism it exposed was worth knowing about regardless.
+
+aiNote: >-
+  Agents write most of the code these hooks police, and agents did the
+  extraction for publication — each with a hard deny-list contract, audited by
+  me and a second-model review before commit. The receipts for the parent
+  write-up's claims are the point of this page.
+
+links:
+  source: https://github.com/Dylansg318/Portfolio/tree/main/code/session-lock
+---
+
+<PlainOnly>
+
+## What's here
+
+Four pieces of the safety system, published in this site's own repository. The
+traffic cop that stops two AI helpers from tripping over each other when they
+share one workspace. The scripts that open a separate workspace per helper and
+later check that no finished work was left behind unmerged. The tooling that
+keeps each helper's long-term memory index honest. And the written playbooks
+that decide when work gets a second opinion before it runs — based on what a
+mistake would cost, never on how big the change looks.
+
+Nothing company-specific survived the trip: the rules the guards enforce were
+rewritten as generic examples, and every path, name and address is a stand-in.
+
+</PlainOnly>
+
+<EngOnly>
+
+## The pieces
+
+- **[session-lock](https://github.com/Dylansg318/Portfolio/tree/main/code/session-lock)** — the coordination layer: O_EXCL atomic locks on the shared git index, PID-liveness + TTL steal, reentrancy by session id, a cross-session broadcast inbox, and the guard hooks that block `git add -A`, `commit -a`, `--no-verify` and full-tree test runs. Every path fails open, deliberately, and the comments argue each failure mode.
+- **[fleet-scripts](https://github.com/Dylansg318/Portfolio/tree/main/code/fleet-scripts)** — spawn one terminal tab per work slice (each agent briefed, in its own worktree), reap sessions by liveness and merge state, and audit worktrees for finished-but-unmerged work — including the `git diff A...B` three-dot trap that once let finished features rot for five weeks.
+- **[ai-context-tools](https://github.com/Dylansg318/Portfolio/tree/main/code/ai-context-tools)** — the memory index as a generated artifact (frontmatter in, index out, a check mode that fails CI on drift), and a read-only SQLite-graph visualizer that renders module architecture as one interactive map.
+- **[agent-configs](https://github.com/Dylansg318/Portfolio/tree/main/code/agent-configs)** — the transferable core of consequence-triggered, cross-model review, plus the change-record planning format that replaced 900-line implementation plans with a ~60–90-line decision ledger.
+
+<Takeaway>
+  The reviewer must be a different model than the writer. Two passes by the
+  same model share the same blind spots — the published configs pair every
+  session model with a reviewer from a different family, and treat a
+  rubber-stamp result as a failed review.
+</Takeaway>
+
+</EngOnly>

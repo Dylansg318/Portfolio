@@ -1,0 +1,105 @@
+/* Camera stage shared by every scan surface. In the source app these rules
+ * rode the app's design tokens; here they are self-contained: the tokens are
+ * replaced with literals and a minimal `.scan-btn` / `.sr-only` stand in for
+ * the app's button and screen-reader-only utilities. */
+
+.scan-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+}
+
+.scan-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Sits over the preview so it stays reachable one-handed on a phone. */
+.scan-torch {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  min-height: 40px;
+}
+
+.scan-lastread {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 6px 10px;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: #fff;
+  background: rgba(0, 0, 0, .55);
+  word-break: break-all;
+}
+
+.scan-wrap,
+.scan-fallback {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+/* A <label> wrapping a visually-hidden file input — tapping it opens the
+ * phone's own camera app, which is the only way to get a full-resolution,
+ * properly focused frame into the page. */
+.scan-photo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.scan-photo-miss {
+  font-size: 12px;
+  color: #6b7280;
+  text-align: center;
+}
+
+.scan-res {
+  opacity: .75;
+}
+
+.scan-error {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+/* Stand-ins for the host app's utilities (the source app supplies its own). */
+.scan-btn {
+  padding: 8px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #f9fafb;
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+  cursor: pointer;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
