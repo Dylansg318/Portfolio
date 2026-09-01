@@ -1,12 +1,16 @@
 ---
 title: The toolbox, extracted
 blurb: Nine self-contained pieces of the ERP, lifted out and sanitized — barcode parsing, thermal-print layout, a self-updating device agent, invoice parsers.
-plainBlurb: The system itself must stay private, but its cleverest parts don't have to. Nine pieces are pulled out and scrubbed clean — real warehouse code, waiting to be released.
+plainBlurb: The system itself must stay private, but its cleverest parts don't have to. Nine pieces are pulled out and scrubbed clean — real warehouse code, now public and readable.
 date: 2026-09-01
 parent: mhlhub
-status: wip
+status: live
 role: sole engineer
 stack: [TypeScript, Node.js, React, PostgreSQL, ZPL, zxing-wasm]
+
+links:
+  # The excerpts themselves, public since 2026-09-01.
+  source: https://github.com/Dylansg318/Portfolio/tree/main/code
 
 problem: >-
   A one-company ERP can't be open-sourced, so a portfolio built on it asks to be
@@ -57,8 +61,9 @@ Every name, address, order number and account number was replaced first. The
 test data was rebuilt from scratch, because a barcode in a test file is a real
 barcode — it literally contains a real order.
 
-The set is still being finished, so it isn't released yet. This page is the
-description of what it holds and how it was made safe to hand over.
+The set is published. This page is the description of what it holds and how it
+was made safe to hand over; the code itself sits in the `code/` folder of this
+site's own repository, open to anyone.
 
 </PlainOnly>
 
@@ -66,8 +71,8 @@ description of what it holds and how it was made safe to hand over.
 
 ## The pieces
 
-All of it lives under `code/` in this site's own repo, which stays private
-while the set is finished — readable excerpts with their tests and the
+All of it lives under [`code/`](https://github.com/Dylansg318/Portfolio/tree/main/code)
+in this site's own repository — readable excerpts with their tests and the
 production reasoning kept in the comments:
 
 - **barcode-parsers** — a pure-function GS1 Application Identifier parser (GTIN-8/12/13/14 equivalence, FNC1 ambiguity, code-ID prefixes) and carrier-label extraction for USPS IMpb, FedEx "96" and UPS 1Z barcodes.

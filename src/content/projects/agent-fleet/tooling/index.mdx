@@ -1,12 +1,16 @@
 ---
 title: The guardrails, extracted
 blurb: The session-lock layer, fleet scripts, context tooling and review-agent configs behind the fleet write-up, lifted out of the private repo and sanitized.
-plainBlurb: The safety system I describe in the fleet write-up, pulled out on its own and stripped of everything company-specific — the actual traffic-cop code, cleaned up and waiting to be released.
+plainBlurb: The safety system I describe in the fleet write-up, pulled out on its own and stripped of everything company-specific — the actual traffic-cop code, cleaned up and published.
 date: 2026-09-01
 parent: agent-fleet
-status: wip
+status: live
 role: sole engineer
 stack: [Node.js, Git hooks, Claude Code, Shell, launchd]
+
+links:
+  # The excerpts themselves, public since 2026-09-01.
+  source: https://github.com/Dylansg318/Portfolio/tree/main/code
 
 problem: >-
   The fleet write-up makes claims — hooks that block dangerous git operations,
@@ -53,14 +57,19 @@ mistake would cost, never on how big the change looks.
 Nothing company-specific survived the trip: the rules the guards enforce were
 rewritten as generic examples, and every path, name and address is a stand-in.
 
-The set is still being finished, so it isn't released yet. This page describes
-what it contains and why it is shaped the way it is.
+The set is published. This page describes what it contains and why it is shaped
+the way it is; the code itself sits in the `code/` folder of this site's own
+repository, open to anyone.
 
 </PlainOnly>
 
 <EngOnly>
 
 ## The pieces
+
+All four live under [`code/`](https://github.com/Dylansg318/Portfolio/tree/main/code)
+in this site's own repository, with their tests and the reasoning kept in the
+comments:
 
 - **session-lock** — the coordination layer: O_EXCL atomic locks on the shared git index, PID-liveness + TTL steal, reentrancy by session id, a cross-session broadcast inbox, and the guard hooks that block `git add -A`, `commit -a`, `--no-verify` and full-tree test runs. Every path fails open, deliberately, and the comments argue each failure mode.
 - **fleet-scripts** — spawn one terminal tab per work slice (each agent briefed, in its own worktree), reap sessions by liveness and merge state, and audit worktrees for finished-but-unmerged work — including the `git diff A...B` three-dot trap that once let finished features rot for five weeks.
