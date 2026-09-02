@@ -2,6 +2,8 @@
 import Base from '../layouts/Base.astro';
 import FeaturedProject from '../components/ui/FeaturedProject.astro';
 import WorkRow from '../components/ui/WorkRow.astro';
+import Nameplate from '../components/ui/Nameplate.astro';
+import Loops from '../components/ui/Loops.astro';
 import { site } from '../lib/site';
 import { getProjects } from '../lib/content';
 
@@ -17,47 +19,49 @@ const [flagship, ...rest] = projects;
 ---
 <Base>
   <!-- ============================== NAMEPLATE ========================= -->
+  <!-- Two columns on a wide screen: the name and its one sentence on the
+       left, the loops on the right. On a phone the loops follow the buttons.
+       See docs/plans/2026-09-02-portfolio-hero-loops-and-register.md. -->
   <section>
-    <div class="mx-auto max-w-(--container-wide) px-4 pb-14 pt-16 sm:px-6 sm:pb-20 sm:pt-24">
-      <h1 class="reveal reveal-load font-display text-5xl font-extrabold leading-[0.95] tracking-tight text-ink sm:text-7xl lg:text-8xl">
-        {site.name}
-      </h1>
+    <div class="mx-auto max-w-(--container-wide) px-4 pb-14 pt-16 sm:px-6 sm:pb-20 sm:pt-24 lg:grid lg:grid-cols-[1.35fr_1fr] lg:items-center lg:gap-x-16">
+      <div>
+        <h1 class="reveal reveal-load font-display text-5xl font-extrabold leading-[0.95] tracking-tight text-ink sm:text-7xl lg:text-8xl">
+          {site.name}
+        </h1>
 
-      <p
-        class="reveal reveal-load mt-5 text-xs uppercase tracking-[0.18em] text-ink-faint sm:text-sm"
-        style="--reveal-delay: 60ms"
-      >
-        Software engineer · {site.location} · {site.timezone}
-      </p>
+        <p
+          class="reveal reveal-load mt-5 text-xs uppercase tracking-[0.18em] text-ink-faint sm:text-sm"
+          style="--reveal-delay: 60ms"
+        >
+          Software engineer · {site.location} · {site.timezone}
+        </p>
 
-      <!-- One sentence of employment. Deliberately not a slogan: it says where
-           I work and what I own, and nothing about how good I am at it. -->
-      <p
-        class="reveal reveal-load mt-8 max-w-(--container-reading) text-lg leading-relaxed text-ink-muted sm:text-xl"
-        style="--reveal-delay: 120ms"
-      >
-        The engineer at{' '}
-        <a href={site.employer.site} rel="noopener" class="text-ink underline decoration-border-strong underline-offset-4 transition-colors hover:decoration-accent">
-          {site.employer.name}
-        </a>, {site.employer.kind}. I built and run MHLHUB — the system the company
-        works in — and the environments the rest of the business ships through.
-      </p>
+        <!-- One sentence of employment, in two registers. Deliberately not a
+             slogan: it says where I work and what I own, and nothing about how
+             good I am at it. Flip the header switch and it rewrites itself. -->
+        <Nameplate
+          class="reveal reveal-load mt-8 max-w-(--container-reading) text-lg leading-relaxed text-ink-muted sm:text-xl"
+          style="--reveal-delay: 120ms"
+        />
 
-      <div class="reveal reveal-load mt-9 flex flex-wrap gap-3" style="--reveal-delay: 180ms">
-        <a href="#work" class="btn btn-primary">
-          See the work
-          <span aria-hidden="true">→</span>
-        </a>
-        <a href={site.resumeUrl} class="btn btn-ghost">Resume</a>
-        {site.links.github && (
-          <a href={site.links.github} rel="me noopener" class="btn btn-ghost">
-            <svg viewBox="0 0 24 24" class="size-4" fill="currentColor" aria-hidden="true">
-              <path d="M12 .5A11.5 11.5 0 0 0 .5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.37-3.87-1.37-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.79 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.12 3.05.74.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.05.78 2.12v3.14c0 .31.2.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z" />
-            </svg>
-            GitHub
+        <div class="reveal reveal-load mt-9 flex flex-wrap gap-3" style="--reveal-delay: 180ms">
+          <a href="#work" class="btn btn-primary">
+            See the work
+            <span aria-hidden="true">→</span>
           </a>
-        )}
+          <a href={site.resumeUrl} class="btn btn-ghost">Resume</a>
+          {site.links.github && (
+            <a href={site.links.github} rel="me noopener" class="btn btn-ghost">
+              <svg viewBox="0 0 24 24" class="size-4" fill="currentColor" aria-hidden="true">
+                <path d="M12 .5A11.5 11.5 0 0 0 .5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.37-3.87-1.37-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.79 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.12 3.05.74.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.05.78 2.12v3.14c0 .31.2.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z" />
+              </svg>
+              GitHub
+            </a>
+          )}
+        </div>
       </div>
+
+      <Loops class="mt-14 lg:mt-0" />
     </div>
   </section>
 

@@ -12,26 +12,31 @@ import { site } from '../lib/site';
  *  say what actually happened rather than compressing it into a title. */
 const path = [
   {
+    id: 'gmu',
     when: '2020 – 24',
     what: 'Computer Science coursework, George Mason University',
     note: "Dean's List. Four years of CS alongside a full-time job — everything below happened while I was in it. I left before the degree was conferred, so the work below is the credential.",
   },
   {
+    id: 'tmobile',
     when: '2021 – 22',
     what: 'T-Mobile — sales associate, then store manager',
     note: 'My first job. When the store manager was getting ready to leave he decided I was working harder than the rest of the floor and spent his last months training me to replace him. I got the job because the team trusted me to run the place, not because I was the best at selling phones.',
   },
   {
+    id: 'thequi',
     when: '2022 – 25',
     what: 'The Qui, Korean BBQ & Grill — head server',
     note: 'Promoted twice within months. I was studying for the CYDEO SDET program between shifts — Selenium, Cucumber, REST Assured. It is where the testing habits came from; I still write the test before I trust the fix.',
   },
   {
+    id: 'rmh3',
     when: '2025',
     what: 'RMH3 Dental Supply — hired off the restaurant floor',
     note: 'They were regulars. They watched me work a section, decided I would be a good fit for their company, and offered me a job. I started in inventory to learn the products, then shipping, and made it known that the technical work was what I wanted.',
   },
   {
+    id: 'mhlhub',
     when: '2025 – now',
     what: 'From a customer-service spreadsheet to the ERP',
     note: 'Customer service was entirely online, so consolidating it meant a spreadsheet — and the spreadsheet turned into a system. Pricing came next, because winning the buy box by hand does not scale. MHLHUB grew out of those two problems and now runs the company.',
@@ -76,7 +81,7 @@ const path = [
           <h2 class="reveal font-display text-2xl font-bold text-ink">How I got here</h2>
           <ol class="mt-5 space-y-4">
             {path.map((stop, i) => (
-              <li class="tile reveal flex flex-col gap-1 p-5 sm:flex-row sm:gap-6" style={`--reveal-delay: ${i * 70}ms`}>
+              <li id={stop.id} class="tile reveal flex scroll-mt-24 flex-col gap-1 p-5 sm:flex-row sm:gap-6" style={`--reveal-delay: ${i * 70}ms`}>
                 <span class="shrink-0 pt-0.5 font-mono text-sm tabular-nums text-accent sm:w-24">{stop.when}</span>
                 <span>
                   <span class="block font-semibold text-ink">{stop.what}</span>
