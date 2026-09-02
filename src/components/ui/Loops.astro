@@ -1,0 +1,189 @@
+---
+/**
+ * The loops — the hero's list, in the grammar of my notes.
+ *
+ * Choreography, once, on load, all CSS on server-rendered markup:
+ *   1. drift  — each line's text starts loose: nudged off its row, faintly
+ *               rotated, dim. Unfiled.
+ *   2. file   — it slides onto the row and the `- [ ] YEAR —` head fades in.
+ *   3. tick   — the closed lines flip `[ ]` → `[x]` in order, and their text
+ *               settles to the muted ink of something dealt with.
+ *   4. cursor — the open line keeps `[ ]` and gets a blinking cursor.
+ *
+ * Static styles are the FINISHED state and every keyframe animates *from*
+ * the start, so with animations off (no CSS support, reduced motion, print)
+ * the list simply renders finished. Reduced motion also zeroes the delays,
+ * or the lines would pop in one by one over two seconds — no movement, but
+ * still a sequence nobody asked for.
+ */
+import { loops } from '../../lib/loops';
+
+interface Props {
+  class?: string;
+}
+const { class: className } = Astro.props;
+
+/** Where each line starts before it files itself. Presentational, so it lives
+ *  here and not in the data. */
+const drift = [
+  { dx: '1.6rem', dy: '0.9rem', rot: '-1.2deg' },
+  { dx: '-1.1rem', dy: '1.4rem', rot: '0.8deg' },
+  { dx: '2.2rem', dy: '-0.5rem', rot: '-0.6deg' },
+  { dx: '-1.6rem', dy: '1.1rem', rot: '1.1deg' },
+  { dx: '0.9rem', dy: '0.7rem', rot: '-0.9deg' },
+];
+---
+<div class:list={['loops', className]}>
+  <p class="eyebrow">Loops</p>
+  <ol class="mt-4 font-mono text-sm leading-7 sm:text-base sm:leading-8">
+    {
+      loops.map((loop, i) => {
+        const d = drift[i % drift.length];
+        return (
+          <li
+            class:list={['loop', loop.done ? 'is-done' : 'is-open']}
+            style={`--i: ${i}; --dx: ${d.dx}; --dy: ${d.dy}; --rot: ${d.rot}`}
+          >
+            <a href={loop.href} title={loop.title} class="loop-link">
+              {/* One line, on purpose: the head is white-space: pre. */}
+              <span class="loop-head" aria-hidden="true">- <span class="loop-box"><span class="box-open">[ ]</span><span class="box-done">[x]</span></span> {loop.when} — </span>
+              <span class="sr-only">{loop.done ? 'Done' : 'Open'}, {loop.when}:</span>
+              <span class="loop-text">
+                {loop.text}
+                {!loop.done && <span class="loop-cursor" aria-hidden="true" />}
+              </span>
+            </a>
+          </li>
+        );
+      })
+    }
+  </ol>
+</div>
+
+<style>
+  /* Timing. The hero's own reveal-load stagger ends at ~180ms + 600ms; the
+     list starts filing at 200ms so the two read as one entrance. */
+  .loop {
+    --file-at: calc(200ms + var(--i) * 90ms);
+    --tick-at: calc(1000ms + var(--i) * 140ms);
+  }
+
+  /* Head in one column, text in the other: a hanging indent, so a long line
+     wraps under its own text on a phone rather than under the date. */
+  .loop-link {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    align-items: baseline;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .loop-link:hover .loop-text {
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-underline-offset: 4px;
+  }
+
+  /* ---- 2. file: the head fades in once the text has landed ---------------- */
+  .loop-head {
+    white-space: pre;
+    color: var(--ink-faint);
+    animation: loop-head var(--dur) var(--ease) both;
+    animation-delay: calc(var(--file-at) + 320ms);
+  }
+  @keyframes loop-head {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* ---- 1. drift → file: the text slides onto its row ----------------------- */
+  .loop-text {
+    animation: loop-file 700ms var(--ease-out) both;
+    animation-delay: var(--file-at);
+  }
+  @keyframes loop-file {
+    from {
+      opacity: 0.35;
+      transform: translate(var(--dx), var(--dy)) rotate(var(--rot));
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* ---- 3. tick: [ ] → [x], and the text settles ---------------------------- */
+  .loop-box {
+    display: inline-grid;
+    color: var(--ink-faint);
+  }
+  .loop-box > span {
+    grid-area: 1 / 1;
+  }
+  .box-done {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  /* Open lines never tick: the done glyph stays hidden. */
+  .is-open .box-done {
+    display: none;
+  }
+  .is-done .box-open {
+    opacity: 0;
+    animation: box-off var(--dur-fast) linear both;
+    animation-delay: var(--tick-at);
+  }
+  .is-done .box-done {
+    animation: box-on var(--dur-fast) linear both;
+    animation-delay: var(--tick-at);
+  }
+  @keyframes box-off {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+  @keyframes box-on {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .is-done .loop-text {
+    color: var(--ink-muted);
+    animation:
+      loop-file 700ms var(--ease-out) both,
+      loop-settle var(--dur) var(--ease) both;
+    animation-delay: var(--file-at), var(--tick-at);
+  }
+  @keyframes loop-settle {
+    from { color: var(--ink); }
+    to { color: var(--ink-muted); }
+  }
+
+  /* ---- 4. cursor: the line that isn't written yet -------------------------- */
+  .loop-cursor {
+    display: inline-block;
+    width: 0.55ch;
+    height: 1.05em;
+    vertical-align: text-bottom;
+    background: var(--accent);
+    opacity: 0;
+    animation: cursor-blink 1.1s steps(1, end) infinite;
+    animation-delay: calc(1000ms + 5 * 140ms);
+  }
+  @keyframes cursor-blink {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+
+  /* No motion, no sequence: everything finished, cursor on, no delays. The
+     global rule already collapses the durations. */
+  @media (prefers-reduced-motion: reduce) {
+    .loop-head,
+    .loop-text,
+    .is-done .box-open,
+    .is-done .box-done {
+      animation-delay: 0ms !important;
+    }
+    .loop-cursor {
+      animation: none !important;
+      opacity: 1;
+    }
+  }
+</style>
