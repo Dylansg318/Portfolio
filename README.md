@@ -145,6 +145,20 @@ never a literal colour — so a redesign is one file, and dark mode already work
 since the repo went public, because GitHub doesn't bill standard runners on public
 repositories. Nothing prompts and nothing confirms: `git push` is the deploy button.
 
+A run is checkout → `npm ci` → **typecheck and build at the same time** →
+`wrangler deploy`. The overlap is the point: on the last sequential run the
+typecheck took 13.0s and the build 8.5s of a 45-second job, and the two share no
+inputs, so the build now runs in the background while `wrangler types` and `astro
+check` run in front of it. The gate is intact — the deploy step still refuses to
+fire unless the typecheck passed; only the ordering moved. The deploy itself calls
+`npm run cf:deploy` rather than `cloudflare/wrangler-action`, which was spending
+1.7s a run rediscovering the wrangler version this repo already pins.
+
+The ordering inside that one step is load-bearing, and commented as such in
+`.github/workflows/deploy.yml`. Don't start the two Astro processes at the same
+instant: both regenerate content types into `.astro/`, and the ~3s `wrangler types`
+call sitting in front of the check is what keeps them from writing it at once.
+
 For what a push can't express — a non-`main` ref, a redeploy with no new commit,
 gates run locally before pushing, or shipping while Actions is degraded:
 
