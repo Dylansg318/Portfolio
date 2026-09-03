@@ -108,6 +108,12 @@ const projectSchema = ({ image }: SchemaContext) =>
           label: z.string().default('Launch demo'),
           aspect: z.string().default('16 / 9'),
           fullscreen: z.boolean().default(true),
+          /**
+           * Grant the frame the camera. Off by default — a game has no
+           * business asking — and opt-in per demo rather than per lane, so
+           * the sandbox stays least-privilege for everything else.
+           */
+          camera: z.boolean().default(false),
         }),
       ])
       .default({ kind: 'none' }),
