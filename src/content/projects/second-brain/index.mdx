@@ -1,0 +1,231 @@
+---
+title: A second brain where the agent does the filing
+blurb: A plain-markdown vault an AI librarian keeps for me — 738,000 messages indexed locally, nothing filed without my approval, no cloud.
+plainBlurb: A filing cabinet for my own notes, mail and messages that an AI assistant maintains for me. It proposes what needs doing next; I approve it. Everything stays on my Mac.
+date: 2026-09-03
+featured: 50
+status: live
+role: solo · personal tooling
+stack: [Claude Code, Node.js, SQLite, FTS5, Astro, Markdown, Obsidian]
+
+problem: >-
+  The things that actually run my week lived in four places that don't talk to each
+  other: markdown notes I wrote only when I remembered to, a phone message archive
+  going back to 2018, mail, and my own head. On 2026-09-03 the vault's own front page
+  reported zero overdue while eight real obligations sat unread in the inbox and one
+  order had been sitting in the building for three weeks, forgotten twice. A second
+  brain that only knows what you sat down and filed is a diary, not a system.
+
+unique: >-
+  Nothing is auto-filed, and the search layer is disposable. A local SQLite + FTS5
+  index over every message and note is derived — delete it, rebuild it, lose nothing —
+  while plain markdown stays the truth, so the system outlives every tool in it. The
+  sweep proposes loops and I approve them, because the documented failure mode of a
+  second brain is a system that generates more filing than thinking. And the copy I
+  could hand to someone else is a build output with a mechanical gate in front of it,
+  not a scrubbed sibling repo maintained by hand.
+
+learned:
+  - A naive ingester would have captured 12% of my message archive and looked like it succeeded. Only 86,113 of 730,507 rows carry plain text; the other 88% keep it in an NSArchiver blob. Measuring the decoder — 400/400 exact against rows carrying both fields — was the difference between a corpus and a guess.
+  - A mechanical gate finds what a careful read cannot. My own by-hand scrub of my own tooling still left a real vendor domain and a real revenue figure, quoted in code comments as examples. You remember the names you used; you don't remember the things you quoted.
+  - Files forget, git doesn't. A pre-publication scan of the file set I meant to open-source found 128 identifier hits — including my home address, sitting in five commits of history, where deleting the line would have published it anyway. Nothing shipped. That scan is now a gate that blocks the build, and the real fix was upstream — the tooling carries no identifiers in the first place, so a copy is clean by construction instead of clean by scrubbing.
+  - A write path's guards must check what the parser reads back for every record it did not intend to touch, not only the one it did. Ticking a wrapped checkbox changed exactly one line, passed every guard, and put an item on the front page that nobody had written.
+
+aiNote: >-
+  The agent is the librarian here, not an assistant I ask questions of. The vault was
+  bootstrapped overnight by four parallel Claude Code sessions under a conductor, and
+  day-to-day filing is one on-demand run against a constitution file the session reads
+  before anything else. What stayed mine: the invariants — raw before synthesis,
+  "captured" is not "occurred", nothing auto-filed, no patient detail ever — the
+  approval on every proposed item, and the verification. Every number on this page came
+  out of a command, not out of a summary.
+
+metrics:
+  - { label: messages indexed locally, value: "738K" }
+  - { label: text hidden in a binary blob, value: "88%" }
+  - { label: notes filed without approval, value: "0" }
+  - { label: leaks a careful scrub missed, value: "3" }
+---
+
+<PlainOnly>
+
+## The story
+
+I kept notes the way most people do: badly. A file here, a text message there, an email
+I meant to come back to. The result was a front page that told me I had nothing overdue
+on a morning when eight things were actually waiting on me, and an order that sat in the
+building for three weeks because nobody had written it down anywhere it would be seen.
+
+So I built a filing cabinet and hired an AI to be the librarian.
+
+The cabinet is plain text files in a folder — the kind anything can open, now or in ten
+years. No app owns them, no subscription holds them hostage, and nothing needs the
+internet. Obsidian is just a window onto the folder; delete it and the notes are fine.
+
+Capture takes no discipline at all. I type a fragment, dictate it, or star an email, and
+that's the whole of my job. All the filing burden belongs to the librarian: it reads the
+scraps, writes them up properly, links them to the person and the project they belong to,
+and rebuilds the front page.
+
+Two rules keep it honest. **Nothing gets summarized before the original is saved** — the
+raw copy is written first, always, so a question I haven't thought to ask yet can still
+be answered later. And **nothing is filed onto my list without me approving it.** The
+system reads my messages and proposes what looks like an obligation; I say yes or no. The
+usual way these systems die is that they end up producing more filing than thinking, and
+that's the exact thing being designed against.
+
+There's also an inspector. If I ever hand a copy of this machinery to another person, a
+gate checks it first and refuses to build if it finds anything that identifies me, my
+employer, my vendors or my money. That inspector caught three real things a careful
+read-through of my own work had missed, and it caught something bigger: my home address,
+sitting in the project's own history from an early setup note. Version control keeps
+what files forget, so deleting the line would not have removed it — publishing was the
+only way it could ever have gotten out, and the check ran before that happened.
+
+Nothing was published. The address is out of the working files, the plan to publish
+anything from this project publicly was dropped, and the machinery I fixed afterwards is
+what makes the whole thing safe to hand to a person: the tooling itself now carries no
+names, no employer, no vendors, no addresses, so a copy comes out clean rather than being
+cleaned on the way out — and the inspector runs before every build, refusing to produce a
+copy at all if it finds anything. That's the version of this I can share without thinking
+twice about it.
+
+</PlainOnly>
+
+<EngOnly>
+
+## Markdown is the truth; everything else is a view
+
+The vault is a private git repo of plain markdown. Obsidian is a viewer. The local app is
+a read layer. The search index is a derived artifact that can be deleted and rebuilt. That
+ordering isn't aesthetic — it's the only property that survives a decade, and every design
+decision below defers to it.
+
+Every note carries frontmatter, and two of its fields are the ones that keep costing people
+money when they're conflated: **`captured:` is when it was recorded, `occurred:` is when it
+happened.** An email read today about a call last Tuesday carries both. Get that wrong once
+and every future question about *when* something happened is wrong forever.
+
+Notes are atomic, linked by wikilink in both directions, and a lint pass enforces that every
+note is reachable from the front page within two hops. An unreachable note is a lost note.
+
+## The substrate: search without a model
+
+The vault could only answer what I had already sat down and filed. Underneath the spine now
+sits one local SQLite database with FTS5 — 737,962 rows across iMessage, WhatsApp and Apple
+Notes, spanning 2018 to today — that both the agent and the app query at question time.
+
+Embeddings were considered and rejected. The queries I actually run are name-shaped: a
+vendor, a person, an order number. FTS5 with bm25 answers those in milliseconds, with no
+model to call and nothing to re-embed, and a vector layer slots in underneath later if
+semantic search ever earns its keep. Querying the live sources per question was also
+rejected: a 1.1 GB store with write-ahead locks, framework-generated column names, and no
+way to search across sources at once.
+
+The index is gitignored and never leaves the Mac. It is explicitly disposable — the schema
+keeps each source's own payload verbatim in a `raw` column, so a field I want next month
+never requires re-reading the source.
+
+## The decoder that decided whether any of it was real
+
+The single biggest risk was invisible. iMessage stores message text in a `text` column —
+except that only **86,113 of 730,507 rows** actually have one. The other **642,288 (88%)**
+carry their text only inside `attributedBody`, an NSArchiver `streamtyped` blob.
+
+An ingester that reads `text` alone captures 12% of the archive, throws no errors, and looks
+exactly like a success.
+
+So the decoder was measured before anything was built on it: find `NSString`, seek the next
+`0x2b`, read a length byte, take that many UTF-8 bytes. **400/400 exact** against rows
+carrying both fields, and **2,000/2,000 recovered** on rows with no `text` at all — but only
+after normalising the inline-attachment placeholder that the two fields disagree about on
+4,620 rows. Before that normalisation it's 399/400 on a stride sample across the table. The
+verify command prints the raw number next to the normalised one, deliberately, so the gate
+can't be quietly tuned into passing.
+
+Two smaller findings came out of the same discipline. A field that looked like a contact name
+turned out to be a base64 media hash on all 2,296 rows that had one — an earlier build indexed
+2,119 of them as message text. And WhatsApp's 17% empty-body rate is real and irreducible:
+captionless photos and system events with no text in the source at all. The fix there was to
+*not* impose a per-source floor, and to record why.
+
+## Propose, don't file
+
+The sweep reads the index and proposes candidate open loops. It writes nothing. I approve.
+
+This is the load-bearing product decision, and it's a decision about a documented failure mode
+rather than about technology: a second brain that files for you produces more filing than
+thinking and gets abandoned within months. The agent's job is to make sure nothing is *missed*,
+not to decide what's *mine*.
+
+## Raw before synthesis, and its one exception
+
+Every external ingest writes an immutable raw copy before any synthesized note, with the note
+pointing back at it. If answering a new question would mean re-fetching from the source, the
+ingest was too lossy — fix the ingest, not the note.
+
+Personal messages are the one exception, and only about *where* the raw layer lives: for that
+material the local index *is* the raw layer, because it keeps each row's source payload
+verbatim. When a thread earns a note, its raw copy is written out at that moment, before the
+note. The invariant still holds for every note in the vault; it just no longer means committing
+730,000 personal messages into git.
+
+## The page that writes back
+
+The local app runs on `127.0.0.1` and is almost entirely a read layer. It writes in exactly two
+ways: a capture, and ticking, snoozing or adding a single loop — one line, in one note, or it
+refuses.
+
+An independent review pass found a defect that my own read and every one of the write path's own
+guards had missed. Ticking a loop whose text *wraps* orphans the continuation line behind the new
+checkbox, and the parser then folded that orphan into the loop *above* it. One line changed. Every
+guard passed. The diff looked perfect. The front page displayed an item nobody had written.
+
+<Takeaway>
+  Counting the rows you changed and confirming the target looks right is the check that feels
+  sufficient and isn't. A write path has to check what the parser reads back for the records it
+  did *not* intend to touch.
+</Takeaway>
+
+## The shareable copy is a build output
+
+There's a generic version of all this machinery — the tooling, the read layer, the note shapes,
+the librarian skill and a genericized constitution — that I can hand to a person. It is built by
+a command, never edited by hand, because two repos maintained in parallel diverge and the one that
+diverges is the one a stranger reads.
+
+An automated regex scrub is deliberately *not* part of that build. Scrubbing is the fragile part.
+Instead the tooling in the real vault carries no identifiers in the first place, and a gate blocks
+the build on names, real email domains, phone numbers, addresses, money figures, gendered pronouns
+and secrets — before it copies anything. It's a blocker, not a report.
+
+That gate earned its place immediately. After a careful by-hand pass over my own tooling, it found
+a real vendor domain and a real revenue figure sitting in code comments as *examples*, plus a
+verbatim quote from a private note — and more on the next pass. A from-memory scrub finds the names
+you thought to search for. It does not find the things you quoted.
+
+The original plan was to publish the tooling. Scanning the proposed public file set *before*
+publishing it turned up **128 identifier hits, including my home address** — and five commits of
+history touched that file, so deleting the line would have published it regardless. Git keeps what
+files forget, which is exactly why the check belongs in front of the publish step and not in a
+final read-through of the diff.
+
+Nothing shipped, and the fix went in at three levels. The address came out of the working files.
+The identifiers came out of the tooling itself, so a copy now derives clean instead of being
+scrubbed clean — a scrubbed sibling repo is the thing that diverges. And the scan became a build
+gate that refuses to write a copy at all when it trips, which is what makes the framework safe to
+hand to someone rather than something I'd have to re-audit by hand every time.
+
+The plan changed on the evidence: the vault stays private and catch-all, and the framework became a
+private, plantable starter with the rules included. A framework without the rules is just scripts.
+
+## What it deliberately doesn't do
+
+No public remote, ever. No scheduled agents and no background jobs — the librarian runs when I
+trigger it. No plugin that phones home, and sync and publish are committed *off*. No patient detail
+in the repo, in any form: the business is a supply company, but an order can still carry a
+clinician's note, and that gets redacted in place before anything is filed. And an ERP bridge that
+would show live order status beside a loop is specified, scoped, and parked until there's a
+read-only credential for it — because inventing a new one wasn't worth the convenience.
+
+</EngOnly>
