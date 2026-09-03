@@ -21,6 +21,21 @@ const projectSchema = ({ image }: SchemaContext) =>
     date: z.coerce.date(),
     /** Optional — cards fall back to a deterministic generated cover. */
     cover: image().optional(),
+    /**
+     * The same shot with the product in ITS dark theme.
+     *
+     * A screenshot is the one thing on the page that cannot follow the site's
+     * theme: a light UI capture sits on the dark ground as a white slab, and
+     * the reader's first impression of the product is a lighting mismatch the
+     * product itself does not have. Both files ship and CSS picks one, so the
+     * swap survives the manual toggle (which `prefers-color-scheme` would not).
+     *
+     * Optional and additive: a project with no dark capture — or one whose art
+     * is theme-less, like a game canvas — keeps rendering `cover` in both.
+     * Frame it identically to `cover`; the two are swapped in place, so a
+     * different crop reads as the page jumping when the theme changes.
+     */
+    coverDark: image().optional(),
     coverAlt: z.string().optional(),
     /** Manual ordering on the index; higher sorts first, then by date. */
     featured: z.number().default(0),
