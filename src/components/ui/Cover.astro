@@ -1,0 +1,61 @@
+---
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+/**
+ * A project's cover screenshot, in the theme the reader is actually using.
+ *
+ * Every other pixel on this site is a token that flips with `data-theme`; a
+ * screenshot is baked. One light capture on the dark ground reads as a white
+ * slab, so a project that HAS a dark capture ships both and lets CSS choose.
+ *
+ * Why CSS classes and not `<picture media="(prefers-color-scheme: dark)">`:
+ * the theme here is an explicit toggle stored in localStorage, so the OS
+ * preference is the wrong question — a visitor reading the dark site on a
+ * light Mac would get the light screenshot. `dark:` resolves against
+ * `[data-theme]`, which is set before first paint, so there is no flash and
+ * the toggle takes effect without a reload.
+ *
+ * Both <img> tags are in the DOM, but only one is fetched: Astro's <Image>
+ * defaults to loading="lazy", and a `display: none` element never enters the
+ * viewport, so the hidden variant costs markup and no bytes. Keep it lazy —
+ * adding loading="eager" here would double the image weight of every card.
+ */
+interface Props {
+  cover: ImageMetadata;
+  coverDark?: ImageMetadata;
+  alt: string;
+  /** Applied to whichever variant renders — layout must not depend on theme. */
+  class?: string;
+  widths: number[];
+  sizes: string;
+}
+
+const { cover, coverDark, alt, class: className, widths, sizes } = Astro.props;
+---
+
+{
+  coverDark ? (
+    <>
+      <Image
+        src={cover}
+        alt={alt}
+        class:list={[className, 'dark:hidden']}
+        widths={widths}
+        sizes={sizes}
+      />
+      {/* alt is repeated on purpose: the hidden twin is display:none, which
+          removes it from the accessibility tree, so exactly one description
+          is ever announced — but whichever one shows must carry it. */}
+      <Image
+        src={coverDark}
+        alt={alt}
+        class:list={[className, 'hidden dark:block']}
+        widths={widths}
+        sizes={sizes}
+      />
+    </>
+  ) : (
+    <Image src={cover} alt={alt} class={className} widths={widths} sizes={sizes} />
+  )
+}

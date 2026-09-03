@@ -1,5 +1,5 @@
 ---
-import { Image } from 'astro:assets';
+import Cover from './Cover.astro';
 import { coverGradient, statusLabel, type Project } from '../../lib/content';
 
 /** The flagship card on the home page: one project, full width, metrics
@@ -19,8 +19,9 @@ const inlineMetrics = data.cover ? data.metrics.slice(0, 4) : data.metrics.slice
 <article class="tile reveal group grid overflow-hidden md:grid-cols-[1.1fr_1fr]">
   <div class="relative min-h-56 overflow-hidden bg-surface-raised md:min-h-full">
     {data.cover ? (
-      <Image
-        src={data.cover}
+      <Cover
+        cover={data.cover}
+        coverDark={data.coverDark}
         alt={data.coverAlt ?? ''}
         class="size-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
         widths={[640, 1024]}
