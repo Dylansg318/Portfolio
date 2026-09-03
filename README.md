@@ -139,6 +139,12 @@ All colour, spacing and motion tokens live in `src/styles/global.css`. Every
 component references semantic names (`bg-surface`, `text-ink`, `border-border`),
 never a literal colour — so a redesign is one file, and dark mode already works.
 
+The reasoning — the palette and why it's spent the way it is, the two writing
+registers, the fixed shape of every page, the decision log, and the checklists
+for adding a project or a feature without drifting — is in
+[`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md). This README is the mechanics; that file
+is the why.
+
 ## Deploying
 
 **Pushing to `main` deploys.** GitHub Actions builds and ships every push — free
