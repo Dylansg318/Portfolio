@@ -172,8 +172,12 @@ git -C "$REPO_ROOT" worktree add --quiet --detach "$BUILD_DIR" "$SHA" || die "co
 
 # --- build (and deploy) inside Linux -----------------------------------------
 # NOTE: SITE_URL is intentionally absent — see the header.
+# The same three npm scripts CI runs, in the same order, so a failure here and a
+# failure there mean the same thing. CI overlaps the check and the build to save
+# wall-clock; this path keeps them sequential — it is the break-glass route, and a
+# readable, unambiguous log is worth more than eight seconds.
 STEPS='npm ci --no-audit --no-fund && npm run check && npm run build'
-[ "$BUILD_ONLY" -eq 0 ] && STEPS="$STEPS && npx wrangler deploy"
+[ "$BUILD_ONLY" -eq 0 ] && STEPS="$STEPS && npm run cf:deploy"
 
 log "Building in $PLATFORM ($NODE_IMAGE)..."
 START=$(date +%s)

@@ -45,16 +45,53 @@ jobs:
           node-version: 22
           cache: npm
 
-      - run: npm ci
+      # Same flags scripts/deploy-from-mac.sh already passes. `npm ci` reinstalls
+      # from the lockfile either way; the audit report and the funding banner are
+      # pure output, and `--prefer-offline` stops npm revalidating tarballs the
+      # setup-node cache above just restored.
+      - run: npm ci --no-audit --no-fund --prefer-offline
 
-      # Types first: a schema violation should fail here, not silently ship.
-      - name: Typecheck
-        run: npm run check
-
-      - name: Build
-        run: npm run build
+      # The gate and the build run TOGETHER, not one after the other. Nothing
+      # here is weakened: the deploy step below still refuses to run unless the
+      # typecheck passed. Only the ordering changed.
+      #
+      #   `wrangler types` regenerates the gitignored worker-configuration.d.ts
+      #   that `astro check` reads. `astro build` reads neither — verified by
+      #   deleting the file and building, which succeeds — so the build has no
+      #   reason to queue behind them.
+      #
+      # Measured on run #25, the last sequential one: typecheck 13.0s + build 8.5s
+      # = 21.5s of a 45s job. Overlapped, the foreground path (types ~2.9s + check
+      # ~9.9s) is the long pole and the build finishes inside it.
+      #
+      # The order is load-bearing a second way: `wrangler types` delays `astro
+      # check` by ~3s, which is long enough that the build's `astro sync` has
+      # finished writing .astro/ before the check's own sync starts. Both commands
+      # regenerate the same content types into the same directory, so do not
+      # "simplify" this by launching the two Astro processes at the same instant.
+      #
+      # The build's output is buffered and replayed in a fold rather than streamed:
+      # two processes interleaving into one log is unreadable, and a failed build
+      # still has to be diagnosable from the run page.
+      - name: Typecheck and build
         env:
           SITE_URL: ${{ vars.SITE_URL }}
+        run: |
+          npm run build > "$RUNNER_TEMP/build.log" 2>&1 &
+          build_pid=$!
+
+          check_rc=0
+          npm run cf:types && npm run check:astro && npm run check:contrast || check_rc=$?
+
+          build_rc=0
+          wait "$build_pid" || build_rc=$?
+
+          echo "::group::astro build + pagefind"
+          cat "$RUNNER_TEMP/build.log"
+          echo "::endgroup::"
+
+          [ "$check_rc" -eq 0 ] || { echo "::error::Typecheck failed — nothing was deployed."; exit "$check_rc"; }
+          [ "$build_rc" -eq 0 ] || { echo "::error::Build failed — see the fold above."; exit "$build_rc"; }
 
       # Secrets can't be used directly in an `if:`, so surface presence as an env
       # flag. Without this the deploy step fails on every push until Cloudflare
@@ -79,12 +116,17 @@ jobs:
           github.ref == 'refs/heads/main'
           && github.event_name != 'pull_request'
           && steps.cf.outputs.ready == 'true'
-        # v4 changed the action's DEFAULT wrangler to v4, which does not apply
-        # here: the action probes for an existing install first, and `npm ci`
-        # above has already put this repo's pinned wrangler (4.127.1) on disk.
-        # CI therefore deploys with the exact version `npx wrangler deploy` uses
-        # in scripts/deploy-from-mac.sh, and a bump in package.json moves both.
-        uses: cloudflare/wrangler-action@v4
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        #
+        # `npm run cf:deploy` (= `wrangler deploy`), NOT cloudflare/wrangler-action.
+        # The action's one real service was deciding which wrangler to run, and
+        # this repo pins one in package.json that `npm ci` has already installed —
+        # so on run #25 it spent 1.7s on `npx --no-install wrangler --version`
+        # rediscovering a version we chose, plus an action download in job setup.
+        # Calling the same npm script scripts/deploy-from-mac.sh calls also removes
+        # the last place CI and the local path could drift apart.
+        run: npm run cf:deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # Wrangler phones home on every invocation unless told not to.
+          WRANGLER_SEND_METRICS: "false"
