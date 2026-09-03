@@ -57,6 +57,7 @@ const { demo, title, slug } = Astro.props;
           style={`aspect-ratio: ${demo.aspect};`}
           data-demo-frame
           data-src={demo.src}
+          data-camera={demo.camera ? '1' : undefined}
         >
           <button
             type="button"
@@ -184,7 +185,11 @@ const { demo, title, slug } = Astro.props;
           'sandbox',
           'allow-scripts allow-same-origin allow-pointer-lock allow-popups',
         );
-        iframe.setAttribute('allow', 'fullscreen; autoplay; gamepad; pointer-lock');
+        // Permissions Policy: a sandboxed frame does not inherit the camera,
+        // and Safari wants it named on the element. Only when the demo asked.
+        const allow = ['fullscreen', 'autoplay', 'gamepad', 'pointer-lock'];
+        if (frame.dataset.camera) allow.push('camera');
+        iframe.setAttribute('allow', allow.join('; '));
         btn.remove();
         frame.appendChild(iframe);
       },

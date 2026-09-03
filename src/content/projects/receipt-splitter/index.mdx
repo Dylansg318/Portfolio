@@ -1,50 +1,87 @@
 ---
 title: Split the check from a photo
-blurb: A small Java tool that OCRs a receipt photo with Tesseract and asks a language model to split it between friends, my first AI-as-a-component build.
-plainBlurb: Photograph the dinner receipt, say who ate what, and it tells everyone what they owe. A weekend project that taught me a lot about where AI actually breaks.
-date: 2025-02-28
+blurb: Photograph a receipt, tap who had what, get the split. Runs on your phone with no server, and refuses to show a split that doesn't add up.
+plainBlurb: Photograph the dinner receipt, say who ate what, and it tells everyone what they owe. It checks its own answer against the receipt's printed total and won't show a split that doesn't match.
+date: 2026-09-03
 featured: 40
-status: archived
+status: wip
 role: solo · side project
-stack: [Java, Tesseract, OpenAI API, Maven]
+stack: [TypeScript, Preact, Tesseract.js, Vite]
 
 problem: >-
   Group dinners end with one person reading line items aloud while everyone does
-  arithmetic on their phones. I wanted the boring version: photograph the receipt, say
-  who had what, get the split.
+  arithmetic on their phones. The first version (February 2025, Java) photographed the
+  receipt, OCR'd it, and asked GPT-3.5 to split it. It worked on clean receipts and
+  produced confident, wrong splits on real ones, with no way to tell which was which.
 
 unique: >-
-  OCR first, model second. The language model never sees the image, Tesseract turns the
-  photo into text, and the model's only job is assignment and arithmetic on that text.
-  That keeps the expensive, unpredictable part small and makes its output easy to check
-  against the receipt total.
+  Confidence comes from arithmetic, not from a model. A receipt prints its own answer
+  key, the line items must sum to the subtotal and subtotal plus tax plus tip must equal
+  the total, so a reading that satisfies both is proved rather than believed, and a
+  reading that doesn't is refused. The language model is gone entirely. The camera
+  reads several frames and only trusts values that repeat, a rule lifted from the
+  barcode scanner I built at work, where a drifting hand cannot repeat a wrong read.
 
 learned:
-  - The cheapest way to make an LLM reliable is to give it less to do. Narrowing the task from "read this receipt" to "split these lines" removed most of the wrong answers.
-  - Real receipts are the test set. Thermal prints, folds, and a coffee stain broke the OCR long before the model did, the fragile part of an "AI" feature is usually the part before the AI.
-  - I'd add a check that the split sums to the printed total before showing it. A confident wrong split is worse than an error message, and this project is where I first learned that.
+  - Self-reported confidence is not evidence. Tesseract read "TAX 1.69" as "19.169" at healthy confidence. The receipt's own arithmetic caught it; the confidence score never would have.
+  - Synthetic test data lies. The generated receipts scored 30 of 40. The first 13 real photographs scored 1. The gap, not the score, was the finding, and it moved cropping and multi-frame capture from "later" to "now".
+  - A rule measured in one project transfers to another with its numbers attached. The scanner's "two frames must agree, a blank frame breaks the streak" came with 220 sessions of evidence, and I kept the measurement discipline, not just the rule.
+  - Refusing is a feature. On real receipts the tool has produced zero wrong splits. It has also refused most of them. That ordering of priorities is the whole design.
 
 aiNote: >-
-  Hand-written, pre-agent. The model is a runtime component here, not a coding tool, which turned out to be a useful way to learn where models are dependable (structured
-  arithmetic over clean text) and where they aren't (reading a crumpled receipt).
+  Two eras. v1 (2025) used a model at runtime as the component that did the splitting,
+  which is what made it unauditable. v2 (2026) removed that model and was built with
+  Claude Code from a change record I wrote first: the invariants (nothing leaves the
+  device, never show a split that doesn't reconcile, allocations sum exactly) were mine,
+  and every slice had to print a measurement before the next one started. The agent
+  wrote most of the code; I supplied the real receipts, caught a benchmark that
+  re-jittered one photo instead of re-observing it, and decided which numbers were
+  allowed to move.
+
+metrics:
+  - { label: Network calls after load, value: "0" }
+  - { label: Wrong splits on real receipts, value: "0" }
+  - { label: Money arithmetic, value: "integer cents" }
+
+links:
+  source: https://github.com/Dylansg318/SplitApp
+
+demo:
+  kind: iframe
+  src: /demos/receipt-splitter/index.html
+  label: Try it on a receipt
+  aspect: "4 / 5"
+  # Explicit: the body passes raw frontmatter to <Demo>, so schema defaults don't apply.
+  fullscreen: true
+  camera: true
 ---
+
+<Demo demo={frontmatter.demo} title={frontmatter.title} slug="receipt-splitter" />
 
 <PlainOnly>
 
 ## The story
 
 Every group dinner ends the same way: one person holding the receipt, reading line items
-out loud, while everyone does phone math. I wanted the lazy version, take a photo, say
+out loud, while everyone does phone math. I wanted the lazy version: take a photo, say
 who had what, get the split.
 
-So I built it. The computer reads the text off the receipt photo, then an AI does the
-assigning and the arithmetic, tax and tip split fairly. What actually broke, over and
-over, wasn't the AI: it was the receipts. Thermal paper fades, people fold them, a
-coffee ring turns an 8 into a 3. The unglamorous step before the clever step is where
-these things really fail, a lesson I've reused constantly since.
+The first attempt, in early 2025, had an AI do the splitting. It looked great on a clean
+receipt and quietly got real ones wrong, and there was no way to tell the good answers
+from the bad. That version taught me the lesson this one is built on: a confident wrong
+answer is worse than no answer.
 
-The other keeper: a confident wrong answer is worse than an error message. Today I'd
-make it re-add the split and refuse to show one that doesn't match the printed total.
+So the new version doesn't trust anything it reads until the numbers prove themselves.
+A receipt states its own subtotal, tax, tip and total. If the items add to the subtotal
+and the subtotal plus tax plus tip equals the total, the reading is right. If they don't,
+it says so and refuses, rather than guessing. The camera also reads the receipt several
+times as your hand moves, and only believes numbers it sees twice in a row, a trick I
+borrowed from the barcode scanner I built for the warehouse at work.
+
+Everything happens on your phone. The photo never leaves it.
+
+To try it below, point it at a real receipt, or choose a photo of one. The best test is
+on a phone: open the same page on your phone and use the live camera.
 
 </PlainOnly>
 
@@ -52,29 +89,46 @@ make it re-add the split and refuse to show one that doesn't match the printed t
 
 ## What it does
 
-Point it at a receipt photo. Tesseract (through Tess4J) extracts the text. The text goes to
-an OpenAI chat completion with an instruction to split the items between the named people
-and return the totals, including tax and tip proportionally. A console program, deliberately, the point was the pipeline, not the UI.
+Camera or photo, on-device Tesseract.js, a geometric parse (cluster words into rows by
+y, find the right-aligned price column by x), reconciliation against the receipt's own
+printed totals, then a tap-to-assign split with tax and tip apportioned by what each
+person ate, in integer cents, with largest-remainder rounding so the shares always sum
+to the printed total.
 
-## Why OCR first
+## Why the model went
 
-The obvious build is to hand the photo straight to a multimodal model and ask for the split.
-I didn't, for two reasons. The model was the expensive and least-predictable step, so I
-wanted it to do as little as possible. And I wanted a text intermediate I could read, when
-the split was wrong, I could see whether the OCR misread a price or the model mis-assigned
-an item, instead of staring at one opaque answer.
+v1 sent OCR text to GPT-3.5 and displayed whatever came back. The fragile step was
+always the one before the model, reading thermal paper, and the model couldn't tell a
+misread from a good read any better than I could. Removing it took away the cost, the
+API key, the privacy leak and the unauditable step in one move. What replaced it is two
+equations, and they are stronger evidence than any confidence score: when exactly one
+field is misread, the other three determine its true value, and the app proposes that
+correction for you to confirm rather than applying it.
 
-## What broke
+## The camera, and what came from MHLHUB
 
-Not the model. The receipts. Thermal paper fades, people fold them, and a coffee ring turns
-an 8 into a 3. Most of the effort went into image preprocessing before Tesseract saw it. The
-lesson stuck: when a feature has an AI step, the unglamorous input step is where it actually
-fails.
+Real photographs broke the synthetic results (30 of 40 settled synthetically, 1 of the
+first 13 real photos). Two things fixed most of that. Cropping to a guide frame, so
+the table edge and the card reader stop being OCR'd as line items. And multi-frame
+confirmation: each field keeps a streak and is trusted only after it repeats in
+consecutive frames, a blank frame breaks the streak, and a page dense with money tokens
+has to confirm one more time. Those rules are a port of the `<CameraScanner>` in my
+warehouse system, where they took wrong barcode reads from 9 in 220 sessions to 0.
 
-## What I'd do now
+One ordering was measured rather than assumed: a frame that reconciles on its own is
+accepted immediately, and the streak is the fallback, because gating on the streak
+started refusing receipts that had read perfectly. Consensus doesn't fill gaps, it
+deletes noise: junk read off the table edge can't survive the hand moving.
 
-Validate the output against the printed total and refuse to show a split that doesn't add up.
-Keep the OCR-first shape. And wrap it in something my friends would actually open at the
-table, which is a different project.
+## Where it stands
+
+The reader, parser, reconciler, split model and camera loop are built and tested. On
+real receipts it has produced zero wrong splits and settled about half of the ones it
+was pointed at, so the honest description is "safe, and still learning to read". Live
+camera testing on phones is the current work. Offline install and sharing the split by
+link are next.
+
+The demo above is the real app, not a mock. It serves its own copy of the OCR engine
+(about 6 MB, fetched once from this site) and makes no other network requests.
 
 </EngOnly>
