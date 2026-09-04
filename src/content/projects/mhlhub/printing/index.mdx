@@ -1,0 +1,203 @@
+---
+title: Printing labels when the printer can lie about it
+blurb: A thermal-label pipeline and a self-updating Windows print fleet — predicted widths, verified feeds, and an update that rolls itself back.
+plainBlurb: Every box needs a label and a slip, printed on machines in a warehouse nobody logs into. This is what prints them, checks they came out, and repairs itself when an update goes bad.
+date: 2026-09-03
+featured: 65
+parent: mhlhub
+status: live
+role: sole engineer
+stack: [TypeScript, Node.js, ZPL II, EPL2, Win32 spooler API, C#, sharp]
+
+problem: >-
+  Every order leaves the building with a shipping label and a packing slip on it, printed
+  on USB thermal printers hanging off Windows PCs on the warehouse floor. Nearly every
+  failure in that path is silent. The obvious Windows print call exits 0 on a USB-only
+  printer without putting a byte on the wire. A slip emitted in EPL to a printer running
+  under a ZPL driver feeds a blank page and reports success. And ZPL has no layout engine:
+  text that overflows its box is not wrapped or truncated, it overwrites the last line, so
+  a quantity of 200 prints as 20 with the last 0 stamped on top. That is a mis-pick, not a
+  cosmetic defect. On top of all of it, nobody can remote-desktop into a warehouse PC every
+  time the software changes.
+
+unique: >-
+  The printer is treated as an unreliable narrator rather than a device that either worked
+  or errored. The agent reads the Zebra's own odometer over raw USB before and after every
+  job and judges the feed per label — fine, nothing moved, partially fed, or running away —
+  so "the spooler accepted it" is never mistaken for "a label exists". Ordering does the
+  rest: nothing prints on a claim the server has not confirmed, so a dropped connection
+  abandons a job unprinted instead of printing it blind, and a label that physically printed
+  but whose report could not be delivered is persisted to disk and retried across restarts
+  rather than requeued into a duplicate. The updater that ships all of this to the fleet is
+  the one component deliberately unable to update itself.
+
+learned:
+  - The auto-update channel delivers exactly one file, and that rule was learned by breaking it. A refactor split the agent's helpers into a second module; the update shipped and every host crashed with "module not found", because the second file was never part of the payload. Probation caught it and rolled the whole fleet back — the system working as designed — but every printer sat pinned to the old version until the helpers were inlined again.
+  - A character-width guess is wrong in both directions at once. A flat fontSize × 0.6 per character over-reserved mixed-case titles, wasting label rows, and under-reserved all-caps ones, printing past the box. Measuring the real glyph advances found the hyphen had been scored at 0.34 in a punctuation bucket for a year when it actually measures 0.903 — wider than a capital — and roughly half the catalogue's titles contain one.
+  - Measurement method changes the answer more than precision does. Dividing ink width by character count folds the side bearings into every glyph and under-scores by 10–12%, which is the direction that prints past the box. Rendering N copies against 2N and differencing them cancels the bearings exactly.
+  - A verification channel allowed to stop the line is worse than no verification. Every failed status read is treated as "unknown, carry on", because a broken reader on a perfectly healthy printer must never be the reason the warehouse stops shipping.
+  - Printer settings outlive the document that set them. Speed and darkness are printer configuration, not format geometry, so they survive the end of the label format. One carrier's label opened with maximum speed and darkness, and every document printed after it inherited both until the next power cycle. Every document now states its own.
+
+aiNote: >-
+  The Win32 spooler interop and the C# raw-USB reader were agent-drafted against captured
+  device output, then settled on real hardware, where the argument ends quickly: a printer
+  either fed a label or it did not. What stayed mine were the orderings that decide what
+  happens when something goes wrong — verification fails open, an unconfirmable claim is
+  abandoned unprinted rather than printed blind, the update channel carries one file. Two
+  attempts at an automatic line-art-versus-photo classifier for product images were written
+  and thrown away; the choice is stored per product instead, because both misfired and a
+  wrong call there prints a silhouette.
+
+metrics:
+  - { label: rollback window, value: "90s" }
+  - { label: feed verdicts, value: "Per label" }
+  - { label: fleet updates, value: "Unattended" }
+---
+
+<PlainOnly>
+
+## The story
+
+Every box that leaves the building has a shipping label and a packing slip on it. Those
+come out of thermal printers plugged into ordinary Windows PCs sitting on the warehouse
+floor, and almost everything that can go wrong there goes wrong *quietly*.
+
+The worst version is a printer that says it printed. Windows accepts the job, reports
+success, and nothing comes out — or a blank page does. Somebody notices twenty minutes
+later, when a box is sitting on the bench with nowhere to go. The second-worst version is
+the opposite: the same label prints twice, and now there are two identical labels for one
+package and a decent chance the wrong one ends up on a box.
+
+So the system stopped trusting the printer's word for it. On the models that support it,
+the software reads the printer's own mileage counter before and after each job — the same
+counter a mechanic would read — and works out whether paper actually moved, and how much.
+Nothing came out? Safe to send again. Half of it came out? Flag it for a person and never
+reprint automatically, because the difference between one label and two is a mis-shipped
+package. And if the reading itself fails, the answer is always "carry on printing" —
+a broken sensor should never be the reason the warehouse stops.
+
+The other half of the problem is that nobody can walk over and update software on a dozen
+warehouse PCs. So the machines update themselves. A new version arrives, gets checked,
+waits for the current label to finish, and then swaps in. Then it's on probation for a
+minute and a half: report in healthy, or get rolled back to the previous version
+automatically — and that bad version gets blacklisted so it's never tried again. The floor
+keeps running on the last version that worked, and nobody has to notice tonight.
+
+The one piece that never updates itself is the piece that does the rescuing. It has one
+job, and it can't be allowed to break itself doing it.
+
+</PlainOnly>
+
+<EngOnly>
+
+## The shape of it
+
+Three stages, then a fourth that keeps the other three alive. A document gets **composed**
+into printer language, **delivered** to a physical device, and **verified** to have actually
+come out. Around all of it sits a supervisor whose only job is shipping new versions to
+unattended machines without ever bricking one.
+
+Each stage has its own failure mode, and all three of them are silent by default.
+
+## ZPL has no layout engine
+
+`^FB` wraps text but does not truncate it — per the manual, text past the line cap
+overwrites the last line. `^BC` takes no `^FB` at all and clips nothing, so a long order id
+prints straight through whatever sits to its right. Placing anything safely means predicting
+the printed width before committing to it.
+
+The first attempt was `fontSize × 0.6` per character, which was mis-tuned in both directions
+at once. The replacement is a measured per-character advance table for the `^A0` font: real
+capitals run from J at 0.442× the font size to W at 0.812×, so any "all caps ≈ 0.58" bucket
+is wrong for most of its members, and the error is unbounded on a string that is all one
+kind. The table was built by repeat-differencing — render N copies, render 2N, difference the
+widths — which cancels side bearings exactly.
+
+Two things keep it honest. The reserve calculation and the actual line-breaker are separate
+implementations of the same greedy wrap, and the suite fails unless they agree at every width
+the engine uses. And barcode widths come from symbology arithmetic verified against a real
+render: Code 128 is 11 × (chars + 2) + 13 modules, and a 19-character order id measures 244
+modules exactly — which proves `^BC` auto mode does *not* subset-C-pack digit runs. Assuming
+it does halves the predicted width, in the expensive direction.
+
+Images split the same way. A logo is line art and wants a hard threshold, because every pixel
+is already meant to be pure black or white. A product photo through that same threshold
+becomes a silhouette, so photos get Floyd–Steinberg error diffusion, normalised to full range
+first and lifted in the midtones to compensate for thermal dot gain.
+
+## Getting bytes onto paper
+
+PDFs go through SumatraPDF aimed at a **specific named** Windows printer, never the system
+default. Raw ZPL goes through the Win32 spooler API directly — `OpenPrinter`,
+`StartDocPrinter` with `DataType="RAW"`, `WritePrinter` — because the obvious route,
+`cmd /c print`, exits 0 on a USB-only printer without putting anything on the wire.
+
+Language mismatches are fixed at the door rather than at the device. An upstream label system
+sometimes emits EPL2 line-mode instead of ZPL, and a printer installed under a ZPL driver
+renders that as a blank page while reporting success. A 184-line converter translates EPL to
+ZPL the moment a job enters the queue, so the queue stays homogeneous and neither the printer
+nor the agent ever has to detect a language. Anything the converter doesn't recognise degrades
+into a ZPL comment rather than an exception — the slip still prints, and the gap is greppable
+in the stored payload instead of invisible.
+
+## Treating the printer as an unreliable narrator
+
+The delivery path is built around the assumption that any step can succeed halfway.
+
+- **Claim-ACK.** The server marks a job claimed before the agent has the response, so a flaky
+  network can lose a claim in transit. The agent acknowledges every claim and prints only once
+  that acknowledgement is confirmed. An unconfirmable claim abandons the job *unprinted* for
+  fast redelivery. Nothing prints twice; nothing prints blind.
+- **A persistent outcome ledger.** A label that physically printed but whose "done" report
+  can't reach the server is written to disk and retried every cycle until acknowledged,
+  surviving restarts. Without it the server's reaper requeues the job and a duplicate prints.
+- **In-flight reconciliation.** Before printing, the agent persists the job alongside the
+  printer's odometer reading. If it dies mid-print, the restart reads the odometer again and
+  settles the orphan — printed, not printed, or needs a human — instead of letting the reaper
+  guess.
+- **Per-label feed verdicts.** Where a bidirectional channel is available, a small C# reader
+  queries the Zebra's odometer and status registers over raw USB and grades each job: `ok`,
+  `no_feed` (the spooler accepted it and nothing moved — safe to requeue), `partial` (some
+  labels exist, flagged and never auto-reprinted), or `runaway` (dump mode; stop claiming
+  until a human clears it).
+- **A circuit breaker.** Three consecutive failures pause claiming, so a printer that has run
+  out of paper doesn't burn the entire queue to failed.
+
+<Takeaway>
+  Every read failure fails open. A broken status channel on a healthy printer must never be
+  the thing that stops the warehouse shipping — an unknown verdict means carry on, not halt.
+</Takeaway>
+
+The reader is query-only by construction: a command allowlist makes destructive commands
+unsendable, and it runs as a resident process so the agent pays one .NET startup per agent
+lifetime instead of six per job.
+
+## An updater that cannot brick the floor
+
+A supervisor spawns the agent as a child process and polls a server manifest every few
+minutes. When a new version is advertised it downloads it, verifies the sha256 against the
+manifest *and* runs a syntax check, waits for the agent to go idle (a version swap must never
+land mid-print), keeps the outgoing version as the rollback target, and swaps.
+
+Then the new version is on probation for about 90 seconds. It has to write a health heartbeat
+naming its own version. If it crash-loops or simply never reports healthy, the supervisor
+restores the previous version and **blacklists the bad build's hash**, so the fleet pins to
+the last good version instead of retrying a broken one forever. A separate watchdog handles
+the other failure shape: an agent that is alive but frozen, heartbeat stale past two minutes.
+
+Two constraints make the whole thing safe. The update channel delivers exactly one file, so
+every helper lives in it — learned the hard way, see above. And the supervisor never updates
+itself, because it is the rollback executor, and the rollback executor must not be able to
+break itself. A breaking change to the supervisor is the only event that requires touching a
+machine by hand.
+
+The install details are the same kind of unglamorous: the agent runs as a Windows scheduled
+task under the actual console user rather than SYSTEM, because SYSTEM cannot see USB-installed
+printers in most setups; it launches through a script shim so Node runs with no console window
+to accidentally close; and it carries a repeating safety-net trigger alongside the logon
+trigger, because Fast Startup's hibernate-wake never emits a logon event.
+
+The extracted code for the converter, the layout kit and the device agent is public in
+[`code/`](https://github.com/Dylansg318/Portfolio/tree/main/code).
+
+</EngOnly>
