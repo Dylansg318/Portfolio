@@ -25,7 +25,7 @@ unique: >-
   start from the ledger's filters instead of rediscovering the traps.
 
 learned:
-  - Bad filters fail open. A status check written as `<> 'void'` matched every row because the stored value was `'voided'`. The canonical WHERE clauses now live in one place and every report reads from it.
+  - Bad filters fail open. A status check written as <> 'void' matched every row because the stored value was 'voided'. The canonical WHERE clauses now live in one place and every report reads from it.
   - Voided journal entries are unbalanced on purpose, so a trial balance that forgets to exclude them goes red. That's a feature. It makes the missing filter visible instead of quietly wrong.
   - For direct orders, QuickBooks is the only place money actually moves. The app records. It never pretends to collect. Being clear about which system is the bank stopped a whole category of double-counting.
 
