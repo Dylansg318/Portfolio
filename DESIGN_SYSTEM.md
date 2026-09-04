@@ -383,7 +383,7 @@ Frontmatter is enforced by the schema in `src/content.config.ts`; every field ha
 comment there saying what it is for. The parts that shape the site:
 
 - **`featured`** orders listings (higher first, then date). Current bands: MHLHUB 100,
-  its subsystems 90 / 80 / 65 / 60 / 0, agent fleet 70, second brain 50, receipt splitter
+  its subsystems 90 / 80 / 75 / 65 / 60 / 0, agent fleet 70, second brain 50, receipt splitter
   40, ERP test automation 30, Galaxy Defense 25, this site 10. A new project picks a slot
   in that order; the flagship on the home page is whatever is highest. Subsystem ranks
   share the number line with top-level ones but never the same listing, so a tie between
@@ -597,6 +597,7 @@ for each is in the commit, the plan, or the code comment named.
 | 2026-09-03 | The second-brain vault written up. |
 | 2026-09-03 | This file. |
 | 2026-09-03 | Printing gets its own subsystem page (`featured: 65`). The layout kit, the EPL converter and the device agent were one row each in the toolbox list; the toolbox stays the complete inventory of `code/` and links across. |
+| 2026-09-04 | Inventory gets its own subsystem page (`featured: 75`), built on the ABC-classifier ranking bug and the scan-anchoring rule. Six subsystems is the ceiling for the **Inside it** grid; a seventh reads as a table of contents. |
 
 ---
 

@@ -1,0 +1,177 @@
+---
+title: Counting what sells, not what exists
+blurb: A nightly classifier ranked all 27,215 products and made 1,979 of them class A. Ranking only what sells turned a fake Pareto into a real one.
+plainBlurb: A nightly job decides which products are worth counting and reordering. It had been calling nearly everything important, which is the same as calling nothing important.
+date: 2026-09-03
+featured: 75
+parent: mhlhub
+status: live
+role: sole engineer
+stack: [TypeScript, PostgreSQL, Node.js, GS1, HIBC]
+
+problem: >-
+  A nightly job sorts the catalog into A, B and C so the rest of the system knows what to
+  count often and what to reorder carefully. It ranked the entire sellable catalog —
+  27,215 products — and handed the top 20% to class A. That is 5,443 slots, against only
+  3,721 products carrying any demand at all, so the A bucket was larger than the whole
+  population that could fill it and essentially everything that sold came out class A:
+  1,979 A against 2 B and 3 C. Nothing errored, no job failed, and the number on the screen
+  looked like a number. Meanwhile, at the receiving end of the building, the scanner was
+  reading internal SKUs beginning "106-" as a GS1 batch/lot field and putting a fabricated
+  lot number onto screens people act on.
+
+unique: >-
+  Both halves are the same rule: refuse to answer confidently rather than answer wrongly.
+  The classifier now ranks only the products carrying demand, which turns the fake Pareto
+  into a real one — 745 products carrying 89% of 30-day revenue, then 1,117 at 9.5% and
+  1,859 at 1.6%. Products with no demand floor to class C rather than null, which looks
+  like sloppiness and is the opposite: null would empty the bucket the cycle-count
+  schedules filter on, and route the replenishment fallback to a larger safety cushion for
+  products that have never sold a unit. On the scanning side every ambiguous barcode
+  degrades to a literal lookup — a miss, never a wrong answer — because a missing lot
+  number sends someone to go and look, and a fabricated one does not.
+
+learned:
+  - A percentile is a statement about the population you hand it, not about the data. Twenty percent of 27,215 sellable products is 5,443 slots, but only 3,721 products had any demand at all, so the A bucket was bigger than the entire population that could fill it. The arithmetic was never wrong. The population was.
+  - The output distribution is the test no unit test writes for you. 1,979 A against 2 B and 3 C passes every assertion about sorting and bucketing and is still obviously broken, because that shape cannot occur naturally. Anything that ranks or scores now gets its buckets counted, not just its logic asserted.
+  - Null is a routing decision, not an absence. Flooring no-demand products to C rather than null keeps the C bucket that cycle-count schedules filter on from emptying, and stops the replenishment fallback from handing a larger safety cushion to products that have never sold a unit. The safe-looking choice was the expensive one.
+  - Sort by value, resolve by id. Classes are looked up per product rather than by index into the caller's ordering, so a credit line with negative revenue sorting below the zeros cannot quietly shift the class boundaries under everything else.
+  - A wrong expiry is worse than no expiry. Internal SKUs beginning "106-" were parsed as a batch/lot field and fabricated a lot number onto screens people act on. Ambiguous reads now degrade to a literal lookup, which produces a miss someone investigates rather than an answer nobody thinks to question.
+
+aiNote: >-
+  The classifier was extracted out of the nightly job as a pure function so the rule could
+  be tested without standing up the whole intelligence pipeline, and agents wrote that
+  extraction and its tests. The judgements stayed mine: rank only the demand-carrying
+  population, floor no-demand products to C rather than null, resolve classes by id rather
+  than by input order. The verification that mattered was not a passing test — it was
+  counting the output buckets, because 1,979 / 2 / 3 is not a Pareto and no assertion about
+  sorting was ever going to say so.
+
+metrics:
+  - { label: revenue in the A class, value: "89%" }
+  - { label: products in it, value: "745" }
+  - { label: sellable catalog, value: "27K" }
+---
+
+<PlainOnly>
+
+## The story
+
+Some products matter more than others. A few hundred of them earn nearly all the money,
+and the rest sit on a shelf being occasionally useful. Knowing which is which is what
+tells the warehouse what to count this week and what to reorder before it runs out.
+
+A job runs every night to sort that out, marking each product A, B or C. It had a bug that
+is almost funny in hindsight: it was picking the top 20% of *everything we could sell*,
+about 27,000 products — but only about 3,700 of those had sold anything at all. Twenty
+percent of 27,000 is bigger than 3,700, so every product that had ever sold got marked
+"most important". Nearly two thousand top-priority products, and three that weren't.
+
+Nothing broke. No error, no alert. It just quietly made two other things wrong. The
+reordering maths gave every product the caution normally reserved for the critical ones,
+and rounded every suggested order up — so we bought more than we needed, across the board.
+And the instruction "go count the important items" pointed the warehouse at five thousand
+products, more than three thousand of which had never sold a single unit. People were
+counting shelves that didn't need counting, and the shelves that did were in the same pile.
+
+The fix is one sentence: rank only the products that actually sell. That turns the list
+into what it was always supposed to be — **745 products earning 89% of the money**, then a
+middle group, then a long tail.
+
+There's a related habit at the other end of the building. When the scanner reads a barcode
+it isn't sure about, it says so instead of guessing. It used to occasionally read part of
+our own product code as a batch number and show a batch number that didn't exist. A
+missing batch number makes somebody walk over and look at the box. An invented one doesn't.
+
+</PlainOnly>
+
+<EngOnly>
+
+## A percentile over the wrong population
+
+The classifier's job is ordinary Pareto: sort by revenue velocity, take the top slice as A,
+the next as B, the rest C. The bug was in what got sorted. It ranked every sellable product
+— 27,215 of them — so a 20% A bucket meant 5,443 slots. Only 3,721 products carried any
+demand in the lookback window at all.
+
+When the bucket is larger than the population that can fill it, the boundary never binds.
+Everything with a pulse landed in A:
+
+- **1,979** class A
+- **2** class B
+- **3** class C
+
+That distribution is the entire finding. Every assertion you would naturally write — that
+the sort is descending, that the buckets partition the input, that percentages sum to 100 —
+passes on it.
+
+## What broke downstream, quietly
+
+Nothing consumed the classes directly. Two things consumed them indirectly, and both failed
+in the direction that costs money without announcing itself.
+
+**Replenishment.** The suggested-quantity SQL picks a service level (a Z score) from the
+class. With everything in A, the service level pinned at 1.96 for the entire catalog and
+the suggested quantity always rounded up. Over-ordering across the board, permanently, and
+each individual suggestion looked perfectly reasonable in isolation.
+
+**Cycle counting.** The scheduler's rule is "count the A items often". That instruction now
+pointed at 5,443 products, more than 3,700 of which had never sold a unit. Counting effort
+went to the shelves least likely to be wrong and least costly if they were, while the
+products that actually move sat in the same undifferentiated pile.
+
+Ranking only products with demand produces the split the system was designed around:
+
+| Class | Products | Share of 30-day revenue |
+|---|---|---|
+| A | 745 | 89.0% |
+| B | 1,117 | 9.5% |
+| C | 1,859 | 1.6% |
+
+## Why zero demand lands in C, not null
+
+The obvious modelling choice for "this product has no demand, so it wasn't ranked" is null.
+It is also the wrong one, in two specific ways.
+
+The cycle-count schedules filter on class. A null empties the C bucket entirely, so the
+long tail stops being scheduled for counting at all — it doesn't get counted rarely, it
+gets counted never. And the replenishment SQL has a fallback branch for a missing class
+that routes to the B service level of 1.65, which is a *larger* safety cushion than C. Null
+would have quietly ordered more stock of the products with no demand whatsoever.
+
+So no-demand products floor to C. It looks like a shortcut in the code, which is exactly
+why the reasoning sits in a comment directly above it.
+
+<Takeaway>
+  A distribution can pass every unit test and still be impossible. Anything that ranks or
+  scores gets its output buckets counted, not just its logic asserted.
+</Takeaway>
+
+One smaller edge in the same function: classes resolve by product id, not by index into the
+caller's ordering. The function sorts internally so it doesn't depend on the caller's
+`ORDER BY`, and a credit line with negative revenue — sorting below all the zeros — can't
+shift the class boundaries underneath everything else.
+
+## Reading what's physically on the shelf
+
+Inventory is only as good as what gets recorded when a box is opened, and the failure mode
+there is the same shape: a confident wrong answer beats a missing one only in the mind of
+whoever wrote the parser.
+
+The scanner reads GS1 Application Identifiers off cartons — GTIN, batch/lot, expiry. Twice,
+internal SKUs beginning "106-" were read as AI (10), the batch/lot field, and put a
+fabricated lot number onto screens people act on. The fix is an anchoring rule: an AI
+sequence is only trusted where the payload's structure actually places one, never inferred
+from a number that happens to start with the right digits. The HIBC `$$` date layout is
+deliberately not inferred either, because a wrong expiry on a dental consumable is worse
+than no expiry.
+
+Every degradation lands in the same place — a literal-only lookup, which produces a miss.
+A miss sends a person to go and look at the box. A fabricated lot number sends nobody
+anywhere.
+
+The classifier and the scan parser are both public in
+[`code/`](https://github.com/Dylansg318/Portfolio/tree/main/code), with the measured
+numbers and the traps in the comments.
+
+</EngOnly>
