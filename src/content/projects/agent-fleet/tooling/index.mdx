@@ -21,8 +21,8 @@ problem: >-
   staged files. The proof, and the useful part, is the code.
 
 unique: >-
-  The design choices are the story. The lock is keyed on `git rev-parse
-  --git-path index` — the file that is actually shared — so worktrees, which
+  The design choices are the story. The lock is keyed on the real index path
+  (git rev-parse --git-path index) — the file that is actually shared — so worktrees, which
   have their own index, never block each other and the lock serializes exactly
   the sessions that can hurt each other. Stale locks are stolen by PID
   liveness and TTL, so the coordinator can't deadlock the thing it

@@ -26,7 +26,7 @@ unique: >-
 
 learned:
   - A join against a vendor's mirror that matches zero rows is almost always your key format, not their data. A non-breaking space in a SKU cost a day.
-  - Failing open is the default failure mode of a filter. A status check written as `<> 'void'` matched everything because the value was `'voided'`. Every list now has a canonical filter helper, and the helper has a test.
+  - Failing open is the default failure mode of a filter. A status check written as <> 'void' matched everything because the value was 'voided'. Every list now has a canonical filter helper, and the helper has a test.
   - Storing the raw payload is the cheapest insurance there's. Three separate features were shipped months later from data we'd already captured and never had to re-fetch.
 
 aiNote: >-
