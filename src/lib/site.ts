@@ -13,10 +13,10 @@ export const site = {
   /** Descriptive, not a claim. Feeds /about's meta description and the default
    *  OG card, both of which are read by people who have not met me. */
   tagline:
-    'Software engineer in Northern Virginia with a background in retail management and hospitality.',
+    'Software engineer in Northern Virginia. Ran a phone store and a restaurant floor first.',
   description:
-    'Meet Dylan San Gabriel, a software engineer in Northern Virginia. ' +
-    'Explore my background, production systems, developer tools, and independent projects.',
+    'Dylan San Gabriel, software engineer in Northern Virginia. How I got here, ' +
+    "what I've built at work and on my own, and how to get in touch.",
   location: 'Chantilly, VA',
   timezone: 'US Eastern',
 

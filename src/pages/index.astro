@@ -10,9 +10,9 @@ import { getProjects } from '../lib/content';
 // independent product. The complete catalog remains on /projects.
 const projects = await getProjects();
 const selections = [
-  { id: 'mhlhub', label: 'At work', focus: 'Building and operating a complete business system.' },
-  { id: 'agent-fleet', label: 'Developer tools', focus: 'Making the way I build software more dependable.' },
-  { id: 'receipt-splitter', label: 'Independent project', focus: 'Taking a familiar problem from camera to working product.' },
+  { id: 'mhlhub', label: 'At work', focus: "Everything the company does in a day, in one place. I'm the only engineer on it." },
+  { id: 'agent-fleet', label: 'Tools for myself', focus: 'What keeps five to ten coding agents on one repo from losing work.' },
+  { id: 'receipt-splitter', label: 'On the side', focus: 'The whole thing on my own, from the phone camera to the split.' },
 ];
 const selected = selections.flatMap((selection) => {
   const project = projects.find((p) => p.id === selection.id);
@@ -34,18 +34,19 @@ const game = projects.find((p) => p.id === 'galaxy-defense');
         <div class="reveal reveal-load" style="--reveal-delay: 100ms">
           <Nameplate class="text-lg leading-relaxed text-ink-muted sm:text-xl" />
           <p class="mt-5 text-base leading-relaxed text-ink-muted">
-            Having worked on the other side of the tools, I care about what happens
-            when people actually depend on them.
+            Before this, software was something I had to use on a shift — a register,
+            a POS, a count that never matched the shelf. Most of what I build now
+            replaces something someone was doing by hand.
           </p>
           <div class="mt-8 flex flex-wrap gap-3">
-            <a href="#work" class="btn btn-primary">Explore my work <span aria-hidden="true">↓</span></a>
+            <a href="#work" class="btn btn-primary">See the work <span aria-hidden="true">↓</span></a>
             <a href={site.resumeUrl} class="btn btn-ghost">Resume</a>
-            <a href="/about" class="btn btn-ghost">More about me</a>
+            <a href="/about" class="btn btn-ghost">About me</a>
           </div>
         </div>
       </div>
       <div class="mt-12 flex flex-wrap gap-x-8 gap-y-3 border-t border-border pt-5 text-sm text-ink-muted">
-        <p><span class="text-ink">My focus</span> · Backend &amp; full-stack engineering</p>
+        <p><span class="text-ink">Mostly backend</span> · TypeScript, Node, Postgres</p>
         <a href="#experience" class="text-accent hover:underline">Retail → hospitality → software <span aria-hidden="true">↓</span></a>
       </div>
     </div>
@@ -56,7 +57,7 @@ const game = projects.find((p) => p.id === 'galaxy-defense');
       <div class="reveal flex flex-wrap items-end justify-between gap-5">
         <div>
           <p class="eyebrow">Selected work</p>
-          <h2 id="work-heading" class="mt-3 text-3xl font-bold sm:text-4xl">What I bring to the work.</h2>
+          <h2 id="work-heading" class="mt-3 text-3xl font-bold sm:text-4xl">One at work, one for myself, one on the side.</h2>
         </div>
         <a href="/projects" class="text-sm font-medium text-accent hover:underline">All projects →</a>
       </div>
@@ -74,8 +75,9 @@ const game = projects.find((p) => p.id === 'galaxy-defense');
         <p class="eyebrow">Experience</p>
         <h2 id="experience-heading" class="mt-3 text-3xl font-bold sm:text-4xl">How I got here.</h2>
         <p class="mt-5 leading-relaxed text-ink-muted">
-          Before writing software for a business, I managed a store and ran a restaurant floor.
-          Along the way, I studied computer science and completed a software testing program.
+          I managed a T-Mobile store, then ran front-of-house at a Korean BBQ restaurant.
+          I was taking CS classes at George Mason the whole time, and finished a software
+          testing bootcamp between shifts.
         </p>
         <a href="/about#tmobile" class="mt-5 inline-block text-sm font-medium text-accent hover:underline">The longer story →</a>
       </div>
@@ -97,10 +99,10 @@ const game = projects.find((p) => p.id === 'galaxy-defense');
     <div class="mx-auto grid max-w-(--container-wide) gap-10 px-4 py-16 sm:px-6 sm:py-20 md:grid-cols-2 md:items-center md:gap-20">
       <div class="reveal">
         <p class="eyebrow">Away from work</p>
-        <h2 id="personal-heading" class="mt-3 text-3xl font-bold sm:text-4xl">Usually making something.</h2>
+        <h2 id="personal-heading" class="mt-3 text-3xl font-bold sm:text-4xl">Cooking, music, one more side project.</h2>
         <p class="mt-5 leading-relaxed text-ink-muted">
-          Cooking, playing music, and trying restaurants I haven't been to yet.
-          Usually somewhere between picking up a new hobby and talking myself into another side project.
+          I cook, I play a bit of music, and I'm always trying a restaurant I haven't
+          been to yet. There's usually a side project going that I talked myself into.
         </p>
         <a href="/desk" class="mt-5 inline-block text-sm font-medium text-accent hover:underline">Take a look around my help desk →</a>
       </div>
@@ -120,11 +122,12 @@ const game = projects.find((p) => p.id === 'galaxy-defense');
 
   <section aria-labelledby="contact-heading" class="border-t border-border">
     <div class="mx-auto max-w-(--container-wide) px-4 py-16 sm:px-6 sm:py-20">
-      <p class="eyebrow reveal">What's next</p>
-      <h2 id="contact-heading" class="reveal mt-3 text-3xl font-bold sm:text-4xl">Let's work together.</h2>
+      <p class="eyebrow reveal">Contact</p>
+      <h2 id="contact-heading" class="reveal mt-3 text-3xl font-bold sm:text-4xl">What I'm looking for.</h2>
       <p class="reveal mt-5 max-w-(--container-reading) text-lg leading-relaxed text-ink-muted">
-        I'm looking for a backend or full-stack engineering role, remote or in Northern Virginia.
-        If my experience fits what your team is building, I'd like to talk.
+        A backend or full-stack role, remote or in Northern Virginia. If that's what
+        you're hiring for, let me know. The form is the quickest way to reach me; email
+        works too.
       </p>
       <div class="reveal mt-7 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
         <a href="/contact" class="btn btn-primary">Get in touch</a>
