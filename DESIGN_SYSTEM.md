@@ -642,6 +642,15 @@ follows:
 - **Honest hedges stay.** "Mostly backend", "about", "usually". A qualifier he would
   actually say is not weakness; deleting it to sound certain is the drift.
 
+The same pass then ran over `/about`, which was closer to begin with but carried the
+two tells this rule exists to catch: authored epigrams ("Subtly wrong is worse than
+obviously broken", "The app is the work, not a view of it") and formal non-contracted
+forms ("It is where", "It was not for lack of trying") that Dylan never uses. The three
+`site.principles` now lead with the situation rather than the maxim. Two paragraphs
+that had come to duplicate the home page — the by-hand line and the off-the-clock tile
+— were rewritten to say something the other page does not; check both pages together
+when either one changes.
+
 One trap worth naming, because it will come up again: an agent calibrating this voice
 must not calibrate on its own prior output. Long-form writing that passed through an
 agent reads as the agent's register, not Dylan's, and feeding it back in tightens the
