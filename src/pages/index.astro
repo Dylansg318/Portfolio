@@ -1,126 +1,136 @@
 ---
 import Base from '../layouts/Base.astro';
-import FeaturedProject from '../components/ui/FeaturedProject.astro';
-import WorkRow from '../components/ui/WorkRow.astro';
+import HomeProject from '../components/ui/HomeProject.astro';
 import Nameplate from '../components/ui/Nameplate.astro';
-import Loops from '../components/ui/Loops.astro';
+import Cover from '../components/ui/Cover.astro';
 import { site } from '../lib/site';
 import { getProjects } from '../lib/content';
 
-/** Three sections: who, the work, how to reach me.
- *
- *  This page used to render most of site.ts — six sections and seventeen
- *  boxes — which described the ERP four times before you reached its
- *  write-up. Everything cut from here still exists: the principles and the
- *  path are on /about, the job history is on /resume. A front page that
- *  repeats them is not more informative, only longer. */
+// Curate for breadth: production ownership, developer tooling, and an
+// independent product. The complete catalog remains on /projects.
 const projects = await getProjects();
-const [flagship, ...rest] = projects;
+const selections = [
+  { id: 'mhlhub', label: 'At work', focus: 'Building and operating a complete business system.' },
+  { id: 'agent-fleet', label: 'Developer tools', focus: 'Making the way I build software more dependable.' },
+  { id: 'receipt-splitter', label: 'Independent project', focus: 'Taking a familiar problem from camera to working product.' },
+];
+const selected = selections.flatMap((selection) => {
+  const project = projects.find((p) => p.id === selection.id);
+  return project ? [{ ...selection, project }] : [];
+});
+const game = projects.find((p) => p.id === 'galaxy-defense');
 ---
 <Base>
-  <!-- ============================== NAMEPLATE ========================= -->
-  <!-- Two columns on a wide screen: the name and its one sentence on the
-       left, the loops on the right. On a phone the loops follow the buttons.
-       See docs/plans/2026-09-02-portfolio-hero-loops-and-register.md. -->
-  <section>
-    <div class="mx-auto max-w-(--container-wide) px-4 pb-14 pt-16 sm:px-6 sm:pb-20 sm:pt-24 lg:grid lg:grid-cols-[1.35fr_1fr] lg:items-center lg:gap-x-16">
-      <div>
-        <h1 class="reveal reveal-load font-display text-5xl font-extrabold leading-[0.95] tracking-tight text-ink sm:text-7xl lg:text-8xl">
-          {site.name}
-        </h1>
-
-        <p
-          class="reveal reveal-load mt-5 text-xs uppercase tracking-[0.18em] text-ink-faint sm:text-sm"
-          style="--reveal-delay: 60ms"
-        >
-          Software engineer · {site.location} · {site.timezone}
-        </p>
-
-        <!-- One sentence of employment, in two registers. Deliberately not a
-             slogan: it says where I work and what I own, and nothing about how
-             good I am at it. Flip the header switch and it rewrites itself. -->
-        <Nameplate
-          class="reveal reveal-load mt-8 max-w-(--container-reading) text-lg leading-relaxed text-ink-muted sm:text-xl"
-          style="--reveal-delay: 120ms"
-        />
-
-        <div class="reveal reveal-load mt-9 flex flex-wrap gap-3" style="--reveal-delay: 180ms">
-          <a href="#work" class="btn btn-primary">
-            See the work
-            <span aria-hidden="true">→</span>
-          </a>
-          <a href={site.resumeUrl} class="btn btn-ghost">Resume</a>
-          {site.links.github && (
-            <a href={site.links.github} rel="me noopener" class="btn btn-ghost">
-              <svg viewBox="0 0 24 24" class="size-4" fill="currentColor" aria-hidden="true">
-                <path d="M12 .5A11.5 11.5 0 0 0 .5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.37-3.87-1.37-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.79 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.12 3.05.74.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.05.78 2.12v3.14c0 .31.2.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z" />
-              </svg>
-              GitHub
-            </a>
-          )}
+  <section aria-labelledby="intro-heading">
+    <div class="mx-auto max-w-(--container-wide) px-4 pb-16 pt-16 sm:px-6 sm:pb-20 sm:pt-24">
+      <div class="grid gap-10 lg:grid-cols-[1.05fr_1fr] lg:items-end lg:gap-16">
+        <div class="reveal reveal-load">
+          <p class="eyebrow">{site.role}</p>
+          <h1 id="intro-heading" class="mt-6 font-display text-[clamp(3rem,8vw,5rem)] lg:text-[clamp(3rem,6.5vw,5rem)] font-extrabold leading-[0.94] tracking-[-0.055em] text-ink">
+            Dylan{' '}<span class="block whitespace-nowrap">San Gabriel<span class="text-accent">.</span></span>
+          </h1>
+          <p class="mt-6 text-sm text-ink-faint">{site.location} · {site.timezone}</p>
+        </div>
+        <div class="reveal reveal-load" style="--reveal-delay: 100ms">
+          <Nameplate class="text-lg leading-relaxed text-ink-muted sm:text-xl" />
+          <p class="mt-5 text-base leading-relaxed text-ink-muted">
+            Having worked on the other side of the tools, I care about what happens
+            when people actually depend on them.
+          </p>
+          <div class="mt-8 flex flex-wrap gap-3">
+            <a href="#work" class="btn btn-primary">Explore my work <span aria-hidden="true">↓</span></a>
+            <a href={site.resumeUrl} class="btn btn-ghost">Resume</a>
+            <a href="/about" class="btn btn-ghost">More about me</a>
+          </div>
         </div>
       </div>
-
-      <Loops class="mt-14 lg:mt-0" />
+      <div class="mt-12 flex flex-wrap gap-x-8 gap-y-3 border-t border-border pt-5 text-sm text-ink-muted">
+        <p><span class="text-ink">My focus</span> · Backend &amp; full-stack engineering</p>
+        <a href="#experience" class="text-accent hover:underline">Retail → hospitality → software <span aria-hidden="true">↓</span></a>
+      </div>
     </div>
   </section>
 
-  <!-- ============================== THE WORK ========================== -->
-  <section id="work" class="border-t border-border">
+  <section id="work" aria-labelledby="work-heading" class="scroll-mt-24 border-t border-border">
     <div class="mx-auto max-w-(--container-wide) px-4 py-16 sm:px-6 sm:py-20">
-      <p class="eyebrow reveal">The work</p>
+      <div class="reveal flex flex-wrap items-end justify-between gap-5">
+        <div>
+          <p class="eyebrow">Selected work</p>
+          <h2 id="work-heading" class="mt-3 text-3xl font-bold sm:text-4xl">What I bring to the work.</h2>
+        </div>
+        <a href="/projects" class="text-sm font-medium text-accent hover:underline">All projects →</a>
+      </div>
+      <div class="mt-10 grid gap-x-8 gap-y-12 md:grid-cols-3">
+        {selected.map(({ project, label, focus }, i) => (
+          <HomeProject project={project} label={label} focus={focus} number={i + 1} />
+        ))}
+      </div>
+    </div>
+  </section>
 
-      {projects.length === 0 ? (
-        <p class="mt-8 rounded-xl border border-dashed border-border p-10 text-center text-ink-muted">
-          No projects published yet.
+  <section id="experience" aria-labelledby="experience-heading" class="scroll-mt-24 border-t border-border">
+    <div class="mx-auto grid max-w-(--container-wide) gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[1fr_1.65fr] lg:gap-20">
+      <div class="reveal">
+        <p class="eyebrow">Experience</p>
+        <h2 id="experience-heading" class="mt-3 text-3xl font-bold sm:text-4xl">How I got here.</h2>
+        <p class="mt-5 leading-relaxed text-ink-muted">
+          Before writing software for a business, I managed a store and ran a restaurant floor.
+          Along the way, I studied computer science and completed a software testing program.
         </p>
-      ) : (
-        <>
-          {flagship && (
-            <div class="mt-8">
-              <FeaturedProject project={flagship} />
-            </div>
-          )}
+        <a href="/about#tmobile" class="mt-5 inline-block text-sm font-medium text-accent hover:underline">The longer story →</a>
+      </div>
+      <ol class="career-path">
+        {site.experience.map((job) => (
+          <li class="reveal relative border-l border-border-strong pb-9 pl-7 last:pb-0">
+            <span aria-hidden="true" class="absolute -left-[5px] top-1.5 size-[9px] rounded-full bg-accent"></span>
+            <p class="font-mono text-xs text-ink-faint">{job.start} — {job.end}</p>
+            <h3 class="mt-2 text-xl font-semibold">{job.title}</h3>
+            <p class="mt-1 text-sm text-ink-faint">{job.org}</p>
+            <p class="mt-3 max-w-xl text-sm leading-relaxed text-ink-muted">{job.summary}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
 
-          {/* Rows, not cards. See WorkRow.astro for why. */}
-          <div class="mt-10 border-t border-border">
-            {rest.map((project, i) => <WorkRow project={project} delay={i * 50} />)}
+  <section aria-labelledby="personal-heading" class="border-t border-border">
+    <div class="mx-auto grid max-w-(--container-wide) gap-10 px-4 py-16 sm:px-6 sm:py-20 md:grid-cols-2 md:items-center md:gap-20">
+      <div class="reveal">
+        <p class="eyebrow">Away from work</p>
+        <h2 id="personal-heading" class="mt-3 text-3xl font-bold sm:text-4xl">Usually making something.</h2>
+        <p class="mt-5 leading-relaxed text-ink-muted">
+          Cooking, playing music, and trying restaurants I haven't been to yet.
+          Usually somewhere between picking up a new hobby and talking myself into another side project.
+        </p>
+        <a href="/desk" class="mt-5 inline-block text-sm font-medium text-accent hover:underline">Take a look around my help desk →</a>
+      </div>
+      {game && (
+        <a href={`/projects/${game.id}`} class="reveal group grid grid-cols-[7rem_1fr] items-center gap-5 border-y border-border py-6 sm:grid-cols-[9rem_1fr]">
+          {game.data.cover && <Cover cover={game.data.cover} alt={game.data.coverAlt ?? ''} class="aspect-square w-full rounded-lg object-cover" widths={[160, 320]} sizes="144px" />}
+          <div>
+            <p class="font-mono text-xs text-ink-faint">2020 · Where it started</p>
+            <h3 class="mt-2 text-xl font-semibold group-hover:text-accent">Galaxy Defense</h3>
+            <p class="mt-2 text-sm leading-relaxed text-ink-muted">A high-school game with a shop, upgrades, and a boss fight. Still playable.</p>
+            <p class="mt-3 text-sm font-medium text-accent">Play &amp; read the story →</p>
           </div>
-
-          <p class="mt-8">
-            <a href="/projects" class="text-sm font-medium text-accent hover:underline">
-              All projects, including the parts of MHLHUB →
-            </a>
-          </p>
-        </>
+        </a>
       )}
     </div>
   </section>
 
-  <!-- =============================== CONTACT ========================== -->
-  <section class="border-t border-border">
+  <section aria-labelledby="contact-heading" class="border-t border-border">
     <div class="mx-auto max-w-(--container-wide) px-4 py-16 sm:px-6 sm:py-20">
-      <p class="eyebrow reveal">Contact</p>
-      <p class="reveal mt-4 max-w-(--container-reading) text-lg leading-relaxed text-ink-muted">
-        Hiring for a backend or full-stack role, or running a business on spreadsheets and
-        six logins? Either way, <a href="/contact" class="text-ink underline decoration-border-strong underline-offset-4 transition-colors hover:decoration-accent">write to me</a>.
-        {site.location} · {site.timezone}.
+      <p class="eyebrow reveal">What's next</p>
+      <h2 id="contact-heading" class="reveal mt-3 text-3xl font-bold sm:text-4xl">Let's work together.</h2>
+      <p class="reveal mt-5 max-w-(--container-reading) text-lg leading-relaxed text-ink-muted">
+        I'm looking for a backend or full-stack engineering role, remote or in Northern Virginia.
+        If my experience fits what your team is building, I'd like to talk.
       </p>
-      <div class="reveal mt-6 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
+      <div class="reveal mt-7 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
         <a href="/contact" class="btn btn-primary">Get in touch</a>
-        <a href={`mailto:${site.email}`} class="text-ink-muted underline decoration-border-strong underline-offset-4 transition-colors hover:text-ink hover:decoration-accent">
-          {site.email}
-        </a>
-        {site.links.github && (
-          <a href={site.links.github} rel="me noopener" class="text-ink-muted underline decoration-border-strong underline-offset-4 transition-colors hover:text-ink hover:decoration-accent">
-            GitHub
-          </a>
-        )}
-        {site.links.linkedin && (
-          <a href={site.links.linkedin} rel="me noopener" class="text-ink-muted underline decoration-border-strong underline-offset-4 transition-colors hover:text-ink hover:decoration-accent">
-            LinkedIn
-          </a>
-        )}
+        <a href={`mailto:${site.email}`} class="text-accent hover:underline">{site.email}</a>
+        {site.links.github && <a href={site.links.github} rel="me noopener" class="text-ink-muted hover:underline">GitHub</a>}
+        {site.links.linkedin && <a href={site.links.linkedin} rel="me noopener" class="text-ink-muted hover:underline">LinkedIn</a>}
       </div>
     </div>
   </section>

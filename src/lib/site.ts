@@ -13,12 +13,10 @@ export const site = {
   /** Descriptive, not a claim. Feeds /about's meta description and the default
    *  OG card, both of which are read by people who have not met me. */
   tagline:
-    'Software engineer in Northern Virginia. Builds and runs the ERP a dental distributor operates on.',
+    'Software engineer in Northern Virginia with a background in retail management and hospitality.',
   description:
-    'Order intake across six sales channels, inventory sync, automated repricing, ' +
-    'shipping, and the integrations that keep it all in agreement. About 500 orders ' +
-    'a day, 32,000 products, one codebase. Write-ups of what the problem actually was ' +
-    'and what came out of solving it.',
+    'Meet Dylan San Gabriel, a software engineer in Northern Virginia. ' +
+    'Explore my background, production systems, developer tools, and independent projects.',
   location: 'Chantilly, VA',
   timezone: 'US Eastern',
 

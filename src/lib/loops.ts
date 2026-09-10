@@ -35,23 +35,23 @@ export interface Segment {
 }
 
 const opening: Segment[] = [
-  { t: 'The engineer at ' },
+  { t: 'My background spans retail management, hospitality, and software engineering. ' },
+];
+const employer: Segment[] = [
+  { t: "Today, I'm the engineer at " },
   { t: site.employer.name, href: site.employer.site },
-  { t: `, ${site.employer.kind}. ` },
 ];
 
 export const nameplate: Record<'plain' | 'eng', Segment[]> = {
   plain: [
     ...opening,
-    { t: 'I built the one system the company runs its orders, stock, prices and shipping in, and I keep it running.' },
+    ...employer,
+    { t: ', building and maintaining the software behind its daily operations.' },
   ],
   eng: [
     ...opening,
-    {
-      t:
-        'I built and run MHLHUB, the ERP the company works in: TypeScript and Postgres, six sales channels, ' +
-        '180 scheduled jobs, one codebase. I also own the environments the rest of the business ships through.',
-    },
+    ...employer,
+    { t: ', working across TypeScript, React, Node.js, and PostgreSQL, from integrations and data correctness to deployment.' },
   ],
 };
 

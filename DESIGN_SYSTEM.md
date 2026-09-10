@@ -601,6 +601,23 @@ for each is in the commit, the plan, or the code comment named.
 
 ---
 
+### 2026-09-10 — Person-first homepage
+
+The homepage now introduces Dylan's professional background before presenting work.
+This supersedes the earlier three-section homepage and employer-only nameplate rules:
+name and role → short background → selected projects → experience → personal interests
+→ contact. The first nameplate sentence still stays identical in both registers.
+
+Selected work is curated for breadth: MHLHUB, agent tooling, and the independent receipt
+splitter. Each preview explains what the work demonstrates, uses a real screenshot where
+available, and links to the complete case study. The catalog stays on /projects. No ERP
+metrics appear in the introduction. The career timeline uses site.experience so dates
+and titles agree with the résumé. Existing interests and the playable high-school game
+supply personal detail without inventing a new biography. Search descriptions introduce
+the person rather than the dental distributor.
+
+---
+
 ## 10. Parked and open
 
 Things decided *not yet*, so they are not re-decided by accident. Move a line to §9 when
