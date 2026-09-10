@@ -618,6 +618,38 @@ the person rather than the dental distributor.
 
 ---
 
+### 2026-09-10 — The homepage says it the way Dylan says it
+
+The person-first structure of the entry above is unchanged; only the wording is. The
+first pass wrote that structure in template English — "Explore my work", "What I bring
+to the work", "Let's work together", "Building and operating a complete business
+system" — which reads like every other portfolio and contradicts §2.2 (say what
+happened, not what I am; no slogans; short words for hard things).
+
+The copy was recalibrated against how Dylan actually writes, rather than against how
+portfolio sites usually sound. The rules that came out of it, which this page now
+follows:
+
+- **Fact first, no runway.** The sentence opens on the thing, not on a frame around
+  the thing. "I ran a phone store, then a restaurant floor", not "My background spans
+  retail management and hospitality".
+- **Concrete nouns over abstractions.** A register, a POS, a count that never matched
+  the shelf — never "a complete business system" or "production ownership".
+- **No adjectives about himself.** He never describes his own qualities. Headings state
+  what a thing is ("One at work, one for myself, one on the side"), never what it proves.
+- **Plain courtesy, not brochure warmth.** His professional register is "If that's what
+  you're hiring for, let me know" — direct and brief. Not "Let's work together."
+- **Honest hedges stay.** "Mostly backend", "about", "usually". A qualifier he would
+  actually say is not weakness; deleting it to sound certain is the drift.
+
+One trap worth naming, because it will come up again: an agent calibrating this voice
+must not calibrate on its own prior output. Long-form writing that passed through an
+agent reads as the agent's register, not Dylan's, and feeding it back in tightens the
+loop instead of correcting it. Short, unedited writing is the reference. Whatever the
+reference, §11 still governs which facts may appear.
+
+---
+
 ## 10. Parked and open
 
 Things decided *not yet*, so they are not re-decided by accident. Move a line to §9 when
