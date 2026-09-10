@@ -231,19 +231,19 @@ export const site = {
   /** How I work — three things, in my own words. */
   principles: [
     {
-      title: 'Subtly wrong is worse than obviously broken.',
+      title: 'A wrong number is worse than a crash.',
       body:
-        "A page that crashes gets fixed the same day. A number that's plausibly wrong gets trusted for a month. I build for the second case.",
+        "If a page breaks, someone tells me that morning. If a number is only a little bit off, it gets used for a month before anyone checks. So most of the work goes into the second one.",
     },
     {
-      title: 'The app is the work, not a view of it.',
+      title: "If they have to export it, it isn't finished.",
       body:
-        "If someone has to export to a spreadsheet to finish their job, the feature isn't done. The screen is where the work happens.",
+        "Somebody dropping the data into a spreadsheet to finish their job means the screen didn't do what they needed. That's the part I go back and fix.",
     },
     {
-      title: 'Store the raw thing, parse it after.',
+      title: 'Save what the vendor sent, read it later.',
       body:
-        'Every external payload gets stored exactly as received, before anything interprets it. When the question changes later, the answer is already in the database.',
+        'Every payload gets stored exactly as it came in, before anything touches it. When someone asks a different question six months later, the answer is already sitting there.',
     },
   ],
 } as const;
