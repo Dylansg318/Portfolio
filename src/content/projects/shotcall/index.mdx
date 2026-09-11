@@ -1,5 +1,5 @@
 ---
-title: Carom
+title: Shotcall
 blurb: A daily bounce puzzle. Guess which pocket the ball drops into; every wrong guess reveals one more bounce.
 plainBlurb: A once-a-day puzzle like Wordle, but with a bouncing ball. Work out which pocket it ends up in. Guess wrong and it shows you one more bounce.
 date: 2026-09-11
@@ -13,7 +13,7 @@ stack: [TypeScript, Astro, SVG, Node]
 # pocket. Not a mockup: the white path is where the ball actually went and the
 # amber line is a stroke drawn with a mouse.
 cover: ./cover.png
-coverAlt: "A solved Carom board. The ball's real path is chalked in white from the top rail through three bounces into pocket F; a wobbly amber line, drawn freehand by the player, runs beside it. Four pockets are crossed out, fourteen are lettered A to P, and a wooden block sits on the green cloth."
+coverAlt: "A solved Shotcall board. The ball's real path is chalked in white from the top rail through three bounces into pocket F; a wobbly amber line, drawn freehand by the player, runs beside it. Four pockets are crossed out, fourteen are lettered A to P, and a wooden block sits on the green cloth."
 
 problem: >-
   A daily puzzle has two requirements that fight each other. Every day has to be
@@ -43,6 +43,7 @@ learned:
   - Deduplicate before you count your supply. 84% of the boards that passed every filter were mirror images of boards already in the list. "Five years of puzzles" was 2.8 years as soon as a board and its reflection were recognised as the same puzzle.
   - A failing test is not the same as wrong code. The time-reversibility check failed on 32% of boards and the check was the thing that was broken — reversing a bounce means negating the ray the ball arrived on, not the one it left on. Changing a test until it passes is usually a fudge, so being able to say precisely why this one wasn't is the whole difference.
   - Pointer code has to be driven with the real input, not read. Two bugs existed only on the device I was not using at the time. Capturing the pointer on pointerdown retargets the click that follows it, so every pocket silently stopped accepting a tap while drawing was armed. And calling preventDefault on pointerdown suppresses the synthesised click entirely, so on a phone a finger tap on a pocket did nothing at all. Both were invisible to reading the code and obvious within seconds of driving a real mouse and a real finger at it.
+  - The best fix sometimes deletes the mechanic. The erase animation originally swept an eraser across the table, which needed careful bookkeeping about which pieces of the line each pass had already caught — and got it wrong, leaving a bright untouched tail standing whenever an animation frame missed the end of a sweep. Making the eraser stay in one place and shake instead was a better animation *and* removed the state the bug lived in.
   - Verify the thing that ships. The physics gate used to hold its own copy of the reflection rule, which meant a pass was a statement about the gate. It now imports the same module the generator deals boards with and the browser rolls the ball with, and replays all 365 committed boards through it.
 
 aiNote: >-
@@ -67,8 +68,8 @@ metrics:
 
 demo:
   kind: island
-  entry: carom
-  label: Play Carom
+  entry: shotcall
+  label: Play Shotcall
 ---
 
 A ball rolls onto a billiards table at forty-five degrees. It bounces three times
@@ -76,6 +77,10 @@ off anything solid — the rails, or the block bolted to the cloth — and drops
 the first pocket it reaches. There are fourteen pockets. You get four guesses, and
 each wrong one rolls the ball forward by one bounce, so a miss buys you information
 instead of just costing you a life.
+
+The name is the pool rule it borrows: under call-shot rules you have to nominate
+the pocket before you shoot, and the cushions on the way, which is exactly what
+this asks of you.
 
 You can also chalk the route yourself. Drag across the cloth and the line follows
 your hand — no snapping to the grid, no smoothing — and when the real path appears
@@ -139,8 +144,9 @@ cloth and you draw on it, freehand, exactly where your hand went — so you can
 trace the route you think the ball takes. When the real path appears you see both
 lines at once and get a number for how far off you were, in dots. Getting the
 pocket right is luck one time in fourteen; getting the route right is not. And if
-you want another go at the drawing, the eraser takes it off in three passes, the
-way a hand clears a board.
+you want another go at the drawing, an eraser drops onto the line and scrubs at one
+small spot — and the whole line comes off anyway, in three goes, the way a hand
+clears a board.
 
 And because a puzzle that sends the ball to the wrong pocket is worse than no
 puzzle, none of this is taken on trust. Every one of the 365 days that shipped is
@@ -312,17 +318,27 @@ to reading the code:
   altogether, so on a phone a finger tap on a pocket did nothing at all. That call
   moved to the move handler too.
 
-The erase is three passes of a felt eraser rather than one fade, because a fade is
-what a computer does and a board being cleared goes in swipes. The line is redrawn
-as short pieces so it can break rather than dim: each pass takes whole pieces out,
-leaves the survivors on a broken dasharray with a thinner stroke, raises dust along
-the band it just crossed, and the third pass takes the rest. One detail there was a
-real bug — a piece in the last few percent of a sweep is only caught if an
-animation frame happens to land on it, and locking pieces to "damaged by this pass
-only" meant a piece the sweep flew past was excluded from every later pass, leaving
-a bright untouched tail standing after the erase finished. Letting a later pass
-collect an earlier one's misses makes the worst case one frame late instead of
-never.
+The erase is one eraser that does not travel. It lands on the middle of the line
+and shakes — the tight, slightly impatient motion of someone rubbing at one small
+mark — and the entire line degrades anyway, wherever on the board it happens to be.
+The gap between a tiny gesture and a total effect is the joke, and it only works
+because the eraser stays put.
+
+It is still three discrete scrubs with a beat of nothing between them, because a
+fade is what a computer does and a board being cleared goes in strokes. The line is
+redrawn as short pieces rather than one path so it can *break* rather than dim: each
+scrub takes whole pieces out, leaves the survivors on a broken dasharray with a
+thinner stroke, and puffs dust at the eraser. Faded-but-solid chalk does not read as
+chalk.
+
+The first version of this swept across the table instead, and it carried a real bug
+that is worth recording because the fix was to delete the mechanic. A piece in the
+last few percent of a sweep is only damaged if an animation frame happens to land on
+it, and pinning pieces to "damaged by this pass only" then excluded anything the
+sweep flew past from every later pass — so the erase finished with a bright,
+untouched tail still standing. I patched that by letting a later pass collect an
+earlier one's misses. Then the eraser stopped travelling, damage stopped depending
+on position at all, and the entire class of bug went with it.
 
 ## The test that was wrong
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * CAROM — physics gate.
+ * SHOTCALL — physics gate.
  *
- * Carom's whole promise is that the ball goes where the geometry says. This
+ * Shotcall's whole promise is that the ball goes where the geometry says. This
  * asserts that over every board shape the generator can produce, as invariants
  * rather than by eye:
  *
@@ -18,14 +18,14 @@
  * breaks it, and nothing else will.
  *
  * It verifies THE SHIPPED RULE, not a second copy of it. The reflection law is
- * imported from src/demos/carom/trace.mjs — the same module the generator deals
+ * imported from src/demos/shotcall/trace.mjs — the same module the generator deals
  * boards with and the same one the browser rolls the ball with — so a pass here
  * is a statement about the game and not about this file. The invariants are
  * properties (containment, reversibility), which is why testing the real
  * implementation beats re-deriving it: a second copy could only ever prove the
  * two copies agree.
  *
- * Then it replays every board in src/demos/carom/boards.json through that rule
+ * Then it replays every board in src/demos/shotcall/boards.json through that rule
  * and checks each one still reaches its pocket. That is the part that catches
  * drift: boards.json is committed output, so without this a stale or
  * hand-edited file would sail through the gate.
@@ -35,17 +35,17 @@
  * outgoing one — those are different rays at every contact point. The first
  * version of this test negated the wrong one and failed 32% of cases.
  *
- * Run: npm run carom:verify
+ * Run: npm run shotcall:verify
  */
 
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { step } from "../src/demos/carom/trace.mjs";
+import { step } from "../src/demos/shotcall/trace.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const BOARDS = resolve(HERE, "../src/demos/carom/boards.json");
+const BOARDS = resolve(HERE, "../src/demos/shotcall/boards.json");
 
 const inside = (B, x, y) => B && x > B.bx && x < B.bx2 && y > B.by && y < B.by2;
 
@@ -126,7 +126,7 @@ for (const [W, H] of [[11, 9], [8, 6], [10, 7], [13, 9], [12, 8], [7, 5]]) {
   }
 }
 
-console.log("carom physics gate");
+console.log("shotcall physics gate");
 console.log("  boards traced      ", cases.toLocaleString());
 console.log("  ball positions     ", stepsChecked.toLocaleString());
 console.log("");
@@ -172,7 +172,7 @@ for (const date of dates) {
   traced++;
 }
 
-console.log(`\ncarom boards.json  (v${file.version}, generated ${file.generated})`);
+console.log(`\nshotcall boards.json  (v${file.version}, generated ${file.generated})`);
 console.log(`  ${dates.length} days  ${dates[0]} to ${dates[dates.length - 1]}` +
             `  ${file.bounces} bounces  ${file.tries} tries  ${file.pockets} pockets`);
 const boardChecks = [
@@ -185,7 +185,7 @@ for (const [name, n] of boardChecks)
 const badBoards = boardChecks.reduce((a, c) => a + c[1], 0);
 console.log("\n" + (badBoards === 0
   ? `all ${traced} shipped boards trace to their pocket`
-  : `${badBoards} shipped board(s) do not trace — regenerate with npm run carom:boards`));
+  : `${badBoards} shipped board(s) do not trace — regenerate with npm run shotcall:boards`));
 
 // the reference board, traced and printed for the record
 const W = 11, H = 9, B = { bx: 3, by: 3, bx2: 5, by2: 4 };

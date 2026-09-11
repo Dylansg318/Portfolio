@@ -91,7 +91,7 @@ function that stops every timer it started.
 
 A demo with nothing expensive to gate — no loop, no audio, no listener outside
 its own element — may skip the gate, and must say so in its header with the
-reason. `src/demos/carom/` is the worked example: a still SVG board that only
+reason. `src/demos/shotcall/` is the worked example: a still SVG board that only
 animates once a pocket is clicked, where a Start curtain would hide the one thing
 that explains the game.
 

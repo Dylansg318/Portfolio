@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * CAROM — the daily board generator.
+ * SHOTCALL — the daily board generator.
  *
- * Carom is a bounce puzzle: a ball enters a table at 45 degrees, reflects off
+ * Shotcall is a bounce puzzle: a ball enters a table at 45 degrees, reflects off
  * anything solid, and drops into the first pocket it reaches. The player gets
  * four tries and every miss reveals one more bounce.
  *
@@ -10,8 +10,8 @@
  * one to each date of a year. Output is static JSON, so nothing solves anything
  * at request time — see README, the island demo lane.
  *
- * Run: npm run carom:boards            (writes src/demos/carom/boards.json)
- *      npm run carom:boards -- --stats (also prints the difficulty distribution)
+ * Run: npm run shotcall:boards            (writes src/demos/shotcall/boards.json)
+ *      npm run shotcall:boards -- --stats (also prints the difficulty distribution)
  *
  * WHY THE SIZES LOOK ARBITRARY
  *   They are not. The governing variable is gcd(W, H), not area. A shared factor
@@ -48,10 +48,10 @@ import { fileURLToPath } from "node:url";
 
 // The reflection rule lives beside the demo that ships it, so the boards dealt
 // here and the ball the browser rolls cannot disagree. See that file's header.
-import { contacts } from "../src/demos/carom/trace.mjs";
+import { contacts } from "../src/demos/shotcall/trace.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const OUT = resolve(HERE, "../src/demos/carom/boards.json");
+const OUT = resolve(HERE, "../src/demos/shotcall/boards.json");
 
 /* ------------------------------------------------------------------ shape */
 
@@ -325,7 +325,7 @@ writeFileSync(OUT, JSON.stringify({
 }, null, 0) + "\n");
 
 const bytes = JSON.stringify(days).length;
-console.log(`carom: ${pool.length} distinct boards -> ${Object.keys(days).length} days from ${START}`);
+console.log(`shotcall: ${pool.length} distinct boards -> ${Object.keys(days).length} days from ${START}`);
 console.log(`  verified ${checked}/${Object.keys(days).length} traced to their pocket`);
 console.log(`  supply ${(pool.length / 365).toFixed(1)} years   output ${(bytes / 1024).toFixed(0)} KB`);
 if (exhausted) console.log(`  NOTE: ${exhausted} day(s) fell back to a neighbouring tier`);
