@@ -84,10 +84,16 @@ exporting `mount(el: HTMLElement): () => void`, then:
 demo: { kind: island, entry: <name> }
 ```
 
-Copy the start-gate pattern from `src/demos/reflex/` — mount should be cheap
-and only begin expensive work (animation loop, audio, WASM) after an explicit
-click, and it must honour `prefers-reduced-motion`. Return a cleanup function
-that stops every timer it started.
+Copy the start-gate pattern from `src/demos/galaxy-defense/` — mount should be
+cheap and only begin expensive work (animation loop, audio, WASM) after an
+explicit click, and it must honour `prefers-reduced-motion`. Return a cleanup
+function that stops every timer it started.
+
+A demo with nothing expensive to gate — no loop, no audio, no listener outside
+its own element — may skip the gate, and must say so in its header with the
+reason. `src/demos/carom/` is the worked example: a still SVG board that only
+animates once a pocket is clicked, where a Start curtain would hide the one thing
+that explains the game.
 
 > Demo entries must be `.ts`, not `.tsx`. A JSX entry is transformed by
 > `@vitejs/plugin-react`, which injects a Fast Refresh guard that throws unless

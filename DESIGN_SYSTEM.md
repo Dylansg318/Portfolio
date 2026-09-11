@@ -529,6 +529,9 @@ The reasoning for each lives as a comment next to the code. This table is the in
 
 - Island: `src/demos/<name>/index.ts`, `mount(el) => cleanup`, start gate before any
   expensive work, reduced motion honoured, every timer stopped in cleanup. `.ts` only.
+  The gate guards expense, not arrival: a demo with no loop, no audio and no listener
+  outside its element may skip it and must give the reason in its header (see
+  `src/demos/carom/`). Everything else in that list still applies.
 - Iframe: export under `public/demos/<slug>/`, under 25 MiB per asset, `camera: true`
   only if the demo genuinely needs it.
 - Frontmatter `demo:` block; `label` in the imperative (*Play Galaxy Defense*).
@@ -593,6 +596,7 @@ for each is in the commit, the plan, or the code comment named.
 | 2026-09-02 | Vendor and storefront names blurred in the browser before capture on every screenshot. |
 | 2026-09-03 | Receipt splitter v2 embedded through the iframe lane; the page rewritten around "refusing is a feature". |
 | 2026-09-03 | Screenshots follow the site theme: paired light and dark captures swapped on `[data-theme]`. |
+| 2026-09-11 | Carom ships as the second island demo: a daily bounce puzzle with a year of boards generated at build time. The start gate is qualified — it guards expense, not arrival, so a demo with no loop may skip it with a stated reason. One reflection rule is shared by the generator, the physics gate and the demo, and the gate now replays the committed `boards.json` through it. |
 | 2026-09-03 | CI overlaps the typecheck and the build; the wrangler-action probe dropped. |
 | 2026-09-03 | The second-brain vault written up. |
 | 2026-09-03 | This file. |

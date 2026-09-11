@@ -46,6 +46,10 @@ import { writeFileSync, mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+// The reflection rule lives beside the demo that ships it, so the boards dealt
+// here and the ball the browser rolls cannot disagree. See that file's header.
+import { contacts } from "../src/demos/carom/trace.mjs";
+
 const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT = resolve(HERE, "../src/demos/carom/boards.json");
 
@@ -85,42 +89,6 @@ function blockPositions(W, H, bw, bh) {
     for (let by = 1; by + bh <= H - 1; by++)
       out.push({ bx, by, bx2: bx + bw, by2: by + bh });
   return out;
-}
-
-/** Which faces a lattice point sits on. The block's faces reflect exactly like a
- *  rail; its corner reflects both. The ball lands on every whole x and y as it
- *  travels, so it can never slip through a face before touching it. */
-function faces(W, H, B, x, y) {
-  let v = x === 0 || x === W;
-  let h = y === 0 || y === H;
-  const rim = v || h;
-  if (B) {
-    const inX = x >= B.bx && x <= B.bx2, inY = y >= B.by && y <= B.by2;
-    const fX = x === B.bx || x === B.bx2, fY = y === B.by || y === B.by2;
-    if (fX && fY && inX && inY) { v = true; h = true; }
-    else if (fX && inY) v = true;
-    else if (fY && inX) h = true;
-  }
-  return { v, h, rim };
-}
-
-/** Walk until the ball has made CONTACTS contacts. Vertices are exactly the
- *  things it hits. Returns null if it cannot (it always can, in practice). */
-function walk(W, H, B, entry, dir) {
-  const pts = [{ x: entry.x, y: entry.y }];
-  let x = entry.x, y = entry.y, dx = dir.x, dy = dir.y;
-  for (let step = 0; step < 12 * W * H; step++) {
-    x += dx; y += dy;
-    if (B && x > B.bx && x < B.bx2 && y > B.by && y < B.by2)
-      throw new Error("ball entered the block interior — reflection is wrong");
-    const f = faces(W, H, B, x, y);
-    if (!f.v && !f.h) continue;
-    pts.push({ x, y, rim: f.rim, corner: (f.v && f.h), block: !f.rim, t: step + 1 });
-    if (pts.length > CONTACTS) break;
-    if (f.v) dx = -dx;
-    if (f.h) dy = -dy;
-  }
-  return pts.length >= CONTACTS + 1 ? pts.slice(0, CONTACTS + 1) : null;
 }
 
 function inwardDirs(W, H, p) {
@@ -176,9 +144,8 @@ function candidates() {
         for (const entry of rim) {
           if (entry.x >= B.bx && entry.x <= B.bx2 && entry.y >= B.by && entry.y <= B.by2) continue;
           for (const dir of inwardDirs(W, H, entry)) {
-            const pts = walk(W, H, B, entry, dir);
-            if (!pts) continue;
-            const hits = pts.slice(1);
+            const hits = contacts(W, H, B, entry, dir, CONTACTS);
+            if (hits.length < CONTACTS) continue;
             if (hits.some((c) => c.corner)) continue;
 
             const answer = hits[CONTACTS - 1];
@@ -327,7 +294,7 @@ const wantStats = process.argv.includes("--stats");
 const pool = candidates();
 if (!pool.length) throw new Error("no boards survived the filters");
 
-const START = "2026-09-12";
+const START = "2026-09-11";   // the day it went up; out-of-range dates fall back, see the demo
 const DAYS = 365;
 const { days, exhausted, scored } = deal(pool, START, DAYS);
 
@@ -335,12 +302,12 @@ const { days, exhausted, scored } = deal(pool, START, DAYS);
 let checked = 0;
 for (const [date, b] of Object.entries(days)) {
   const B = { bx: b.b[0], by: b.b[1], bx2: b.b[2], by2: b.b[3] };
-  const pts = walk(b.s[0], b.s[1], B, { x: b.e[0], y: b.e[1] }, { x: b.d[0], y: b.d[1] });
-  if (!pts) throw new Error(`${date}: ball never made ${CONTACTS} contacts`);
-  const last = pts[pts.length - 1];
+  const hits = contacts(b.s[0], b.s[1], B, { x: b.e[0], y: b.e[1] }, { x: b.d[0], y: b.d[1] }, CONTACTS);
+  if (hits.length < CONTACTS) throw new Error(`${date}: ball never made ${CONTACTS} contacts`);
+  const last = hits[CONTACTS - 1];
   const hit = b.p.findIndex(([x, y]) => x === last.x && y === last.y);
   if (hit === -1) throw new Error(`${date}: the ball's fourth contact is not a pocket`);
-  for (const c of pts.slice(1, CONTACTS))
+  for (const c of hits.slice(0, CONTACTS - 1))
     if (b.p.some(([x, y]) => x === c.x && y === c.y))
       throw new Error(`${date}: the ball passes a pocket before its answer`);
   checked++;
