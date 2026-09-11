@@ -1,5 +1,5 @@
 /**
- * CAROM — the island lane of the demo seam.
+ * SHOTCALL — the island lane of the demo seam.
  *
  * A daily bounce puzzle. A ball enters a billiards table at 45 degrees, reflects
  * off the rails and off one block bolted to the cloth, and drops into the first
@@ -39,7 +39,7 @@
  *   while chalk is on, because a tap is not a stroke.
  *
  * WHERE THE BOARD COMES FROM
- *   ./boards.json, a year of boards dealt at build time by scripts/carom-boards.mjs
+ *   ./boards.json, a year of boards dealt at build time by scripts/shotcall-boards.mjs
  *   out of the 1,037 that survive its filters. Nothing is solved at request time;
  *   the file is static and the site is prerendered.
  *
@@ -69,7 +69,7 @@
 import { contacts } from './trace.mjs';
 import data from './boards.json';
 
-/** One day's board, as scripts/carom-boards.mjs emits it. Arrays, not objects, because
+/** One day's board, as scripts/shotcall-boards.mjs emits it. Arrays, not objects, because
  *  365 of these ship and the key names would outweigh the values. */
 type Day = {
   /** table size, [W, H], in dots */
@@ -131,12 +131,12 @@ function pickDay(iso: string): { day: Day; dealt: boolean } {
  *
  * No light/dark variants, per DESIGN_SYSTEM 6.2 — a game canvas is theme-less
  * art, so every colour here is explicit and the panel holds on either ground.
- * Everything is scoped under .carom so nothing reaches the page around it, and
+ * Everything is scoped under .shotcall so nothing reaches the page around it, and
  * the one thing borrowed from the site is --font-mono, which is already loaded.
  */
-const STYLE_ID = 'carom-style';
+const STYLE_ID = 'shotcall-style';
 const CSS = `
-.carom {
+.shotcall {
   --room: #15100d; --room-deep: #0b0806;
   --brass: #b08d57; --brass-lit: #e8c27a;
   --chalk: #eaf4f9;
@@ -156,45 +156,45 @@ const CSS = `
   padding-inline: 22px;
   padding-block: 26px 30px;
 }
-.carom * { box-sizing: border-box; }
+.shotcall * { box-sizing: border-box; }
 
 /* the sign above the table */
-.carom-sign {
+.shotcall-sign {
   display: flex; align-items: baseline; gap: 14px;
   border-bottom: 1px solid rgba(200, 179, 148, 0.22);
   padding-bottom: 9px; margin-bottom: 20px;
 }
-.carom-name {
+.shotcall-name {
   font-family: var(--ball-face); font-weight: 900;
   font-size: clamp(1.5rem, 5vw, 2.1rem); line-height: 1;
   letter-spacing: -0.018em; color: #f2e7d3;
   text-shadow: 0 1px 0 #000, 0 0 22px rgba(232, 194, 122, 0.16);
 }
-.carom-date {
+.shotcall-date {
   margin-left: auto; font-family: var(--ball-face); font-weight: 900;
   font-size: 0.78rem; letter-spacing: 0.04em;
   color: var(--warm-dim); white-space: nowrap;
 }
-.carom-ask {
+.shotcall-ask {
   margin: 0 0 5px; font-size: clamp(1rem, 3.2vw, 1.15rem);
   font-weight: 700; letter-spacing: -0.008em; color: #f0e6d4;
 }
-.carom-rule {
+.shotcall-rule {
   margin: 0 0 18px; font-size: 0.76rem;
   letter-spacing: 0.08em; color: var(--warm-dim);
 }
 
 /* the table */
-.carom-felt { margin: 0 0 24px; }
-.carom-table { display: block; width: 100%; height: auto; max-width: 100%; }
-.carom-pk { cursor: pointer; }
-.carom-pk.spent { cursor: default; }
-.carom-pk:not(.spent):hover circle.lip { stroke: var(--brass-lit); stroke-width: 3.4; }
-.carom-pk:focus { outline: none; }
-.carom-pk:focus-visible circle.lip { stroke: var(--chalk); stroke-width: 3.4; }
+.shotcall-felt { margin: 0 0 24px; }
+.shotcall-table { display: block; width: 100%; height: auto; max-width: 100%; }
+.shotcall-pk { cursor: pointer; }
+.shotcall-pk.spent { cursor: default; }
+.shotcall-pk:not(.spent):hover circle.lip { stroke: var(--brass-lit); stroke-width: 3.4; }
+.shotcall-pk:focus { outline: none; }
+.shotcall-pk:focus-visible circle.lip { stroke: var(--chalk); stroke-width: 3.4; }
 
 /* the scorecard: paper in the room, not a UI panel */
-.carom-card {
+.shotcall-card {
   position: relative; font-family: var(--card-face);
   background: var(--stock); color: var(--stock-ink);
   max-width: 25rem; padding: 16px 20px 15px;
@@ -203,17 +203,17 @@ const CSS = `
   background-image: repeating-linear-gradient(
     to bottom, transparent 0 27px, rgba(51, 44, 36, 0.09) 27px 28px);
 }
-.carom-card::before {  /* punch hole, as if it hung on a nail */
+.shotcall-card::before {  /* punch hole, as if it hung on a nail */
   content: ""; position: absolute; top: 9px; left: 10px;
   width: 9px; height: 9px; border-radius: 50%;
   background: var(--room); box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
 }
-.carom-card-head {
+.shotcall-card-head {
   font-size: 0.68rem; letter-spacing: 0.2em; text-transform: uppercase;
   color: #6d6154; margin: 0 0 10px; padding-left: 16px;
   border-bottom: 1px solid var(--ruled); padding-bottom: 7px;
 }
-.carom-stamp {
+.shotcall-stamp {
   position: absolute; top: 12px; right: 12px;
   font-size: 0.6rem; letter-spacing: 0.18em; font-weight: 700;
   color: var(--ruled); opacity: 0.65;
@@ -222,78 +222,78 @@ const CSS = `
 }
 /* The tally row is rebuilt with innerHTML on every guess, so the chalk toggle
    is its sibling and not its child. */
-.carom-row { display: flex; align-items: center; gap: 7px; margin: 0 0 9px; }
-.carom-tallies { display: flex; gap: 7px; align-items: center; margin-right: auto; }
+.shotcall-row { display: flex; align-items: center; gap: 7px; margin: 0 0 9px; }
+.shotcall-tallies { display: flex; gap: 7px; align-items: center; margin-right: auto; }
 
 /* The pocket letters, in the same face as the ball numbers. */
-.carom-table text { font-family: var(--ball-face); font-weight: 900; }
-.carom-tally {
+.shotcall-table text { font-family: var(--ball-face); font-weight: 900; }
+.shotcall-tally {
   width: 26px; height: 30px; border: 1px solid rgba(51, 44, 36, 0.35);
   display: grid; place-items: center;
   font-size: 1.05rem; font-weight: 700; line-height: 1; color: var(--ruled);
 }
-.carom-tally.hit { color: #2f6b3d; }
-.carom-verdict { margin: 0; font-size: 0.88rem; min-height: 1.5em; }
-.carom-verdict b { font-family: var(--ball-face); font-weight: 900; font-size: 1.02em; }
-.carom-verdict.win b { color: #2f6b3d; }
-.carom-verdict.miss b { color: var(--ruled); }
+.shotcall-tally.hit { color: #2f6b3d; }
+.shotcall-verdict { margin: 0; font-size: 0.88rem; min-height: 1.5em; }
+.shotcall-verdict b { font-family: var(--ball-face); font-weight: 900; font-size: 1.02em; }
+.shotcall-verdict.win b { color: #2f6b3d; }
+.shotcall-verdict.miss b { color: var(--ruled); }
 
 /* the chalk toggle, and the cursor it implies */
-.carom-chalk {
+.shotcall-chalk {
   font: inherit; font-size: 0.64rem; font-weight: 700;
   letter-spacing: 0.12em; text-transform: uppercase;
   background: none; color: var(--stock-ink);
   border: 1.5px solid rgba(51, 44, 36, 0.5); border-radius: 2px;
   padding: 0.3rem 0.55rem; cursor: pointer; flex: none;
 }
-.carom-chalk:hover:not(:disabled) { border-color: var(--stock-ink); }
-.carom-chalk[aria-pressed="true"] { background: var(--stock-ink); color: var(--stock); border-color: var(--stock-ink); }
-.carom-chalk:disabled { opacity: 0.4; cursor: default; }
+.shotcall-chalk:hover:not(:disabled) { border-color: var(--stock-ink); }
+.shotcall-chalk[aria-pressed="true"] { background: var(--stock-ink); color: var(--stock); border-color: var(--stock-ink); }
+.shotcall-chalk:disabled { opacity: 0.4; cursor: default; }
 
 /* Only while chalk is armed, so a finger can scroll the page the rest of the time. */
-.carom.chalking .carom-table { cursor: crosshair; touch-action: none; }
+.shotcall.chalking .shotcall-table { cursor: crosshair; touch-action: none; }
 
-.carom-score { margin: 7px 0 0; font-size: 0.82rem; }
-.carom-score b { font-family: var(--ball-face); font-weight: 900; }
+.shotcall-score { margin: 7px 0 0; font-size: 0.82rem; }
+.shotcall-score b { font-family: var(--ball-face); font-weight: 900; }
 
-.carom-next {
+.shotcall-next {
   margin: 11px 0 0; font-size: 0.72rem; font-weight: 700;
   letter-spacing: 0.1em; text-transform: uppercase; color: #6d6154;
 }
-.carom-next b { font-weight: 700; color: var(--stock-ink); font-variant-numeric: tabular-nums; }
+.shotcall-next b { font-weight: 700; color: var(--stock-ink); font-variant-numeric: tabular-nums; }
 
 /* the share slip */
-.carom-slip {
+.shotcall-slip {
   margin-top: 22px; max-width: 25rem;
   border: 1px dashed rgba(200, 179, 148, 0.4); padding: 13px 16px;
   display: flex; align-items: center; gap: 14px;
 }
-.carom-slip pre {
+.shotcall-slip pre {
   margin: 0; flex: 1 1 auto; min-width: 0;
   font-family: var(--card-face); font-size: 0.82rem; line-height: 1.65;
   color: var(--warm); white-space: pre-wrap; word-break: break-word;
 }
-.carom-copy {
+.shotcall-copy {
   font: inherit; font-size: 0.7rem; font-weight: 700;
   letter-spacing: 0.14em; text-transform: uppercase;
   background: var(--brass); color: #201509;
   border: 0; border-radius: 2px; padding: 0.42rem 0.7rem;
   cursor: pointer; flex: none;
 }
-.carom-copy:hover { background: var(--brass-lit); }
+.shotcall-copy:hover { background: var(--brass-lit); }
 
-.carom [hidden] { display: none !important; }
-.carom :focus-visible { outline: 2px solid var(--brass-lit); outline-offset: 3px; }
+.shotcall [hidden] { display: none !important; }
+.shotcall :focus-visible { outline: 2px solid var(--brass-lit); outline-offset: 3px; }
 
 @media (max-width: 560px) {
-  .carom { padding-inline: 15px; }
-  .carom-sign { flex-wrap: wrap; }
-  .carom-date { margin-left: 0; width: 100%; }
-  .carom-card, .carom-slip { max-width: none; }
-  .carom-slip { flex-wrap: wrap; }
+  .shotcall { padding-inline: 15px; }
+  .shotcall-sign { flex-wrap: wrap; }
+  .shotcall-date { margin-left: 0; width: 100%; }
+  .shotcall-card, .shotcall-slip { max-width: none; }
+  .shotcall-slip { flex-wrap: wrap; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .carom * { transition-duration: 0ms !important; }
+  .shotcall * { transition-duration: 0ms !important; }
 }
 `;
 
@@ -375,11 +375,11 @@ export function mount(el: HTMLElement): () => void {
   const ANSWER = POCKETS.findIndex((p) => p.x === finalPoint.x && p.y === finalPoint.y);
 
   if (ANSWER === -1) {
-    // Impossible for a shipped board — scripts/carom-physics.mjs replays all 365
+    // Impossible for a shipped board — scripts/shotcall-physics.mjs replays all 365
     // and fails the build otherwise. Handled anyway so a bad board degrades to a
     // sentence instead of a silent unwinnable table.
     el.innerHTML =
-      `<p class="p-4 text-sm text-ink-muted">Carom could not trace ${iso} to a pocket.</p>`;
+      `<p class="p-4 text-sm text-ink-muted">Shotcall could not trace ${iso} to a pocket.</p>`;
     return () => {
       el.innerHTML = '';
     };
@@ -396,38 +396,38 @@ export function mount(el: HTMLElement): () => void {
   /* ---- shell ------------------------------------------------------- */
 
   el.innerHTML = `
-    <div class="carom">
-      <div class="carom-sign">
-        <span class="carom-name">Carom</span>
-        <p class="carom-date">${dateLabel}${dealt ? '' : ' · off-calendar board'}</p>
+    <div class="shotcall">
+      <div class="shotcall-sign">
+        <span class="shotcall-name">Shotcall</span>
+        <p class="shotcall-date">${dateLabel}${dealt ? '' : ' · off-calendar board'}</p>
       </div>
 
-      <p class="carom-ask">Which pocket does it drop into?</p>
-      <p class="carom-rule">${BOUNCES} bounces off anything solid &middot; each miss reveals one</p>
+      <p class="shotcall-ask">Which pocket does it drop into?</p>
+      <p class="shotcall-rule">${BOUNCES} bounces off anything solid &middot; each miss reveals one</p>
 
-      <div class="carom-felt">
-        <svg class="carom-table" data-table role="img" aria-label="A billiards table
+      <div class="shotcall-felt">
+        <svg class="shotcall-table" data-table role="img" aria-label="A billiards table
           ${W} by ${H} dots, with ${POCKETS.length} pockets around the rim and a solid
           block on the cloth. The ball enters at a marked point on the rim at forty-five
           degrees."></svg>
       </div>
 
-      <div class="carom-card">
-        <span class="carom-stamp">Tier ${day.t + 1}/7</span>
-        <p class="carom-card-head">Scorecard &middot; ${dateLabel}</p>
-        <div class="carom-row">
-          <div class="carom-tallies" data-tallies aria-label="Tries used"></div>
-          <button class="carom-chalk" type="button" data-wipe hidden>Wipe</button>
-          <button class="carom-chalk" type="button" data-chalk aria-pressed="false">Chalk</button>
+      <div class="shotcall-card">
+        <span class="shotcall-stamp">Tier ${day.t + 1}/7</span>
+        <p class="shotcall-card-head">Scorecard &middot; ${dateLabel}</p>
+        <div class="shotcall-row">
+          <div class="shotcall-tallies" data-tallies aria-label="Tries used"></div>
+          <button class="shotcall-chalk" type="button" data-wipe hidden>Wipe</button>
+          <button class="shotcall-chalk" type="button" data-chalk aria-pressed="false">Chalk</button>
         </div>
-        <p class="carom-verdict" data-verdict aria-live="polite">Pick a pocket, or chalk the line you expect.</p>
-        <p class="carom-score" data-score hidden></p>
-        <p class="carom-next" data-next hidden></p>
+        <p class="shotcall-verdict" data-verdict aria-live="polite">Pick a pocket, or chalk the line you expect.</p>
+        <p class="shotcall-score" data-score hidden></p>
+        <p class="shotcall-next" data-next hidden></p>
       </div>
 
-      <div class="carom-slip" data-slip hidden>
+      <div class="shotcall-slip" data-slip hidden>
         <pre data-slip-text></pre>
-        <button class="carom-copy" type="button" data-copy>Copy</button>
+        <button class="shotcall-copy" type="button" data-copy>Copy</button>
       </div>
     </div>
   `;
@@ -442,7 +442,7 @@ export function mount(el: HTMLElement): () => void {
   const chalkBtn = el.querySelector<HTMLButtonElement>('[data-chalk]')!;
   const wipeBtn = el.querySelector<HTMLButtonElement>('[data-wipe]')!;
   const scoreEl = el.querySelector<HTMLElement>('[data-score]')!;
-  const root = el.querySelector<HTMLElement>('.carom')!;
+  const root = el.querySelector<HTMLElement>('.shotcall')!;
 
   /* ---- projection -------------------------------------------------- */
 
@@ -483,7 +483,7 @@ export function mount(el: HTMLElement): () => void {
      clean and yesterday is not resurrected. Every access is guarded: private
      windows and blocked site data both throw here. */
 
-  const storeKey = `carom:${iso}`;
+  const storeKey = `shotcall:${iso}`;
   const save = () => {
     try {
       // Rounded to whole user units: sub-pixel precision in a hand-drawn line is
@@ -533,7 +533,12 @@ export function mount(el: HTMLElement): () => void {
       const stale: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
-        if (k && k.startsWith('carom:') && k !== storeKey) stale.push(k);
+        if (!k) continue;
+        // `carom:` was this game's key prefix before it was renamed. Anyone who
+        // played it in that window has a dead entry that nothing else will ever
+        // read or remove, so it goes too.
+        if (k.startsWith('carom:')) stale.push(k);
+        else if (k.startsWith('shotcall:') && k !== storeKey) stale.push(k);
       }
       for (const k of stale) localStorage.removeItem(k);
     } catch {
@@ -546,13 +551,13 @@ export function mount(el: HTMLElement): () => void {
   function defs() {
     const d = node('defs');
 
-    const lit = node('radialGradient', { id: 'carom-lit', cx: '50%', cy: '40%', r: '74%' });
+    const lit = node('radialGradient', { id: 'shotcall-lit', cx: '50%', cy: '40%', r: '74%' });
     lit.appendChild(node('stop', { offset: '0', 'stop-color': '#3f8474' }));
     lit.appendChild(node('stop', { offset: '0.62', 'stop-color': '#336a5b' }));
     lit.appendChild(node('stop', { offset: '1', 'stop-color': '#265045' }));
     d.appendChild(lit);
 
-    const grain = node('linearGradient', { id: 'carom-grain', x1: '0', y1: '0', x2: '0', y2: '1' });
+    const grain = node('linearGradient', { id: 'shotcall-grain', x1: '0', y1: '0', x2: '0', y2: '1' });
     grain.appendChild(node('stop', { offset: '0', 'stop-color': '#7d5739' }));
     grain.appendChild(node('stop', { offset: '0.5', 'stop-color': '#6b4a32' }));
     grain.appendChild(node('stop', { offset: '1', 'stop-color': '#543823' }));
@@ -575,7 +580,7 @@ export function mount(el: HTMLElement): () => void {
     }));
     svg.appendChild(node('rect', {
       x: PAD - RAIL, y: PAD - RAIL, width: TW + RAIL * 2, height: TH + RAIL * 2,
-      rx: 11, fill: 'url(#carom-grain)',
+      rx: 11, fill: 'url(#shotcall-grain)',
     }));
     svg.appendChild(node('rect', {
       x: PAD - RAIL + 3.5, y: PAD - RAIL + 3.5,
@@ -585,7 +590,7 @@ export function mount(el: HTMLElement): () => void {
     svg.appendChild(node('rect', {
       x: PAD - 4, y: PAD - 4, width: TW + 8, height: TH + 8, rx: 3, fill: '#1b3a32',
     }));
-    svg.appendChild(node('rect', { x: PAD, y: PAD, width: TW, height: TH, fill: 'url(#carom-lit)' }));
+    svg.appendChild(node('rect', { x: PAD, y: PAD, width: TW, height: TH, fill: 'url(#shotcall-lit)' }));
 
     // the spots you count
     for (let gx = 1; gx < W; gx++) {
@@ -605,7 +610,7 @@ export function mount(el: HTMLElement): () => void {
     svg.appendChild(node('rect', {
       x: bx + 1, y: by + 5, width: bw, height: bh, rx: 4, fill: '#000000', 'fill-opacity': 0.42,
     }));
-    svg.appendChild(node('rect', { x: bx, y: by, width: bw, height: bh, rx: 4, fill: 'url(#carom-grain)' }));
+    svg.appendChild(node('rect', { x: bx, y: by, width: bw, height: bh, rx: 4, fill: 'url(#shotcall-grain)' }));
     svg.appendChild(node('rect', {
       x: bx + 3, y: by + 3, width: bw - 6, height: bh - 6, rx: 2,
       fill: 'none', stroke: '#9c7551', 'stroke-width': 1, 'stroke-opacity': 0.6,
@@ -639,7 +644,7 @@ export function mount(el: HTMLElement): () => void {
 
     // pockets: brass rim, real hole
     POCKETS.forEach((p, i) => {
-      const g = node('g', { class: 'carom-pk', role: 'button', tabindex: 0 });
+      const g = node('g', { class: 'shotcall-pk', role: 'button', tabindex: 0 });
       const label = document.createElementNS(NS, 'title');
       label.textContent = `Pocket ${LETTERS[i]}`;
       g.appendChild(label);
@@ -886,31 +891,35 @@ export function mount(el: HTMLElement): () => void {
   }
 
   /**
-   * The erase: three passes of a felt eraser, not one fade.
+   * The erase: one eraser, scrubbing in place, taking the whole line with it.
    *
-   * One smooth fade-out is what a computer does. A board being cleared goes in
-   * swipes: the first pass takes most of the chalk but leaves it rough and full
-   * of blank spots, the second takes most of what is left, and the third takes the
-   * rest — with dust raised on each pass and a beat of nothing in between, so the
-   * whole thing reads staccato.
+   * It does not travel across the board. It sits on the line and shakes — the
+   * fast, tight, slightly impatient motion of someone rubbing at one small mark —
+   * and the entire line degrades anyway. That gap between a tiny gesture and a
+   * total effect is the joke, and it only works if the eraser stays put.
+   *
+   * Still staccato: the damage lands in three discrete scrubs with a beat of
+   * nothing between them, because a board being cleared goes in strokes and a
+   * smooth fade is what a computer does.
    *
    * The patchiness is two effects, because either one alone looks wrong. Whole
-   * chunks of the line drop out entirely (the eraser caught them), and the chunks
-   * that survive get a broken dasharray and a thinner stroke (the eraser dragged
-   * across them and took some of it). Faded-but-solid chalk does not look like
-   * chalk.
+   * pieces of the line drop out (the eraser took them), and the pieces that
+   * survive get a broken dasharray and a thinner stroke (it dragged across them
+   * and took some). Faded-but-solid chalk does not look like chalk, and the line
+   * has to be drawn in pieces rather than as one path for any of it to be
+   * possible — a single path can only fade as a whole.
    */
-  const SWIPES = 3;
-  const SWIPE_MS = 210;
-  const SWIPE_GAP = 80;
-  const ERASE_MS = SWIPES * SWIPE_MS + (SWIPES - 1) * SWIPE_GAP;
+  const SCRUBS = 3;
+  const SCRUB_MS = 200;
+  const SCRUB_GAP = 90;
+  const ERASE_MS = SCRUBS * SCRUB_MS + (SCRUBS - 1) * SCRUB_GAP;
 
   type Chunk = {
     el: SVGElement;
     midX: number;
     midY: number;
     alpha: number;
-    hit: number; // how many passes have caught it
+    scrubs: number; // how many scrubs have hit it
   };
   type Mote = {
     el: SVGElement;
@@ -925,8 +934,6 @@ export function mount(el: HTMLElement): () => void {
     if (!g) return;
     clear(g);
 
-    /* The line is redrawn here in short pieces rather than one path, because a
-       single path can only fade as a whole — pieces are what allow blank spots. */
     const chunks: Chunk[] = [];
     const PER = 2; // segments per piece
     for (let i = 0; i < erased.length - 1; i += PER) {
@@ -939,22 +946,17 @@ export function mount(el: HTMLElement): () => void {
       });
       g.appendChild(el);
       const mid = seg[Math.floor(seg.length / 2)]!;
-      chunks.push({ el, midX: mid.x, midY: mid.y, alpha: 1, hit: 0 });
+      chunks.push({ el, midX: mid.x, midY: mid.y, alpha: 1, scrubs: 0 });
     }
     if (!chunks.length) return;
 
-    const xs = chunks.map((c) => c.midX);
-    const x0 = Math.min(...xs) - 34;
-    const x1 = Math.max(...xs) + 34;
+    // it sits on the middle of the line, which is the one spot that always has
+    // chalk under it whatever shape was drawn
+    const anchor = erased[Math.floor(erased.length / 2)]!;
 
-    // the eraser itself, so the passes are something you watch rather than infer
-    const eraser = node('g', { opacity: 0 });
-    eraser.appendChild(node('rect', {
-      x: -23, y: -3, width: 46, height: 13, rx: 3, fill: '#d8cdb4',
-    }));
-    eraser.appendChild(node('rect', {
-      x: -23, y: -13, width: 46, height: 11, rx: 3, fill: '#6b4a32',
-    }));
+    const eraser = node('g', {});
+    eraser.appendChild(node('rect', { x: -23, y: -3, width: 46, height: 13, rx: 3, fill: '#d8cdb4' }));
+    eraser.appendChild(node('rect', { x: -23, y: -13, width: 46, height: 11, rx: 3, fill: '#6b4a32' }));
     eraser.appendChild(node('rect', {
       x: -20, y: -11, width: 40, height: 6, rx: 2,
       fill: 'none', stroke: '#9c7551', 'stroke-width': 0.8, 'stroke-opacity': 0.7,
@@ -962,11 +964,11 @@ export function mount(el: HTMLElement): () => void {
     g.appendChild(eraser);
 
     const motes: Mote[] = [];
-    const raiseDust = (c: Chunk, now: number, n: number) => {
+    const raiseDust = (x: number, y: number, n: number, now: number, spread = 14) => {
       for (let k = 0; k < n; k++) {
         const el = node('circle', {
-          cx: c.midX + (Math.random() - 0.5) * 16,
-          cy: c.midY + (Math.random() - 0.5) * 14,
+          cx: x + (Math.random() - 0.5) * spread,
+          cy: y + (Math.random() - 0.5) * spread,
           r: 2.2, fill: '#f2e6c8', 'fill-opacity': 0,
         });
         g.appendChild(el);
@@ -990,53 +992,50 @@ export function mount(el: HTMLElement): () => void {
       if (t0 === null) t0 = t;
       const ms = t - t0;
 
-      // which pass we are in, and where inside it
-      const cycle = SWIPE_MS + SWIPE_GAP;
-      const pass = Math.min(SWIPES - 1, Math.floor(ms / cycle));
-      const inPass = ms - pass * cycle;
-      const sweeping = inPass <= SWIPE_MS;
-      const p = Math.max(0, Math.min(1, inPass / SWIPE_MS));
+      const cycle = SCRUB_MS + SCRUB_GAP;
+      const scrub = Math.min(SCRUBS - 1, Math.floor(ms / cycle));
+      const inScrub = ms - scrub * cycle;
+      const scrubbing = inScrub <= SCRUB_MS && ms < ERASE_MS;
 
-      // alternate direction, the way a hand does
-      const forward = pass % 2 === 0;
-      const edge = forward ? x0 + (x1 - x0) * p : x1 - (x1 - x0) * p;
-
-      if (sweeping) {
-        let near = chunks[0]!;
-        for (const c of chunks) if (Math.abs(c.midX - edge) < Math.abs(near.midX - edge)) near = c;
+      /* The shake. A sideways oscillation at roughly 11Hz does the scrubbing;
+         the small random component on top is what stops it reading as a machine.
+         It settles to still between scrubs rather than vibrating continuously,
+         which is what makes the three strokes legible as strokes. */
+      if (ms < ERASE_MS) {
+        const amp = scrubbing ? 1 : 0.15;
+        const dx = Math.sin(ms / 14.5) * 6 * amp + (Math.random() - 0.5) * 2.5 * amp;
+        const dy = Math.sin(ms / 9) * 1.6 * amp + (Math.random() - 0.5) * 1.8 * amp;
+        const rot = -4 + Math.sin(ms / 17) * 3.5 * amp;
         eraser.setAttribute('opacity', '0.95');
-        eraser.setAttribute('transform', `translate(${edge} ${near.midY}) rotate(-4)`);
+        eraser.setAttribute('transform', `translate(${anchor.x + dx} ${anchor.y + dy}) rotate(${rot})`);
+        if (scrubbing && Math.random() < 0.4) raiseDust(anchor.x + dx, anchor.y + dy, 1, t, 20);
       } else {
         eraser.setAttribute('opacity', '0');
       }
 
-      for (const c of chunks) {
-        const passed = forward ? c.midX <= edge : c.midX >= edge;
-        /* `hit <= pass` is a catch-up, not sloppiness. A chunk in the last few
-           percent of a sweep is only damaged if a frame happens to land there,
-           and with `hit === pass` a chunk the sweep flew past was then locked out
-           of every later pass — which left a bright, untouched tail standing
-           after the erase finished. Allowing an earlier pass's misses to be
-           collected means the worst case is one frame late (16ms, in the beat
-           between passes) instead of never. */
-        if (passed && c.hit <= pass && c.alpha > 0) {
-          c.hit = pass + 1;
-          if (pass === SWIPES - 1) {
-            c.alpha = 0; // the last pass leaves nothing
+      // one scrub, one round of damage — to every piece still standing, wherever
+      // on the board it happens to be
+      if (scrubbing) {
+        for (const c of chunks) {
+          if (c.scrubs > scrub || c.alpha === 0) continue;
+          c.scrubs = scrub + 1;
+          if (scrub === SCRUBS - 1) {
+            c.alpha = 0;
           } else {
             c.alpha *= 0.2 + Math.random() * 0.35;
-            if (Math.random() < 0.34) c.alpha = 0; // the eraser caught this bit whole
+            if (Math.random() < 0.34) c.alpha = 0; // taken whole
           }
-          raiseDust(c, t, c.alpha === 0 ? 2 : 1);
           if (c.alpha === 0) {
             c.el.setAttribute('stroke-opacity', '0');
+            if (Math.random() < 0.5) raiseDust(c.midX, c.midY, 1, t);
           } else {
-            // rough, broken chalk rather than evenly faded chalk
             c.el.setAttribute('stroke-opacity', String(0.85 * c.alpha));
             c.el.setAttribute('stroke-width', String(1.5 + 1.7 * c.alpha));
             c.el.setAttribute(
               'stroke-dasharray',
-              c.alpha < 0.35 ? `${1 + Math.random() * 2} ${4 + Math.random() * 4}` : `${3 + Math.random() * 3} ${2 + Math.random() * 3}`,
+              c.alpha < 0.35
+                ? `${1 + Math.random() * 2} ${4 + Math.random() * 4}`
+                : `${3 + Math.random() * 3} ${2 + Math.random() * 3}`,
             );
             c.el.setAttribute('stroke-dashoffset', String(Math.random() * 8));
           }
@@ -1058,7 +1057,7 @@ export function mount(el: HTMLElement): () => void {
         m.el.setAttribute('cy', String(m.y + m.vy * mp));
       }
 
-      // belt and braces: nothing survives the last pass, whatever the frame timing
+      // belt and braces: nothing survives the last scrub, whatever the frame timing
       if (ms >= ERASE_MS) {
         for (const c of chunks) {
           if (c.alpha === 0) continue;
@@ -1200,14 +1199,14 @@ export function mount(el: HTMLElement): () => void {
     for (let i = 0; i < TRIES; i++) {
       const cell = document.createElement('span');
       const g = guesses[i];
-      cell.className = 'carom-tally' + (g === undefined ? '' : g === ANSWER ? ' hit' : '');
+      cell.className = 'shotcall-tally' + (g === undefined ? '' : g === ANSWER ? ' hit' : '');
       cell.textContent = g === undefined ? '' : g === ANSWER ? '✓' : '✕';
       talliesBox.appendChild(cell);
     }
   }
 
   function say(html: string, cls?: string) {
-    verdictEl.className = 'carom-verdict' + (cls ? ' ' + cls : '');
+    verdictEl.className = 'shotcall-verdict' + (cls ? ' ' + cls : '');
     verdictEl.innerHTML = html;
   }
 
@@ -1343,7 +1342,7 @@ export function mount(el: HTMLElement): () => void {
     const won = guesses.includes(ANSWER);
     const off = chalkError();
     return (
-      `Carom · ${dateLabel}\n${row}   ${won ? `${guesses.length}/${TRIES}` : `x/${TRIES}`}` +
+      `Shotcall · ${dateLabel}\n${row}   ${won ? `${guesses.length}/${TRIES}` : `x/${TRIES}`}` +
       (off === null ? '' : `\nchalk line ${off.toFixed(1)} dots off`)
     );
   }

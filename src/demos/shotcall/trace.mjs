@@ -1,12 +1,12 @@
 /**
- * CAROM — the reflection rule, in one place.
+ * SHOTCALL — the reflection rule, in one place.
  *
  * Three things have to agree about where the ball goes: the generator that deals
  * a year of boards, the gate that proves the physics, and the demo the browser
  * runs. Each of them used to carry its own copy of the rule, which is two extra
  * chances for the shipped game to disagree with the board it was dealt — and the
  * disagreement would look like a wrong answer, not like a bug. This is the one
- * copy. scripts/carom-boards.mjs, scripts/carom-physics.mjs and ./index.ts all
+ * copy. scripts/shotcall-boards.mjs, scripts/shotcall-physics.mjs and ./index.ts all
  * import it, so the gate now verifies the code that actually ships.
  *
  * It is plain .mjs rather than .ts deliberately: the two scripts are run by node
@@ -134,7 +134,7 @@ export function contacts(W, H, B, entry, dir, max) {
     s = step(W, H, B, s);
     if (B && s.x > B.bx && s.x < B.bx2 && s.y > B.by && s.y < B.by2)
       throw new Error(
-        `carom: the ball reached (${s.x},${s.y}), strictly inside the block — ` +
+        `shotcall: the ball reached (${s.x},${s.y}), strictly inside the block — ` +
         `the reflection rule is wrong`);
     if (!s.contact) continue;
     out.push({ x: s.x, y: s.y, t, rim: s.rim, block: s.block, corner: s.corner });
