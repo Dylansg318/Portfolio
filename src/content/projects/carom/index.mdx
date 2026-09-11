@@ -8,6 +8,13 @@ status: live
 role: solo
 stack: [TypeScript, Astro, SVG, Node]
 
+# A real finished board, captured from the running demo at 2x and matted out to
+# 16:9 in the panel's own background gradient, so a card crop never cuts a
+# pocket. Not a mockup: the white path is where the ball actually went and the
+# amber line is a stroke drawn with a mouse.
+cover: ./cover.png
+coverAlt: "A solved Carom board. The ball's real path is chalked in white from the top rail through three bounces into pocket F; a wobbly amber line, drawn freehand by the player, runs beside it. Four pockets are crossed out, fourteen are lettered A to P, and a wooden block sits on the green cloth."
+
 problem: >-
   A daily puzzle has two requirements that fight each other. Every day has to be
   scored on the same scale, so the shape of the puzzle must be fixed — here,
@@ -35,6 +42,7 @@ learned:
   - Generating content is a filtering problem, not a creative one. 170,356 board shapes go in and 1,037 come out — 0.6%. All the interesting code is in the eight reasons a board gets thrown away, and the single biggest reason, a bounce that lands exactly on a corner and reflects both ways at once, accounts for 59% on its own.
   - Deduplicate before you count your supply. 84% of the boards that passed every filter were mirror images of boards already in the list. "Five years of puzzles" was 2.8 years as soon as a board and its reflection were recognised as the same puzzle.
   - A failing test is not the same as wrong code. The time-reversibility check failed on 32% of boards and the check was the thing that was broken — reversing a bounce means negating the ray the ball arrived on, not the one it left on. Changing a test until it passes is usually a fudge, so being able to say precisely why this one wasn't is the whole difference.
+  - Pointer code has to be driven with the real input, not read. Two bugs existed only on the device I was not using at the time. Capturing the pointer on pointerdown retargets the click that follows it, so every pocket silently stopped accepting a tap while drawing was armed. And calling preventDefault on pointerdown suppresses the synthesised click entirely, so on a phone a finger tap on a pocket did nothing at all. Both were invisible to reading the code and obvious within seconds of driving a real mouse and a real finger at it.
   - Verify the thing that ships. The physics gate used to hold its own copy of the reflection rule, which meant a pass was a statement about the gate. It now imports the same module the generator deals boards with and the browser rolls the ball with, and replays all 365 committed boards through it.
 
 aiNote: >-
@@ -43,11 +51,14 @@ aiNote: >-
   bouncing ball myself, asked for the progressive reveal that makes a wrong guess
   worth something instead of just costing a life, and rejected its first interface
   outright — it had used this site's own design system as a layout template, and
-  the result looked like every other machine-generated page. The generator, the
-  grading and the physics are its work under my direction, and they are the parts
-  I wanted provable rather than plausible: seven invariants over 1.55 million ball
-  positions, and every shipped board replayed through the same rule the browser
-  runs.
+  the result looked like every other machine-generated page. The freehand chalk
+  line and the puff of dust when you rub it out are mine too. I also caught two
+  things it had shipped blind: pockets named by letters that appeared nowhere on
+  the board, so the scorecard kept saying "Not J" about nothing, and a chalk line
+  with no way to erase it. The generator, the grading and the physics are its work
+  under my direction, and they are the parts I wanted provable rather than
+  plausible: seven invariants over 1.55 million ball positions, and every shipped
+  board replayed through the same rule the browser runs.
 
 metrics:
   - { label: Board shapes searched, value: "170,356" }
@@ -65,6 +76,12 @@ off anything solid — the rails, or the block bolted to the cloth — and drops
 the first pocket it reaches. There are fourteen pockets. You get four guesses, and
 each wrong one rolls the ball forward by one bounce, so a miss buys you information
 instead of just costing you a life.
+
+You can also chalk the route yourself. Drag across the cloth and the line follows
+your hand — no snapping to the grid, no smoothing — and when the real path appears
+you get both lines together and a number for how far off you were. That turns out
+to be a much harder question than which pocket it lands in. One board a day, four
+tries, and then it is spent until tomorrow.
 
 That is the entire game, and it is not the interesting part. The interesting part
 is that a daily puzzle needs a board every day, forever, and the constraint that
@@ -116,6 +133,14 @@ groups, and gives each day of the week its own group — easiest on Monday, hard
 on Saturday, Sunday a step back down, the way crosswords do it. So "Saturday"
 means the genuinely hardest seventh of what exists, not a difficulty number I
 invented. All 365 days got one from the group they asked for.
+
+There is a second thing to do with a board besides guessing. Drag across the
+cloth and you draw on it, freehand, exactly where your hand went — so you can
+trace the route you think the ball takes. When the real path appears you see both
+lines at once and get a number for how far off you were, in dots. Getting the
+pocket right is luck one time in fourteen; getting the route right is not. And if
+you want another go at the drawing, the eraser takes it off in three passes, the
+way a hand clears a board.
 
 And because a puzzle that sends the ball to the wrong pocket is worse than no
 puzzle, none of this is taken on trust. Every one of the 365 days that shipped is
@@ -249,6 +274,55 @@ Where I'll be straight about a limit: a prerendered site with no server ships th
 whole year's *boards* to anyone who opens the demo, so a determined reader can
 work out next Tuesday for themselves. That is inherent to the architecture, and a
 puzzle for fun doesn't need me to pretend otherwise.
+
+## Drawing your own line
+
+Naming a pocket is a one-in-fourteen guess. Drawing the route is not, so the cloth
+takes a freehand line: the points are wherever the pointer actually went, with no
+snapping to the lattice and no smoothing, because the whole value of the thing is
+a hand-drawn curve sitting next to an exact one.
+
+Scoring it is where the judgement is. The obvious measure — average distance from
+each drawn point to the nearest point on the true path — is worthless, and
+worthless in a way that looks fine until you try to cheat it. A one-inch scribble
+sitting on top of the path scores nearly perfect, because every point of the
+scribble is indeed close to the path. So the measure runs both ways: the drawing
+against the path *and* the path against the drawing, averaged. The second half is
+what makes a line that didn't go anywhere score like one, and it costs nothing —
+the path is sampled every quarter dot, which is about a hundred points against a
+few hundred drawn ones.
+
+Drawing is a toggle rather than always-on, and that is a phone decision. A finger
+can only draw where the page has given up its own scrolling (`touch-action: none`),
+and the cloth is most of a phone screen — always-on would mean a reader who
+scrolled onto the table could not scroll off it. So it defaults on for a mouse,
+where a drag never scrolled anything, and off for touch, and either way it is one
+tap. A tap on a pocket still guesses while chalk is armed, because a tap is not a
+stroke: strokes under two dots of travel are discarded, which is also what stops a
+stray twitch from wiping a line someone worked on.
+
+Two bugs in that only existed on the input I wasn't using, and both were invisible
+to reading the code:
+
+- **Capturing the pointer on `pointerdown`** retargets the `click` that follows it
+  to the capture element, so every pocket silently stopped accepting a tap the
+  moment drawing was armed. Capture now happens on the first *move*, by which point
+  it is a stroke and the click doesn't matter.
+- **Calling `preventDefault()` on `pointerdown`** suppresses the synthesised click
+  altogether, so on a phone a finger tap on a pocket did nothing at all. That call
+  moved to the move handler too.
+
+The erase is three passes of a felt eraser rather than one fade, because a fade is
+what a computer does and a board being cleared goes in swipes. The line is redrawn
+as short pieces so it can break rather than dim: each pass takes whole pieces out,
+leaves the survivors on a broken dasharray with a thinner stroke, raises dust along
+the band it just crossed, and the third pass takes the rest. One detail there was a
+real bug — a piece in the last few percent of a sweep is only caught if an
+animation frame happens to land on it, and locking pieces to "damaged by this pass
+only" meant a piece the sweep flew past was excluded from every later pass, leaving
+a bright untouched tail standing after the erase finished. Letting a later pass
+collect an earlier one's misses makes the worst case one frame late instead of
+never.
 
 ## The test that was wrong
 

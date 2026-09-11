@@ -7,6 +7,37 @@
  * one more bounce — so a wrong guess buys information instead of just costing a
  * life.
  *
+ * ONE BOARD A DAY, ONCE
+ *   Four tries and the day is spent — there is no replay, the same as every other
+ *   daily game. The day's guesses live in localStorage, so a refresh cannot buy a
+ *   fresh set, and a finished day reopens as the finished board with a countdown
+ *   to the next one. The honest limit of doing this without a server: clearing
+ *   site data resets the day. A cookie would not change that, and nothing short of
+ *   an account would.
+ *
+ *   This does mean a reader who came for the write-up and loses in four gets the
+ *   solved board rather than another go. That is the cost of the thing behaving
+ *   like a real daily game, which is what it is.
+ *
+ * CHALKING YOUR OWN LINE
+ *   Drag across the cloth and you draw, freehand, wherever the pointer actually
+ *   went — no snapping to the lattice, no smoothing. When the real path is
+ *   revealed you get both lines side by side and a number for how far off you
+ *   were, which is a different and harder question than which pocket it lands in.
+ *
+ *   The measure is a symmetric mean nearest-point distance, in dots. Symmetric
+ *   deliberately: the one-sided version scores a two-inch scribble sitting on the
+ *   path as near-perfect, because every point of the scribble is close to the
+ *   path. Measuring the path against the drawing as well is what makes a short
+ *   line score badly, which is correct — it did not predict the route.
+ *
+ *   It is a TOGGLE rather than always-on, and that is a mobile decision. Drawing
+ *   needs `touch-action: none` over the cloth, and the cloth is most of a phone
+ *   screen — always-on would mean a finger can no longer scroll past the game.
+ *   So it defaults on for a mouse (where a drag never scrolled anything) and off
+ *   for touch, and either way one tap changes it. A tap on a pocket still guesses
+ *   while chalk is on, because a tap is not a stroke.
+ *
  * WHERE THE BOARD COMES FROM
  *   ./boards.json, a year of boards dealt at build time by scripts/carom-boards.mjs
  *   out of the 1,037 that survive its filters. Nothing is solved at request time;
@@ -54,6 +85,8 @@ type Day = {
   /** difficulty tier, 0 easiest through 6 hardest */
   t: number;
 };
+
+type Pt = { x: number; y: number };
 
 const DAYS = data.days as Record<string, Day>;
 const DATES = Object.keys(DAYS).sort();
@@ -187,7 +220,13 @@ const CSS = `
   border: 1.5px solid var(--ruled); border-radius: 2px;
   padding: 2px 6px; transform: rotate(4deg);
 }
-.carom-tallies { display: flex; gap: 7px; align-items: center; margin: 0 0 9px; }
+/* The tally row is rebuilt with innerHTML on every guess, so the chalk toggle
+   is its sibling and not its child. */
+.carom-row { display: flex; align-items: center; gap: 7px; margin: 0 0 9px; }
+.carom-tallies { display: flex; gap: 7px; align-items: center; margin-right: auto; }
+
+/* The pocket letters, in the same face as the ball numbers. */
+.carom-table text { font-family: var(--ball-face); font-weight: 900; }
 .carom-tally {
   width: 26px; height: 30px; border: 1px solid rgba(51, 44, 36, 0.35);
   display: grid; place-items: center;
@@ -199,14 +238,29 @@ const CSS = `
 .carom-verdict.win b { color: #2f6b3d; }
 .carom-verdict.miss b { color: var(--ruled); }
 
-.carom-again {
-  font: inherit; font-size: 0.72rem; font-weight: 700;
-  letter-spacing: 0.14em; text-transform: uppercase; margin-top: 11px;
+/* the chalk toggle, and the cursor it implies */
+.carom-chalk {
+  font: inherit; font-size: 0.64rem; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase;
   background: none; color: var(--stock-ink);
-  border: 1.5px solid var(--stock-ink); border-radius: 2px;
-  padding: 0.36rem 0.75rem; cursor: pointer;
+  border: 1.5px solid rgba(51, 44, 36, 0.5); border-radius: 2px;
+  padding: 0.3rem 0.55rem; cursor: pointer; flex: none;
 }
-.carom-again:hover { background: var(--stock-ink); color: var(--stock); }
+.carom-chalk:hover:not(:disabled) { border-color: var(--stock-ink); }
+.carom-chalk[aria-pressed="true"] { background: var(--stock-ink); color: var(--stock); border-color: var(--stock-ink); }
+.carom-chalk:disabled { opacity: 0.4; cursor: default; }
+
+/* Only while chalk is armed, so a finger can scroll the page the rest of the time. */
+.carom.chalking .carom-table { cursor: crosshair; touch-action: none; }
+
+.carom-score { margin: 7px 0 0; font-size: 0.82rem; }
+.carom-score b { font-family: var(--ball-face); font-weight: 900; }
+
+.carom-next {
+  margin: 11px 0 0; font-size: 0.72rem; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; color: #6d6154;
+}
+.carom-next b { font-weight: 700; color: var(--stock-ink); font-variant-numeric: tabular-nums; }
 
 /* the share slip */
 .carom-slip {
@@ -270,6 +324,24 @@ const PAD = 26;
  * and the /play route are all more generous.
  */
 const HIT_R = 32;
+
+/**
+ * The pocket letters, set in the hole like the number on a ball.
+ *
+ * They are not decoration: the scorecard says "Not J" and "It dropped into F",
+ * and with no letters on the board that is a sentence about nothing the player
+ * can point at.
+ *
+ * In the hole rather than out on the rail, which was the first attempt. The rail
+ * is RAIL units wide and the pocket is 12.5 in radius, so any letter big enough
+ * to read sat half on the wood and half over the black — and widening the rail to
+ * make room would have shrunk the whole table, and the tap targets with it. The
+ * hole is the one place with both space and contrast.
+ */
+const LABEL_SIZE = 14;
+
+/** Asked each time rather than cached: a reader can change it mid-session. */
+const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
 const NS = 'http://www.w3.org/2000/svg';
 
@@ -343,9 +415,14 @@ export function mount(el: HTMLElement): () => void {
       <div class="carom-card">
         <span class="carom-stamp">Tier ${day.t + 1}/7</span>
         <p class="carom-card-head">Scorecard &middot; ${dateLabel}</p>
-        <div class="carom-tallies" data-tallies aria-label="Tries used"></div>
-        <p class="carom-verdict" data-verdict aria-live="polite">Pick a pocket. No bounces shown yet.</p>
-        <button class="carom-again" type="button" data-again hidden>Rack again</button>
+        <div class="carom-row">
+          <div class="carom-tallies" data-tallies aria-label="Tries used"></div>
+          <button class="carom-chalk" type="button" data-wipe hidden>Wipe</button>
+          <button class="carom-chalk" type="button" data-chalk aria-pressed="false">Chalk</button>
+        </div>
+        <p class="carom-verdict" data-verdict aria-live="polite">Pick a pocket, or chalk the line you expect.</p>
+        <p class="carom-score" data-score hidden></p>
+        <p class="carom-next" data-next hidden></p>
       </div>
 
       <div class="carom-slip" data-slip hidden>
@@ -358,10 +435,14 @@ export function mount(el: HTMLElement): () => void {
   const svg = el.querySelector<SVGSVGElement>('[data-table]')!;
   const talliesBox = el.querySelector<HTMLElement>('[data-tallies]')!;
   const verdictEl = el.querySelector<HTMLElement>('[data-verdict]')!;
-  const againBtn = el.querySelector<HTMLButtonElement>('[data-again]')!;
+  const nextEl = el.querySelector<HTMLElement>('[data-next]')!;
   const slipBox = el.querySelector<HTMLElement>('[data-slip]')!;
   const slipText = el.querySelector<HTMLElement>('[data-slip-text]')!;
   const copyBtn = el.querySelector<HTMLButtonElement>('[data-copy]')!;
+  const chalkBtn = el.querySelector<HTMLButtonElement>('[data-chalk]')!;
+  const wipeBtn = el.querySelector<HTMLButtonElement>('[data-wipe]')!;
+  const scoreEl = el.querySelector<HTMLElement>('[data-score]')!;
+  const root = el.querySelector<HTMLElement>('.carom')!;
 
   /* ---- projection -------------------------------------------------- */
 
@@ -380,6 +461,18 @@ export function mount(el: HTMLElement): () => void {
   let rolling = false;
   let raf = 0;
   let copyTimer = 0;
+  let nextTimer = 0;
+  let puffRaf = 0;
+
+  /** Armed for a mouse, where a drag never scrolled anything; off for touch. */
+  let chalkOn = window.matchMedia?.('(pointer: fine)').matches ?? false;
+  let drawing = false;
+  let captured = false;
+  let stroke: Pt[] = [];
+  /** The kept line, in SVG user units. One stroke at a time. */
+  let drawn: Pt[] = [];
+  /** Set by a stroke so the click that follows it does not also spend a try. */
+  let swallowClick = false;
 
   const mouths: SVGElement[] = [];
   const layers: Record<string, SVGElement> = {};
@@ -393,27 +486,56 @@ export function mount(el: HTMLElement): () => void {
   const storeKey = `carom:${iso}`;
   const save = () => {
     try {
-      localStorage.setItem(storeKey, JSON.stringify(guesses));
+      // Rounded to whole user units: sub-pixel precision in a hand-drawn line is
+      // noise, and it roughly halves what a long stroke costs to store.
+      const line = drawn.map((q) => [Math.round(q.x), Math.round(q.y)]);
+      localStorage.setItem(storeKey, JSON.stringify({ g: guesses, l: line }));
     } catch {
       /* not important enough to interrupt a game over */
     }
   };
-  const load = (): number[] => {
+
+  /** Accepts the bare array the first shipped version wrote, as well as the
+   *  object that carries the drawn line. */
+  const load = (): { guesses: number[]; line: Pt[] } => {
+    const empty = { guesses: [], line: [] };
     try {
       const raw = localStorage.getItem(storeKey);
-      if (!raw) return [];
+      if (!raw) return empty;
       const parsed: unknown = JSON.parse(raw);
-      if (!Array.isArray(parsed)) return [];
-      return parsed
-        .filter((n): n is number => typeof n === 'number' && n >= 0 && n < POCKETS.length)
-        .slice(0, TRIES);
+      const rawGuesses: unknown = Array.isArray(parsed)
+        ? parsed
+        : (parsed as { g?: unknown })?.g;
+      const rawLine: unknown = Array.isArray(parsed) ? [] : (parsed as { l?: unknown })?.l;
+      if (!Array.isArray(rawGuesses)) return empty;
+      return {
+        guesses: rawGuesses
+          .filter((n): n is number => typeof n === 'number' && n >= 0 && n < POCKETS.length)
+          .slice(0, TRIES),
+        line: Array.isArray(rawLine)
+          ? rawLine
+              .filter(
+                (q): q is [number, number] =>
+                  Array.isArray(q) && typeof q[0] === 'number' && typeof q[1] === 'number',
+              )
+              .map(([x, y]) => ({ x, y }))
+          : [],
+      };
     } catch {
-      return [];
+      return empty;
     }
   };
-  const forget = () => {
+  /** Yesterday's key is never read again, and nothing else deletes it now that
+   *  there is no replay button — so a year of play would leave 365 dead entries.
+   *  Swept on mount, which is the only moment we know today's date here. */
+  const sweepOldDays = () => {
     try {
-      localStorage.removeItem(storeKey);
+      const stale: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('carom:') && k !== storeKey) stale.push(k);
+      }
+      for (const k of stale) localStorage.removeItem(k);
     } catch {
       /* see save() */
     }
@@ -508,6 +630,12 @@ export function mount(el: HTMLElement): () => void {
     svg.appendChild(layers.hot);
     layers.marks = node('g');
     svg.appendChild(layers.marks);
+    // The player's line sits under the pockets, so a pocket keeps its tap target.
+    layers.mine = node('path', {
+      d: '', fill: 'none', stroke: '#e8b44a', 'stroke-width': 3.2,
+      'stroke-opacity': 0.85, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+    });
+    svg.appendChild(layers.mine);
 
     // pockets: brass rim, real hole
     POCKETS.forEach((p, i) => {
@@ -526,6 +654,20 @@ export function mount(el: HTMLElement): () => void {
       g.appendChild(node('circle', {
         cx: sx(p.x), cy: sy(p.y) - 2, r: 8.5, fill: '#000000', 'fill-opacity': 0.8,
       }));
+
+      const tag = node('text', {
+        class: 'lbl',
+        x: sx(p.x),
+        y: sy(p.y) - 1,
+        'font-size': LABEL_SIZE,
+        fill: '#bd9a63',
+        'text-anchor': 'middle',
+        'dominant-baseline': 'central',
+        'pointer-events': 'none',
+      });
+      tag.textContent = LETTERS[i] ?? '?';
+      g.appendChild(tag);
+
       svg.appendChild(g);
       mouths.push(g);
       g.addEventListener('click', () => guess(i));
@@ -564,8 +706,11 @@ export function mount(el: HTMLElement): () => void {
       transform: `translate(${axp} ${ayp}) rotate(${(Math.atan2(-DIR.y, DIR.x) * 180) / Math.PI})`,
     }));
 
+    layers.puff = node('g', { 'pointer-events': 'none' });
+    svg.appendChild(layers.puff);
     layers.ball = node('g');
     svg.appendChild(layers.ball);
+    paintMine();
     paint(revealed);
   }
 
@@ -624,6 +769,377 @@ export function mount(el: HTMLElement): () => void {
     paintBall(at.x, at.y, !mid && upto === LAST);
   }
 
+  /* ---- the player's own chalk line ---------------------------------
+     Freehand: the points are where the pointer actually went, with no snapping
+     to the lattice and no smoothing, because a hand-drawn guess next to an exact
+     path is the whole point of the comparison. Only consecutive points further
+     than DEDUP apart are kept, which trims the data without changing the shape. */
+
+  const DEDUP = 3;               // user units between kept points
+  const MIN_STROKE = 2 * CELL;   // 2 dots of travel, below which it was a tap
+
+  function paintMine() {
+    const g = layers.mine;
+    if (!g) return;
+    const pts = drawing && stroke.length ? stroke : drawn;
+    g.setAttribute(
+      'd',
+      pts.length < 2 ? '' : `M${pts[0]!.x} ${pts[0]!.y}` + pts.slice(1).map((q) => `L${q.x} ${q.y}`).join(''),
+    );
+  }
+
+  /** Client coordinates into the SVG's own units, so the line survives any
+   *  viewport width and the score is measured in dots rather than pixels. */
+  function toUser(ev: PointerEvent): Pt | null {
+    const m = svg.getScreenCTM();
+    if (!m) return null;
+    const q = new DOMPoint(ev.clientX, ev.clientY).matrixTransform(m.inverse());
+    if (q.x < 0 || q.y < 0 || q.x > TW + PAD * 2 || q.y > TH + PAD * 2) return null;
+    return { x: Math.round(q.x * 10) / 10, y: Math.round(q.y * 10) / 10 };
+  }
+
+  const strokeLength = (pts: Pt[]) => {
+    let n = 0;
+    for (let i = 1; i < pts.length; i++) n += Math.hypot(pts[i]!.x - pts[i - 1]!.x, pts[i]!.y - pts[i - 1]!.y);
+    return n;
+  };
+
+  function onDown(ev: PointerEvent) {
+    swallowClick = false;
+    if (!chalkOn || over || rolling || ev.button > 0) return;
+    const q = toUser(ev);
+    if (!q) return;
+    /* NOT preventDefault() here. On touch, preventing the default on pointerdown
+       suppresses the synthesised click that follows — measured: with it, a finger
+       tap on a pocket spent no try at all while chalk was armed. Selection and
+       native drag are suppressed on the first move instead, by which point this
+       is a stroke and not a tap. */
+    drawing = true;
+    captured = false;
+    stroke = [q];
+  }
+
+  function onMove(ev: PointerEvent) {
+    if (!drawing) return;
+    const q = toUser(ev);
+    if (!q) return;
+    const last = stroke[stroke.length - 1]!;
+    if (Math.hypot(q.x - last.x, q.y - last.y) < DEDUP) return;
+    stroke.push(q);
+    ev.preventDefault(); // no text selection, no drag-image, now that it is a stroke
+    /* Capture only once this is definitely a stroke, never on pointerdown.
+       Pointer capture retargets the click that follows to the capture element,
+       so capturing eagerly silently stopped every pocket from taking a tap
+       while chalk was armed. Measured, not guessed: with capture on pointerdown
+       a click on a pocket spent no try at all. */
+    if (!captured) {
+      captured = true;
+      try {
+        svg.setPointerCapture(ev.pointerId);
+      } catch {
+        /* a nicety: without it the stroke just ends when the pointer leaves */
+      }
+    }
+    paintMine();
+  }
+
+  function onUp(ev: PointerEvent) {
+    if (!drawing) return;
+    drawing = false;
+    if (captured) {
+      try {
+        svg.releasePointerCapture(ev.pointerId);
+      } catch {
+        /* see onMove */
+      }
+    }
+    // A tap is not a stroke. Discarding short ones is also what stops a stray
+    // twitch from wiping a line the player spent real effort on.
+    if (stroke.length > 1 && strokeLength(stroke) >= MIN_STROKE) {
+      drawn = stroke;
+      swallowClick = true;
+      save();
+      syncWipe();
+      if (over) showScore();
+    }
+    stroke = [];
+    paintMine();
+  }
+
+  svg.addEventListener('pointerdown', onDown);
+  svg.addEventListener('pointermove', onMove);
+  svg.addEventListener('pointerup', onUp);
+  svg.addEventListener('pointercancel', onUp);
+
+  function setChalk(on: boolean) {
+    chalkOn = on;
+    root.classList.toggle('chalking', on && !over);
+    chalkBtn.setAttribute('aria-pressed', String(on));
+  }
+
+  chalkBtn.addEventListener('click', () => setChalk(!chalkOn));
+
+  /** A line you cannot erase is a line you get one attempt at. Only offered while
+   *  there is something to erase and the day is still open. */
+  function syncWipe() {
+    wipeBtn.hidden = over || drawn.length < 2;
+  }
+
+  /**
+   * The erase: three passes of a felt eraser, not one fade.
+   *
+   * One smooth fade-out is what a computer does. A board being cleared goes in
+   * swipes: the first pass takes most of the chalk but leaves it rough and full
+   * of blank spots, the second takes most of what is left, and the third takes the
+   * rest — with dust raised on each pass and a beat of nothing in between, so the
+   * whole thing reads staccato.
+   *
+   * The patchiness is two effects, because either one alone looks wrong. Whole
+   * chunks of the line drop out entirely (the eraser caught them), and the chunks
+   * that survive get a broken dasharray and a thinner stroke (the eraser dragged
+   * across them and took some of it). Faded-but-solid chalk does not look like
+   * chalk.
+   */
+  const SWIPES = 3;
+  const SWIPE_MS = 210;
+  const SWIPE_GAP = 80;
+  const ERASE_MS = SWIPES * SWIPE_MS + (SWIPES - 1) * SWIPE_GAP;
+
+  type Chunk = {
+    el: SVGElement;
+    midX: number;
+    midY: number;
+    alpha: number;
+    hit: number; // how many passes have caught it
+  };
+  type Mote = {
+    el: SVGElement;
+    x: number; y: number;
+    vx: number; vy: number;
+    grow: number; peak: number;
+    born: number;
+  };
+
+  function eraseLine(erased: Pt[]) {
+    const g = layers.puff;
+    if (!g) return;
+    clear(g);
+
+    /* The line is redrawn here in short pieces rather than one path, because a
+       single path can only fade as a whole — pieces are what allow blank spots. */
+    const chunks: Chunk[] = [];
+    const PER = 2; // segments per piece
+    for (let i = 0; i < erased.length - 1; i += PER) {
+      const seg = erased.slice(i, Math.min(erased.length, i + PER + 1));
+      if (seg.length < 2) continue;
+      const el = node('path', {
+        d: `M${seg[0]!.x} ${seg[0]!.y}` + seg.slice(1).map((q) => `L${q.x} ${q.y}`).join(''),
+        fill: 'none', stroke: '#e8b44a', 'stroke-width': 3.2,
+        'stroke-opacity': 0.85, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+      });
+      g.appendChild(el);
+      const mid = seg[Math.floor(seg.length / 2)]!;
+      chunks.push({ el, midX: mid.x, midY: mid.y, alpha: 1, hit: 0 });
+    }
+    if (!chunks.length) return;
+
+    const xs = chunks.map((c) => c.midX);
+    const x0 = Math.min(...xs) - 34;
+    const x1 = Math.max(...xs) + 34;
+
+    // the eraser itself, so the passes are something you watch rather than infer
+    const eraser = node('g', { opacity: 0 });
+    eraser.appendChild(node('rect', {
+      x: -23, y: -3, width: 46, height: 13, rx: 3, fill: '#d8cdb4',
+    }));
+    eraser.appendChild(node('rect', {
+      x: -23, y: -13, width: 46, height: 11, rx: 3, fill: '#6b4a32',
+    }));
+    eraser.appendChild(node('rect', {
+      x: -20, y: -11, width: 40, height: 6, rx: 2,
+      fill: 'none', stroke: '#9c7551', 'stroke-width': 0.8, 'stroke-opacity': 0.7,
+    }));
+    g.appendChild(eraser);
+
+    const motes: Mote[] = [];
+    const raiseDust = (c: Chunk, now: number, n: number) => {
+      for (let k = 0; k < n; k++) {
+        const el = node('circle', {
+          cx: c.midX + (Math.random() - 0.5) * 16,
+          cy: c.midY + (Math.random() - 0.5) * 14,
+          r: 2.2, fill: '#f2e6c8', 'fill-opacity': 0,
+        });
+        g.appendChild(el);
+        motes.push({
+          el,
+          x: Number(el.getAttribute('cx')),
+          y: Number(el.getAttribute('cy')),
+          vx: (Math.random() - 0.5) * 20,
+          vy: -7 - Math.random() * 15,
+          grow: 5 + Math.random() * 6,
+          peak: 0.3 + Math.random() * 0.3,
+          born: now,
+        });
+      }
+    };
+
+    const MOTE_MS = 520;
+    let t0: number | null = null;
+
+    const frame = (t: number) => {
+      if (t0 === null) t0 = t;
+      const ms = t - t0;
+
+      // which pass we are in, and where inside it
+      const cycle = SWIPE_MS + SWIPE_GAP;
+      const pass = Math.min(SWIPES - 1, Math.floor(ms / cycle));
+      const inPass = ms - pass * cycle;
+      const sweeping = inPass <= SWIPE_MS;
+      const p = Math.max(0, Math.min(1, inPass / SWIPE_MS));
+
+      // alternate direction, the way a hand does
+      const forward = pass % 2 === 0;
+      const edge = forward ? x0 + (x1 - x0) * p : x1 - (x1 - x0) * p;
+
+      if (sweeping) {
+        let near = chunks[0]!;
+        for (const c of chunks) if (Math.abs(c.midX - edge) < Math.abs(near.midX - edge)) near = c;
+        eraser.setAttribute('opacity', '0.95');
+        eraser.setAttribute('transform', `translate(${edge} ${near.midY}) rotate(-4)`);
+      } else {
+        eraser.setAttribute('opacity', '0');
+      }
+
+      for (const c of chunks) {
+        const passed = forward ? c.midX <= edge : c.midX >= edge;
+        /* `hit <= pass` is a catch-up, not sloppiness. A chunk in the last few
+           percent of a sweep is only damaged if a frame happens to land there,
+           and with `hit === pass` a chunk the sweep flew past was then locked out
+           of every later pass — which left a bright, untouched tail standing
+           after the erase finished. Allowing an earlier pass's misses to be
+           collected means the worst case is one frame late (16ms, in the beat
+           between passes) instead of never. */
+        if (passed && c.hit <= pass && c.alpha > 0) {
+          c.hit = pass + 1;
+          if (pass === SWIPES - 1) {
+            c.alpha = 0; // the last pass leaves nothing
+          } else {
+            c.alpha *= 0.2 + Math.random() * 0.35;
+            if (Math.random() < 0.34) c.alpha = 0; // the eraser caught this bit whole
+          }
+          raiseDust(c, t, c.alpha === 0 ? 2 : 1);
+          if (c.alpha === 0) {
+            c.el.setAttribute('stroke-opacity', '0');
+          } else {
+            // rough, broken chalk rather than evenly faded chalk
+            c.el.setAttribute('stroke-opacity', String(0.85 * c.alpha));
+            c.el.setAttribute('stroke-width', String(1.5 + 1.7 * c.alpha));
+            c.el.setAttribute(
+              'stroke-dasharray',
+              c.alpha < 0.35 ? `${1 + Math.random() * 2} ${4 + Math.random() * 4}` : `${3 + Math.random() * 3} ${2 + Math.random() * 3}`,
+            );
+            c.el.setAttribute('stroke-dashoffset', String(Math.random() * 8));
+          }
+        }
+      }
+
+      for (let i = motes.length - 1; i >= 0; i--) {
+        const m = motes[i]!;
+        const mp = (t - m.born) / MOTE_MS;
+        if (mp >= 1) {
+          m.el.remove();
+          motes.splice(i, 1);
+          continue;
+        }
+        const fade = mp < 0.16 ? mp / 0.16 : 1 - (mp - 0.16) / 0.84;
+        m.el.setAttribute('fill-opacity', String(Math.max(0, m.peak * fade)));
+        m.el.setAttribute('r', String(2.2 + m.grow * mp));
+        m.el.setAttribute('cx', String(m.x + m.vx * mp));
+        m.el.setAttribute('cy', String(m.y + m.vy * mp));
+      }
+
+      // belt and braces: nothing survives the last pass, whatever the frame timing
+      if (ms >= ERASE_MS) {
+        for (const c of chunks) {
+          if (c.alpha === 0) continue;
+          c.alpha = 0;
+          c.el.setAttribute('stroke-opacity', '0');
+        }
+      }
+
+      if (ms < ERASE_MS + MOTE_MS) {
+        puffRaf = requestAnimationFrame(frame);
+      } else {
+        puffRaf = 0;
+        clear(g);
+      }
+    };
+
+    if (puffRaf) cancelAnimationFrame(puffRaf);
+    puffRaf = requestAnimationFrame(frame);
+  }
+
+  wipeBtn.addEventListener('click', () => {
+    const erased = drawn;
+    drawn = [];
+    stroke = [];
+    save();
+    paintMine();
+    syncWipe();
+    if (!reducedMotion() && erased.length > 1) eraseLine(erased);
+  });
+
+  /**
+   * How far the drawn line is from the true one, in dots.
+   *
+   * Symmetric mean nearest-point distance. The one-sided version — every drawn
+   * point to its nearest point on the path — scores a one-inch scribble sitting
+   * on the path as almost perfect. Measuring the path against the drawing too is
+   * what makes a line that did not go anywhere score like one.
+   */
+  function chalkError(): number | null {
+    if (drawn.length < 2) return null;
+
+    const P = screenPath();
+    const samples: Pt[] = [];
+    const spacing = CELL / 4;
+    for (let i = 0; i < P.length - 1; i++) {
+      const a = P[i]!, b = P[i + 1]!;
+      const n = Math.max(1, Math.round(Math.hypot(b.x - a.x, b.y - a.y) / spacing));
+      for (let k = 0; k < n; k++)
+        samples.push({ x: a.x + ((b.x - a.x) * k) / n, y: a.y + ((b.y - a.y) * k) / n });
+    }
+    samples.push(P[P.length - 1]!);
+
+    const nearest = (q: Pt, set: Pt[]) => {
+      let best = Infinity;
+      for (const r of set) {
+        const d = (r.x - q.x) ** 2 + (r.y - q.y) ** 2;
+        if (d < best) best = d;
+      }
+      return Math.sqrt(best);
+    };
+
+    let mine = 0;
+    for (const q of drawn) mine += nearest(q, samples);
+    let theirs = 0;
+    for (const q of samples) theirs += nearest(q, drawn);
+
+    return (mine / drawn.length + theirs / samples.length) / 2 / CELL;
+  }
+
+  function showScore() {
+    const off = chalkError();
+    if (off === null) {
+      scoreEl.hidden = true;
+      return;
+    }
+    const verdict =
+      off < 0.8 ? 'nearly exact' : off < 1.6 ? 'close' : off < 3 ? 'roughly the route' : 'a different route';
+    scoreEl.innerHTML = `Your line: <b>${off.toFixed(1)}</b> dots off &mdash; ${verdict}.`;
+    scoreEl.hidden = false;
+  }
+
   /* ---- the shot, one rail at a time -------------------------------- */
 
   function shoot(from: number, to: number, done?: () => void) {
@@ -640,7 +1156,7 @@ export function mount(el: HTMLElement): () => void {
       total += len;
     }
 
-    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    const reduced = reducedMotion();
     if (reduced || total === 0) {
       revealed = to;
       paint(to);
@@ -718,6 +1234,7 @@ export function mount(el: HTMLElement): () => void {
     const lip = mouths[i]?.querySelector('circle.lip');
     lip?.setAttribute('stroke', '#e8c27a');
     lip?.setAttribute('stroke-width', '4.2');
+    mouths[i]?.querySelector('text.lbl')?.setAttribute('fill', '#f0d79a');
   }
 
   function mark(i: number, hit: boolean) {
@@ -730,6 +1247,12 @@ export function mount(el: HTMLElement): () => void {
   }
 
   function guess(i: number) {
+    // The click that ends a stroke lands on whatever was under the pointer, which
+    // is often a pocket. Drawing a line is not guessing.
+    if (swallowClick) {
+      swallowClick = false;
+      return;
+    }
     if (over || rolling || guesses.includes(i)) return;
     guesses.push(i);
     save();
@@ -769,9 +1292,44 @@ export function mount(el: HTMLElement): () => void {
         : `It dropped into <b>${LETTERS[ANSWER]}</b>.`,
       won ? 'win' : 'miss',
     );
+    showScore();
+    setChalk(chalkOn); // over now, so the cursor and touch-action come off
+    chalkBtn.disabled = true;
+    syncWipe();
     slipText.textContent = slip();
     slipBox.hidden = false;
-    againBtn.hidden = false;
+    startCountdown();
+  }
+
+  /* ---- the wait --------------------------------------------------------
+     What a daily game owes you once the day is spent: how long until the next
+     one. Local midnight, because the board is picked from the visitor's own
+     date — the same reason localISO() exists. */
+
+  function msToMidnight() {
+    const next = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+    return next.getTime() - Date.now();
+  }
+
+  function startCountdown() {
+    const tick = () => {
+      const ms = msToMidnight();
+      if (ms <= 0) {
+        nextEl.innerHTML = 'A new board is ready &mdash; reload the page';
+        window.clearInterval(nextTimer);
+        nextTimer = 0;
+        return;
+      }
+      const total = Math.floor(ms / 1000);
+      const pad = (n: number) => String(n).padStart(2, '0');
+      nextEl.innerHTML =
+        `Next board in <b>${Math.floor(total / 3600)}:` +
+        `${pad(Math.floor((total % 3600) / 60))}:${pad(total % 60)}</b>`;
+    };
+    nextEl.hidden = false;
+    tick();
+    window.clearInterval(nextTimer);
+    nextTimer = window.setInterval(tick, 1000);
   }
 
   /** The bounce count stays out of the slip: everyone plays the same table, so it
@@ -783,25 +1341,14 @@ export function mount(el: HTMLElement): () => void {
       row += g === undefined ? '⬜' : g === ANSWER ? '🎯' : '🔴';
     }
     const won = guesses.includes(ANSWER);
-    return `Carom · ${dateLabel}\n${row}   ${won ? `${guesses.length}/${TRIES}` : `x/${TRIES}`}`;
+    const off = chalkError();
+    return (
+      `Carom · ${dateLabel}\n${row}   ${won ? `${guesses.length}/${TRIES}` : `x/${TRIES}`}` +
+      (off === null ? '' : `\nchalk line ${off.toFixed(1)} dots off`)
+    );
   }
 
   /* ---- controls ---------------------------------------------------- */
-
-  againBtn.addEventListener('click', () => {
-    // Replays the same board, because it IS the same board — this is a daily
-    // puzzle, not a shuffler. It is here so a reader who came for the write-up
-    // can see the mechanic twice without waiting until tomorrow.
-    guesses = [];
-    revealed = 0;
-    over = false;
-    forget();
-    slipBox.hidden = true;
-    againBtn.hidden = true;
-    build();
-    renderTallies();
-    say('Pick a pocket. No bounces shown yet.');
-  });
 
   copyBtn.addEventListener('click', () => {
     const text = slipText.textContent ?? '';
@@ -824,10 +1371,14 @@ export function mount(el: HTMLElement): () => void {
 
   /* ---- first paint, replaying whatever today already had ----------- */
 
-  build();
+  sweepOldDays();
   const saved = load();
-  if (saved.length) {
-    for (const i of saved) {
+  drawn = saved.line;
+  build();
+  setChalk(chalkOn);
+  syncWipe();
+  if (saved.guesses.length) {
+    for (const i of saved.guesses) {
       guesses.push(i);
       mark(i, i === ANSWER);
     }
@@ -851,9 +1402,12 @@ export function mount(el: HTMLElement): () => void {
 
   return () => {
     if (raf) cancelAnimationFrame(raf);
+    if (puffRaf) cancelAnimationFrame(puffRaf);
     raf = 0;
+    puffRaf = 0;
     rolling = false;
     window.clearTimeout(copyTimer);
+    window.clearInterval(nextTimer);
     el.innerHTML = '';
   };
 }
