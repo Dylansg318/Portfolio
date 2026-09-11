@@ -17,6 +17,19 @@
  * (7) is the one that earns its keep: a reflection wrong at any face or corner
  * breaks it, and nothing else will.
  *
+ * It verifies THE SHIPPED RULE, not a second copy of it. The reflection law is
+ * imported from src/demos/carom/trace.mjs — the same module the generator deals
+ * boards with and the same one the browser rolls the ball with — so a pass here
+ * is a statement about the game and not about this file. The invariants are
+ * properties (containment, reversibility), which is why testing the real
+ * implementation beats re-deriving it: a second copy could only ever prove the
+ * two copies agree.
+ *
+ * Then it replays every board in src/demos/carom/boards.json through that rule
+ * and checks each one still reaches its pocket. That is the part that catches
+ * drift: boards.json is committed output, so without this a stale or
+ * hand-edited file would sail through the gate.
+ *
  * NOTE ON (7), because it looks like a fudge and is not. Time-reversing a bounce
  * means leaving the contact along the negated INCOMING ray, not the negated
  * outgoing one — those are different rays at every contact point. The first
@@ -25,31 +38,14 @@
  * Run: npm run carom:verify
  */
 
-function onBlock(B, x, y) {
-  if (!B) return { v: false, h: false };
-  const inX = x >= B.bx && x <= B.bx2, inY = y >= B.by && y <= B.by2;
-  const fX = (x === B.bx || x === B.bx2), fY = (y === B.by || y === B.by2);
-  if (fX && fY && inX && inY) return { v: true, h: true };
-  if (fX && inY) return { v: true, h: false };
-  if (fY && inX) return { v: false, h: true };
-  return { v: false, h: false };
-}
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
-// one diagonal step, then reflect off whatever the new point is touching
-function step(W, H, B, s) {
-  const x = s.x + s.dx, y = s.y + s.dy;
-  const rimV = (x === 0 || x === W), rimH = (y === 0 || y === H);
-  const b = onBlock(B, x, y);
-  const V = rimV || b.v, Hh = rimH || b.h;
-  return {
-    x, y,
-    dx: V ? -s.dx : s.dx,
-    dy: Hh ? -s.dy : s.dy,
-    contact: V || Hh, onRim: rimV || rimH, onBlock: b.v || b.h,
-    hitV: V, hitH: Hh,
-    inDx: s.dx, inDy: s.dy
-  };
-}
+import { step } from "../src/demos/carom/trace.mjs";
+
+const HERE = dirname(fileURLToPath(import.meta.url));
+const BOARDS = resolve(HERE, "../src/demos/carom/boards.json");
 
 const inside = (B, x, y) => B && x > B.bx && x < B.bx2 && y > B.by && y < B.by2;
 
@@ -109,7 +105,7 @@ for (const [W, H] of [[11, 9], [8, 6], [10, 7], [13, 9], [12, 8], [7, 5]]) {
             // 5. the reflection law: the perpendicular component flips at a surface
             //    and ONLY at a surface
             const flippedX = p.dx !== p.inDx, flippedY = p.dy !== p.inDy;
-            if (flippedX !== !!p.hitV || flippedY !== !!p.hitH) fails.reflect++;
+            if (flippedX !== !!p.v || flippedY !== !!p.h) fails.reflect++;
             // 6. direction never changes in open space
             if (!p.contact && (flippedX || flippedY)) fails.freeTurn++;
           }
@@ -148,17 +144,60 @@ for (const [name, n] of checks)
 
 const bad = checks.reduce((a, c) => a + c[1], 0);
 console.log("\n" + (bad === 0 ? "all invariants hold" : bad + " violations total"));
-if (bad > 0) process.exit(1);
 
-// the page's own board, traced and printed for the record
+/* ------------------------------------------------ the boards that ship ----
+   boards.json is committed output, so the gate has to read it rather than
+   trust it. Every day is replayed through the same rule the browser uses and
+   must still land in the pocket it was built around — and must not pass any
+   other pocket on the way there, which would make the board a lie. */
+
+const file = JSON.parse(readFileSync(BOARDS, "utf8"));
+const dates = Object.keys(file.days);
+let traced = 0, early = 0, missed = 0, short = 0;
+
+for (const date of dates) {
+  const d = file.days[date];
+  const [W, H] = d.s;
+  const B = { bx: d.b[0], by: d.b[1], bx2: d.b[2], by2: d.b[3] };
+  const hits = [];
+  let s = { x: d.e[0], y: d.e[1], dx: d.d[0], dy: d.d[1] };
+  for (let t = 0; t < 12 * W * H && hits.length < file.bounces + 1; t++) {
+    s = step(W, H, B, s);
+    if (s.contact) hits.push(s);
+  }
+  if (hits.length < file.bounces + 1) { short++; continue; }
+  const last = hits[hits.length - 1];
+  if (!d.p.some(([x, y]) => x === last.x && y === last.y)) { missed++; continue; }
+  if (hits.slice(0, -1).some((c) => d.p.some(([x, y]) => x === c.x && y === c.y))) { early++; continue; }
+  traced++;
+}
+
+console.log(`\ncarom boards.json  (v${file.version}, generated ${file.generated})`);
+console.log(`  ${dates.length} days  ${dates[0]} to ${dates[dates.length - 1]}` +
+            `  ${file.bounces} bounces  ${file.tries} tries  ${file.pockets} pockets`);
+const boardChecks = [
+  ["every board reaches its pocket in " + (file.bounces + 1) + " contacts", short + missed],
+  ["no board passes another pocket first", early]
+];
+for (const [name, n] of boardChecks)
+  console.log(`  ${n === 0 ? "PASS" : "FAIL"}  ${name}${n ? "  (" + n + " of " + dates.length + ")" : ""}`);
+
+const badBoards = boardChecks.reduce((a, c) => a + c[1], 0);
+console.log("\n" + (badBoards === 0
+  ? `all ${traced} shipped boards trace to their pocket`
+  : `${badBoards} shipped board(s) do not trace — regenerate with npm run carom:boards`));
+
+// the reference board, traced and printed for the record
 const W = 11, H = 9, B = { bx: 3, by: 3, bx2: 5, by2: 4 };
-const p = run(W, H, B, { x: 1, y: 0, dx: 1, dy: 1 }, 16);
-const contacts = p.filter(s => s.contact).slice(0, 4);
+const ref = run(W, H, B, { x: 1, y: 0, dx: 1, dy: 1 }, 16);
+const refHits = ref.filter((s) => s.contact).slice(0, 4);
 console.log("\nreference board 11x9, block (3,3)-(5,4), in at (1,0) up-right:");
-console.log("  contacts: " + contacts.map(c =>
-  `(${c.x},${c.y})${c.onBlock ? " block" : " rail"}`).join("  ->  "));
+console.log("  contacts: " + refHits.map((c) =>
+  `(${c.x},${c.y})${c.block ? " block" : " rail"}`).join("  ->  "));
 console.log("  legs: " + (() => {
   const ts = []; let last = 0;
-  p.forEach((s, i) => { if (s.contact && ts.length < 4) { ts.push(i - last); last = i; } });
+  ref.forEach((s, i) => { if (s.contact && ts.length < 4) { ts.push(i - last); last = i; } });
   return ts.join("-");
 })());
+
+if (bad > 0 || badBoards > 0) process.exit(1);

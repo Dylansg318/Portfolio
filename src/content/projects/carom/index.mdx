@@ -1,0 +1,288 @@
+---
+title: Carom
+blurb: A daily bounce puzzle. Guess which pocket the ball drops into; every wrong guess reveals one more bounce.
+plainBlurb: A once-a-day puzzle like Wordle, but with a bouncing ball. Work out which pocket it ends up in. Guess wrong and it shows you one more bounce.
+date: 2026-09-11
+featured: 20
+status: live
+role: solo
+stack: [TypeScript, Astro, SVG, Node]
+
+problem: >-
+  A daily puzzle has two requirements that fight each other. Every day has to be
+  scored on the same scale, so the shape of the puzzle must be fixed — here,
+  exactly three bounces before the pocket, four tries, out of fourteen. And there
+  has to be a board for every day, effectively forever. Fixing the shape is what
+  makes a score mean something, and it is also what destroys the supply: on a
+  plain rectangle only about 91 genuinely distinct boards exist once mirror
+  images are collapsed, which is three months and then the game is over. There is
+  no server to appeal to either. The site is prerendered, so whatever answers
+  tomorrow's puzzle has to already be in the page — without the answer being in
+  the page.
+
+unique: >-
+  Two findings did the work, and neither was about the game. Board quality is
+  governed by gcd(W, H) rather than table size: a shared factor makes the ball
+  close its cycle early, so it can only ever reach a fraction of the rim, which
+  starves both the pocket count and the supply. A 12×6 table is bigger than 11×9
+  and useless. Every table here is coprime for that reason. And the supply problem
+  is solved by one block bolted to the cloth, which takes 91 boards to 1,037 and
+  costs the player no new rule to learn, because bouncing off solid things is
+  already the whole game. The block also cost me the elegant solution, which is
+  the part I'd tell someone about first.
+
+learned:
+  - Generating content is a filtering problem, not a creative one. 170,356 board shapes go in and 1,037 come out — 0.6%. All the interesting code is in the eight reasons a board gets thrown away, and the single biggest reason, a bounce that lands exactly on a corner and reflects both ways at once, accounts for 59% on its own.
+  - Deduplicate before you count your supply. 84% of the boards that passed every filter were mirror images of boards already in the list. "Five years of puzzles" was 2.8 years as soon as a board and its reflection were recognised as the same puzzle.
+  - A failing test is not the same as wrong code. The time-reversibility check failed on 32% of boards and the check was the thing that was broken — reversing a bounce means negating the ray the ball arrived on, not the one it left on. Changing a test until it passes is usually a fudge, so being able to say precisely why this one wasn't is the whole difference.
+  - Verify the thing that ships. The physics gate used to hold its own copy of the reflection rule, which meant a pass was a statement about the gate. It now imports the same module the generator deals boards with and the browser rolls the ball with, and replays all 365 committed boards through it.
+
+aiNote: >-
+  Built with Claude Code in one session, and the useful part is which decisions
+  were mine. I turned down two of its concepts as too complex before proposing the
+  bouncing ball myself, asked for the progressive reveal that makes a wrong guess
+  worth something instead of just costing a life, and rejected its first interface
+  outright — it had used this site's own design system as a layout template, and
+  the result looked like every other machine-generated page. The generator, the
+  grading and the physics are its work under my direction, and they are the parts
+  I wanted provable rather than plausible: seven invariants over 1.55 million ball
+  positions, and every shipped board replayed through the same rule the browser
+  runs.
+
+metrics:
+  - { label: Board shapes searched, value: "170,356" }
+  - { label: Boards that survive, value: "1,037" }
+  - { label: Ball positions verified, value: "1.55M" }
+
+demo:
+  kind: island
+  entry: carom
+  label: Play Carom
+---
+
+A ball rolls onto a billiards table at forty-five degrees. It bounces three times
+off anything solid — the rails, or the block bolted to the cloth — and drops into
+the first pocket it reaches. There are fourteen pockets. You get four guesses, and
+each wrong one rolls the ball forward by one bounce, so a miss buys you information
+instead of just costing you a life.
+
+That is the entire game, and it is not the interesting part. The interesting part
+is that a daily puzzle needs a board every day, forever, and the constraint that
+makes it scoreable is the same constraint that makes boards scarce.
+
+<Demo demo={frontmatter.demo} title={frontmatter.title} />
+
+<PlainOnly>
+
+## Where a new puzzle comes from every day
+
+The hard part of a daily puzzle isn't the puzzle. It's having a fresh one every
+morning, forever, that's *the same kind of hard* as yesterday's — otherwise the
+score you post doesn't mean anything.
+
+Everything here has exactly three bounces. That's what makes Tuesday comparable to
+Monday, and it's also what nearly killed the idea: on a plain rectangular table
+there are only about 91 genuinely different puzzles. Three months and the game is
+finished. Putting one solid block in the middle of the table took that to 1,037 —
+a bit under three years — and it asks nothing new of the player, because bouncing
+off solid things is the entire game already.
+
+The puzzle-maker is brute force and makes no apology for it. It builds every
+combination of table size, block shape, block position, and where the ball comes
+in — **170,356 possible puzzles** — rolls each one, and throws away anything not
+worth playing:
+
+- **100,472** because the ball hits an exact corner, where it bounces off two walls
+  at once and you can't tell by looking what happened.
+- **39,964** because one of the four legs is too short to notice or too long to
+  count comfortably.
+- **12,092** because the ball never touches the block, which makes it decoration
+  that looks like it matters.
+- **5,352** because the ball ends up on the block instead of in a pocket.
+- **4,140** because the answer sits too close to where the ball came in, so you'd
+  get it by feel.
+- **1,488** because the ball would roll straight over its own answer earlier in the
+  journey — meaning the stated answer is a lie.
+- **456** because fourteen properly spaced pockets won't fit.
+
+That leaves 6,392 — and then the surprise. **84% of those were mirror images of
+each other.** A puzzle flipped left-to-right is the same puzzle with the letters
+moved, so only one of each pair survives. Final count: **1,037 genuinely different
+puzzles, about 0.6% of what it started with.** The "five years of puzzles" I
+thought I had was under three.
+
+The last step sorts all 1,037 by how hard they are, cuts them into seven equal
+groups, and gives each day of the week its own group — easiest on Monday, hardest
+on Saturday, Sunday a step back down, the way crosswords do it. So "Saturday"
+means the genuinely hardest seventh of what exists, not a difficulty number I
+invented. All 365 days got one from the group they asked for.
+
+And because a puzzle that sends the ball to the wrong pocket is worse than no
+puzzle, none of this is taken on trust. Every one of the 365 days that shipped is
+re-played by a separate checker that confirms the ball still lands where the
+puzzle says it does — and the build refuses to finish if a single one doesn't.
+
+</PlainOnly>
+
+<EngOnly>
+
+## The rule everything rests on
+
+The ball travels the forty-five degree lattice: one unit sideways for every unit
+forward, always. That single restriction is what makes the whole thing exact. The
+ball lands on every whole number of dots along both axes as it goes, so no
+position is ever a fraction, it can never slip through a surface before touching
+it, and there is no tolerance anywhere in the code to tune.
+
+A block face needs no rule of its own either. An axis-aligned surface flips the
+perpendicular component of the motion and leaves the parallel one alone, whichever
+side of it you are standing on — so the block's vertical faces do exactly what the
+left and right rails do, its horizontal faces do what the top and bottom do, and
+its corner flips both. That is why an obstacle in the middle of the table adds
+nothing for the player to learn.
+
+## Why the tables are odd sizes
+
+The first thing I assumed was that a bigger table means a harder puzzle. It
+doesn't. The governing variable is the greatest common divisor of the two sides,
+and it decides how much of the rim the ball can ever reach:
+
+| gcd(W, H) | share of the rim the ball can reach |
+|---|---|
+| 1 | ~50% |
+| 2 | ~41% |
+| 3 | ~34–38% |
+| 4 | ~28% |
+| 6 | ~19% |
+
+A shared factor closes the ball's cycle early, and once the cycle closes the ball
+retraces a path it has already walked. So a 12×6 table has more cloth than an
+11×9 and is worth less: fewer reachable pockets, fewer distinct boards, and a
+visible bias in where the ball tends to end up. Every table in the shipped set —
+10×7, 11×7, 11×8, 11×9, 10×9, 12×7, 13×9, 13×10 — is coprime, and the generator
+throws if anyone adds one that isn't.
+
+## Where the boards come from
+
+The generator is brute force with hard filters, and it is not apologetic about it.
+It builds every combination of table size, block shape, block position, entry
+point on the rim and inward diagonal — 170,356 boards — walks each one, and throws
+away almost all of them:
+
+| what happened | boards |
+|---|---|
+| considered | 170,356 |
+| a bounce landed exactly on a corner | −100,472 |
+| a leg shorter than 2 dots or longer than 7 | −39,964 |
+| the ball never touches the block | −12,092 |
+| the fourth contact was the block, not a pocket | −5,352 |
+| the answer sits too close to the entry | −4,140 |
+| the ball crosses its own answer early | −1,488 |
+| fourteen spread pockets would not fit | −456 |
+| **survived** | **6,392** |
+| mirror images of a board already kept | −5,355 |
+| **shipped** | **1,037** |
+
+Corners alone kill 59%. A ball arriving exactly at a corner reflects off both
+faces at once, which is correct physics and unreadable on screen — you cannot tell
+by looking whether it bounced or reversed — so every one of them goes.
+
+Two of those filters exist because a puzzle has to be *honest* rather than merely
+solvable. A board where the ball rolls over its own answer on an earlier leg would
+have dropped in there, so the stated answer is a lie; 1,488 of those. And a board
+whose block the ball never touches is worse than a board with no block at all,
+because it is furniture that looks like it matters; 12,092.
+
+Then the surprise. 84% of everything that passed every filter was a mirror image
+of a board already in the list. A table flipped left-to-right is the same puzzle
+with different letters on the pockets, so each board is reduced to an identity
+under all four reflections of a rectangle and only one member of each family
+ships. That is what turned "about five years of supply" into 2.8 years, and it is
+the number I would have got wrong if I hadn't checked.
+
+<Takeaway>
+  Counting your supply before deduplicating it is how you end up confidently
+  quoting a figure that is six times too big.
+</Takeaway>
+
+## The elegant version, and why it isn't the one that shipped
+
+On a bare rectangle you never simulate anything. Unfold the table — mirror it
+repeatedly instead of bouncing the ball — and the path becomes a straight line, so
+rail contacts fall exactly where `t` is congruent to minus the entry coordinate,
+modulo the width or the height. The whole contact sequence is two arithmetic
+progressions merged together, and you can read off the answer in closed form with
+no loop at all.
+
+The block destroys that. Its faces are not on either progression, and a bounce off
+one restarts the ball from a new point in a new direction, so every progression
+downstream of it would have to be re-derived. The version that shipped steps the
+ball one diagonal unit at a time and checks what it is touching.
+
+That is less clever, and it was the right call. The entire search space is about
+eight million steps, which runs in a fifth of a second, so the closed form would
+have bought nothing measurable and introduced a second way to be wrong. Keeping it
+would have been keeping it for my benefit, not the game's.
+
+## Grading a year of days
+
+A difficulty score out of thin air would be a number I made up. This one is
+weighted by what each factor actually costs the player: the total number of dots
+to count, the single longest leg — one long count is where you slip — how many
+bounces are off the block, since you have to notice it before you can predict it,
+how uneven the legs are, and how crowded the answer's neighbourhood is, because a
+lone pocket is easier to land on.
+
+The scores then get split into seven **equal-count** tiers rather than fixed
+thresholds, which matters more than it sounds. It means Saturday is the hardest
+seventh of the boards that actually exist, not the boards that clear a cutoff I
+guessed at. Monday through Saturday ramp up and Sunday steps back down — the
+crossword habit — and a deterministic shuffle inside each tier means the same
+commit always deals the same year. All 365 days drew from the tier their weekday
+asked for; none had to fall back to a neighbour.
+
+The answer is deliberately not in the file. The browser has to trace the path
+anyway in order to animate it, so storing the pocket index would be redundant data
+that also happened to be tomorrow's answer. The generator asserts it instead.
+
+Where I'll be straight about a limit: a prerendered site with no server ships the
+whole year's *boards* to anyone who opens the demo, so a determined reader can
+work out next Tuesday for themselves. That is inherent to the architecture, and a
+puzzle for fun doesn't need me to pretend otherwise.
+
+## The test that was wrong
+
+The physics gate checks seven invariants over every board shape the generator can
+produce — 25,448 boards and 1.55 million ball positions, in 0.19 seconds. Six of
+them are the obvious ones: the ball stays on the table, never ends up inside the
+block, never tunnels through a face, every step is exactly one diagonal unit, the
+direction flips at a surface and only at a surface, and it never turns in open
+space.
+
+The seventh is the one that earns its keep. Run the path backwards from its end
+point and it must retrace itself exactly. A reflection that is wrong at any single
+face or corner breaks that, and nothing else will catch it.
+
+It failed on 32% of boards, and the test was the thing that was broken. Leaving a
+contact point in reverse means negating the direction the ball *arrived* on, not
+the one it bounced away on — at a contact those are two different rays. My first
+version negated the wrong one. Changing a test until it passes is usually how you
+ship a bug with a green checkmark, so it mattered to be able to say exactly which
+line was wrong and why the physics was never in question.
+
+## One copy of the rule
+
+Three things have to agree about where the ball goes: the generator that deals a
+year of boards, the gate that proves the physics, and the demo the browser runs.
+For a while each of them had its own copy of the reflection rule, which is two
+extra chances for the shipped game to disagree with the board it was dealt — and
+that disagreement would look to a player like a wrong answer, not like a bug.
+
+They now import one module. The refactor's proof was that regenerating the year
+produced a byte-identical file. The gate gained something real from it too: it used
+to verify its own private copy of the rule, so a pass was a statement about the
+gate. It now verifies the code that ships, and replays all 365 committed boards
+through it — which closes a hole where a stale or hand-edited `boards.json` would
+have sailed through the build untouched.
+
+</EngOnly>
