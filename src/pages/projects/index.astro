@@ -3,12 +3,16 @@ import Base from '../../layouts/Base.astro';
 import ProjectCard from '../../components/ui/ProjectCard.astro';
 import WorkRow from '../../components/ui/WorkRow.astro';
 import { getProjects, getChildren } from '../../lib/content';
+import { CATEGORIES, categoryLabel } from '../../lib/categories';
 
 const projects = await getProjects();
 // Subsystems are listed once, under their parent, instead of competing with it
 // in the grid. See `parent` in src/content.config.ts.
 const subsystems = await getChildren('mhlhub');
-const stacks = [...new Set(projects.flatMap((p) => p.data.stack))].sort();
+// The tabs are the categories with something filed under them, in the order
+// src/lib/categories.ts declares — not the stack, which grew one chip per
+// library until the row was a keyword cloud. An empty shelf gets no tab.
+const categories = CATEGORIES.filter((c) => projects.some((p) => p.data.category === c));
 ---
 <Base title="Work" description="Everything I've built and written up: the problem, what was non-obvious, and what came out of it.">
   <section>
@@ -25,8 +29,8 @@ const stacks = [...new Set(projects.flatMap((p) => p.data.stack))].sort();
   </section>
 
   <div class="mx-auto max-w-(--container-wide) px-4 sm:px-6">
-    {stacks.length > 0 && (
-      <div class="reveal flex flex-wrap gap-2" role="group" aria-label="Filter by technology">
+    {categories.length > 1 && (
+      <div class="reveal flex flex-wrap gap-2" role="group" aria-label="Filter by kind of project">
         <button
           type="button"
           data-filter="all"
@@ -35,14 +39,14 @@ const stacks = [...new Set(projects.flatMap((p) => p.data.stack))].sort();
         >
           All
         </button>
-        {stacks.map((tech) => (
+        {categories.map((category) => (
           <button
             type="button"
-            data-filter={tech}
+            data-filter={category}
             aria-pressed="false"
             class="rounded-lg border border-border px-3 py-1.5 text-sm text-ink-muted transition-colors hover:border-border-strong hover:text-ink"
           >
-            {tech}
+            {categoryLabel[category]}
           </button>
         ))}
       </div>
@@ -50,7 +54,7 @@ const stacks = [...new Set(projects.flatMap((p) => p.data.stack))].sort();
 
     <div id="project-grid" class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {projects.map((project, i) => (
-        <div data-stack={project.data.stack.join('|')}>
+        <div data-category={project.data.category}>
           <ProjectCard project={project} delay={(i % 3) * 70} />
         </div>
       ))}
@@ -82,7 +86,7 @@ const stacks = [...new Set(projects.flatMap((p) => p.data.stack))].sort();
   document.addEventListener('astro:page-load', () => {
     // Vanilla filtering — no framework runtime on the index page.
     const buttons = document.querySelectorAll<HTMLButtonElement>('[data-filter]');
-    const cards = document.querySelectorAll<HTMLElement>('#project-grid > [data-stack]');
+    const cards = document.querySelectorAll<HTMLElement>('#project-grid > [data-category]');
     const empty = document.getElementById('empty-state');
 
     const ACTIVE = ['border-accent', 'bg-accent', 'text-accent-ink', 'font-medium'];
@@ -101,7 +105,7 @@ const stacks = [...new Set(projects.flatMap((p) => p.data.stack))].sort();
 
         let shown = 0;
         cards.forEach((card) => {
-          const match = filter === 'all' || (card.dataset.stack ?? '').split('|').includes(filter);
+          const match = filter === 'all' || card.dataset.category === filter;
           card.hidden = !match;
           if (match) shown++;
         });

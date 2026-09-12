@@ -1,6 +1,7 @@
 import { defineCollection, type SchemaContext } from 'astro/content/config';
 import { z } from 'astro/zod';
 import { glob } from 'astro/loaders';
+import { CATEGORIES } from './lib/categories';
 
 /**
  * THE NARRATIVE CONTRACT
@@ -52,6 +53,15 @@ const projectSchema = ({ image }: SchemaContext) =>
      * same thing the listing does.
      */
     parent: z.string().optional(),
+
+    /**
+     * Which shelf the work index files this under: what the thing IS, not
+     * what it was built with. The ids and their tab labels live in
+     * src/lib/categories.ts. Required on a top-level project (enforced
+     * below); a subsystem leaves it out, because it is never listed on its
+     * own and is filed wherever its parent is.
+     */
+    category: z.enum(CATEGORIES).optional(),
 
     // --- the contract ------------------------------------------------
     /** What was actually wrong or needed. Not "I built an X". */
@@ -135,6 +145,12 @@ const projectSchema = ({ image }: SchemaContext) =>
 
     /** Write in the open repo without publishing. Excluded from all listings. */
     draft: z.boolean().default(false),
+  })
+  // A default here would be the wrong kind of convenience: a game that forgot
+  // its category would be filed under Work, silently, and read as one.
+  .refine((data) => data.parent !== undefined || data.category !== undefined, {
+    message: 'category is required on a top-level project (subsystems inherit their parent\'s)',
+    path: ['category'],
   });
 
 /**
