@@ -88,6 +88,15 @@ type Day = {
 };
 
 type Pt = { x: number; y: number };
+type Box = { bx: number; by: number; bx2: number; by2: number };
+
+/** Everything a re-rack needs to know about the board it is racking TO.
+ *
+ *  A generated board carries a great deal more (legs, ring distance, canon,
+ *  difficulty); the day's board, rebuilt from boards.json, carries exactly this
+ *  and nothing else. Typing the parameter by what it reads rather than by where
+ *  it usually comes from is what lets the table rack BACK to the day's board. */
+type Rack = { B: Box; entry: Pt; dir: Pt; pockets: Pt[] };
 
 const DAYS = data.days as Record<string, Day>;
 /** The six scores that separate the seven tiers, from the dealt pool. Lets a
@@ -397,6 +406,17 @@ export function mount(el: HTMLElement): () => void {
   let DIR = { x: day.d[0]!, y: day.d[1]! };
   let POCKETS = day.p.map(([x, y]) => ({ x: x!, y: y! }));
 
+  /* The day's board, kept whole so the table can rack BACK to it.
+     Copied rather than aliased: BLOCK, ENTRY, DIR and POCKETS are all reassigned
+     by a re-rack, so holding references here would leave this pointing at
+     whichever practice board was last dealt. */
+  const DAY: Rack = {
+    B: { ...BLOCK },
+    entry: { ...ENTRY },
+    dir: { ...DIR },
+    pockets: POCKETS.map((q) => ({ ...q })),
+  };
+
   // The path, and therefore the answer, derived rather than read. See the header.
   let PATH: Pt[] = [];
   let LAST = 0;
@@ -456,6 +476,7 @@ export function mount(el: HTMLElement): () => void {
         <div class="shotcall-row">
           <div class="shotcall-tallies" data-tallies aria-label="Tries used"></div>
           <button class="shotcall-chalk" type="button" data-rack hidden>Rack another</button>
+          <button class="shotcall-chalk" type="button" data-today hidden>Today's board</button>
           <button class="shotcall-chalk" type="button" data-wipe hidden>Wipe</button>
           <button class="shotcall-chalk" type="button" data-chalk aria-pressed="false">Chalk</button>
         </div>
@@ -485,6 +506,7 @@ export function mount(el: HTMLElement): () => void {
   const chalkBtn = el.querySelector<HTMLButtonElement>('[data-chalk]')!;
   const wipeBtn = el.querySelector<HTMLButtonElement>('[data-wipe]')!;
   const rackBtn = el.querySelector<HTMLButtonElement>('[data-rack]')!;
+  const todayBtn = el.querySelector<HTMLButtonElement>('[data-today]')!;
   const stampEl = el.querySelector<HTMLElement>('[data-stamp]')!;
   const cardHeadEl = el.querySelector<HTMLElement>('[data-cardhead]')!;
   const scoreEl = el.querySelector<HTMLElement>('[data-score]')!;
@@ -949,7 +971,7 @@ export function mount(el: HTMLElement): () => void {
     return g;
   }
 
-  function rerack(next: ReturnType<typeof randomBoard>, done: () => void) {
+  function rerack(next: Rack | null, done: () => void) {
     if (!next) {
       done();
       return;
@@ -1478,6 +1500,11 @@ export function mount(el: HTMLElement): () => void {
     rackBtn.hidden = true;
     rackBtn.disabled = false;
     chalkBtn.disabled = false;
+    // The day's board is off the table. Offer the way back to it for as long as
+    // that is true — including mid-practice-round, because someone who racked by
+    // accident should not have to finish the accident first.
+    todayBtn.hidden = !practice;
+    todayBtn.disabled = false;
     setChalk(chalkOn);
     stampEl.textContent = `Tier ${tier + 1}/${TIERS}`;
     cardHeadEl.textContent = 'Practice';
@@ -1836,6 +1863,93 @@ export function mount(el: HTMLElement): () => void {
   const PLAY_PATH = '/play/shotcall';
   const shareText = () => `${slip()}\n${location.origin}${PLAY_PATH}`;
 
+  /* ---- the day's board, and the way back to it ---------------------- */
+
+  /** Put the day's saved guesses and chalk line onto the board now on the table.
+   *
+   *  Assumes the day's board is already there. Called at first paint, and again
+   *  by "Today's board" once a practice rack has been sent away. */
+  function replaySaved(rec: { guesses: number[]; line: Pt[] }) {
+    if (rec.guesses.length) {
+      for (const i of rec.guesses) {
+        guesses.push(i);
+        mark(i, i === ANSWER);
+      }
+      if (guesses.includes(ANSWER) || guesses.length >= TRIES) {
+        revealed = LAST;
+        paint(LAST);
+        over = true;
+        finish();
+      } else {
+        revealed = Math.min(guesses.length, LAST);
+        paint(revealed);
+        const lastGuess = guesses[guesses.length - 1]!;
+        say(
+          `Not <b>${LETTERS[lastGuess]}</b>. Bounce ${revealed} of ${LAST - 1}, ` +
+            `${TRIES - guesses.length} tries left.`,
+          'miss',
+        );
+      }
+    }
+    renderTallies();
+  }
+
+  /** Undo a practice rack: the day's board back on the table, exactly as it was
+   *  left, with its score, its share slip and its countdown.
+   *
+   *  This has always been one page reload away — the day's record lives in
+   *  localStorage, which is what makes a refresh unable to buy a fresh set of
+   *  tries. But "reload the page" is not a thing to ask of someone who racked a
+   *  practice board and then wanted to show a friend what they actually got, and
+   *  on the write-up page a reload also throws the reader back to the top of the
+   *  article. So the table racks back instead, by the same mechanism it racked
+   *  away: nothing here reaches for the board directly, it hands `rerack` the
+   *  day's geometry and restores the record when the animation lands. */
+  function restoreDay() {
+    practice = false;
+    guesses = [];
+    revealed = 0;
+    over = false;
+    stroke = [];
+    scoreEl.hidden = true;
+    slipBox.hidden = true;
+    rackBtn.hidden = true;
+    rackBtn.disabled = false;
+    todayBtn.hidden = true;
+    todayBtn.disabled = false;
+    chalkBtn.disabled = false;
+    stampEl.textContent = `Tier ${day.t + 1}/${TIERS}`;
+    cardHeadEl.textContent = dateLabel;
+    setChalk(chalkOn);
+
+    const rec = load();
+    drawn = rec.line;
+    paintMine();
+    syncWipe();
+    say('Pick a pocket, or chalk the line you expect.');
+    replaySaved(rec);
+  }
+
+  todayBtn.addEventListener('click', () => {
+    if (reracking || !practice) return;
+    todayBtn.disabled = true;
+    rackBtn.disabled = true;
+    chalkBtn.disabled = true;
+    say('Re-racking&hellip;');
+
+    if (reducedMotion()) {
+      BLOCK = DAY.B;
+      ENTRY = DAY.entry;
+      DIR = DAY.dir;
+      POCKETS = DAY.pockets.map((q) => ({ ...q }));
+      deriveBoard();
+      build();
+      restoreDay();
+      return;
+    }
+    rerack(DAY, restoreDay);
+  });
+
   /* ---- controls ---------------------------------------------------- */
 
   copyBtn.addEventListener('click', () => {
@@ -1865,28 +1979,7 @@ export function mount(el: HTMLElement): () => void {
   build();
   setChalk(chalkOn);
   syncWipe();
-  if (saved.guesses.length) {
-    for (const i of saved.guesses) {
-      guesses.push(i);
-      mark(i, i === ANSWER);
-    }
-    if (guesses.includes(ANSWER) || guesses.length >= TRIES) {
-      revealed = LAST;
-      paint(LAST);
-      over = true;
-      finish();
-    } else {
-      revealed = Math.min(guesses.length, LAST);
-      paint(revealed);
-      const lastGuess = guesses[guesses.length - 1]!;
-      say(
-        `Not <b>${LETTERS[lastGuess]}</b>. Bounce ${revealed} of ${LAST - 1}, ` +
-          `${TRIES - guesses.length} tries left.`,
-        'miss',
-      );
-    }
-  }
-  renderTallies();
+  replaySaved(saved);
 
   return () => {
     if (raf) cancelAnimationFrame(raf);

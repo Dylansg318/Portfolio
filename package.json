@@ -16,6 +16,7 @@
     "shotcall:boards": "node scripts/shotcall-boards.mjs",
     "shotcall:verify": "node scripts/shotcall-physics.mjs",
     "resume:pdf": "./scripts/build-resume-pdf.sh",
+    "share:cards": "./scripts/build-share-cards.sh",
     "astro": "astro",
     "cf:dev": "wrangler dev",
     "cf:deploy": "wrangler deploy",
