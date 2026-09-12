@@ -61,7 +61,9 @@ const description = data.plainBlurb ?? data.blurb;
     <!-- No top bar, deliberately. A cold visitor's first screen should be the
          game and nothing else; the way back into the site is below it, where
          someone who has actually played will look. -->
-    <div class="flex flex-1 items-start justify-center px-4 sm:px-6">
+    <!-- Edge to edge on a phone. A 16px gutter each side is 8% of a 393px screen
+         taken from the one thing the page exists to show. -->
+    <div class="flex flex-1 items-start justify-center px-0 sm:px-6">
       <div class="w-full max-w-5xl">
         <Demo demo={{ ...data.demo, fullscreen: false }} title={data.title} />
       </div>

@@ -319,7 +319,12 @@ const CSS = `
 .shotcall :focus-visible { outline: 2px solid var(--brass-lit); outline-offset: 3px; }
 
 @media (max-width: 560px) {
-  .shotcall { padding-inline: 15px; }
+  /* Every pixel here is table. The board is upright at this width (see
+     PORTRAIT_MQ) and a phone has none to spare on a gutter. */
+  .shotcall { padding-inline: 10px; }
+  /* A floor for the scorecard on a short phone. The upright table is taller than
+     it is wide, so without this it can push the card off the first screen. */
+  .shotcall-table { max-height: 68dvh; }
   .shotcall-sign { flex-wrap: wrap; }
   .shotcall-date { margin-left: 0; width: 100%; }
   .shotcall-card, .shotcall-slip { max-width: none; }
@@ -519,6 +524,29 @@ export function mount(el: HTMLElement): () => void {
   const sx = (x: number) => PAD + x * CELL;
   const sy = (y: number) => PAD + (H - y) * CELL; // y up, like the generator
 
+  /* PORTRAIT ON A PHONE.
+   *
+   * A pool table is landscape and a phone is not, so a table fitted to the width
+   * of a phone uses about a quarter of the screen and leaves the rest empty —
+   * measured at 393px: a 314x238 table in an 852px-tall viewport. Every pool game
+   * on a phone turns the table upright for this reason, and so does this one.
+   *
+   * It is done by rotating ONE group rather than by transposing the projection.
+   * sx/sy, the path, the block, the re-rack flights and the hit targets all stay
+   * in the same landscape user space, which matters for more than convenience:
+   * the player's chalk line is persisted in those units, so a line drawn on a
+   * phone has to line up with the same board opened on a desktop. Rotating the
+   * stage leaves the stored geometry alone and changes only how it is shown.
+   *
+   * Two things do not want the rotation. The pocket letters are counter-rotated
+   * so they stay upright, and pointer input is read through the STAGE's matrix
+   * rather than the svg's, so a drawn point comes back in landscape units. */
+  const PORTRAIT_MQ = window.matchMedia('(max-width: 560px)');
+  let portrait = PORTRAIT_MQ.matches;
+  /** Everything drawn lives in here. Re-made by build(). Typed as a graphics
+   *  element, not an SVGElement, because the pointer path reads its matrix. */
+  let stage: SVGGraphicsElement = svg;
+
   const screenPath = () => PATH.map((p) => ({ x: sx(p.x), y: sy(p.y) }));
 
   /* ---- state ------------------------------------------------------- */
@@ -648,7 +676,7 @@ export function mount(el: HTMLElement): () => void {
     grain.appendChild(node('stop', { offset: '1', 'stop-color': '#543823' }));
     d.appendChild(grain);
 
-    svg.appendChild(d);
+    stage.appendChild(d);
   }
 
   /* ---- the table, in layers ----------------------------------------
@@ -659,24 +687,24 @@ export function mount(el: HTMLElement): () => void {
 
   function furniture() {
     // cabinet shadow, walnut frame, then the cloth
-    svg.appendChild(node('rect', {
+    stage.appendChild(node('rect', {
       x: PAD - RAIL - 7, y: PAD - RAIL - 5,
       width: TW + (RAIL + 7) * 2, height: TH + (RAIL + 7) * 2,
       rx: 15, fill: '#000000', 'fill-opacity': 0.5,
     }));
-    svg.appendChild(node('rect', {
+    stage.appendChild(node('rect', {
       x: PAD - RAIL, y: PAD - RAIL, width: TW + RAIL * 2, height: TH + RAIL * 2,
       rx: 11, fill: 'url(#shotcall-grain)',
     }));
-    svg.appendChild(node('rect', {
+    stage.appendChild(node('rect', {
       x: PAD - RAIL + 3.5, y: PAD - RAIL + 3.5,
       width: TW + RAIL * 2 - 7, height: TH + RAIL * 2 - 7,
       rx: 8, fill: 'none', stroke: '#9c7551', 'stroke-width': 1, 'stroke-opacity': 0.55,
     }));
-    svg.appendChild(node('rect', {
+    stage.appendChild(node('rect', {
       x: PAD - 4, y: PAD - 4, width: TW + 8, height: TH + 8, rx: 3, fill: '#1b3a32',
     }));
-    svg.appendChild(node('rect', { x: PAD, y: PAD, width: TW, height: TH, fill: 'url(#shotcall-lit)' }));
+    stage.appendChild(node('rect', { x: PAD, y: PAD, width: TW, height: TH, fill: 'url(#shotcall-lit)' }));
   }
 
   /** The spots you count. Skips whatever the block is currently standing on. */
@@ -747,6 +775,10 @@ export function mount(el: HTMLElement): () => void {
         class: 'lbl',
         x: sx(p.x),
         y: sy(p.y) - 1,
+        // Counter-rotated about its own pocket, so a turned table still reads A-P
+        // the right way up. About the pocket and not the origin: rotating about
+        // 0,0 would fling every letter off the cloth.
+        ...(portrait ? { transform: `rotate(-90 ${sx(p.x)} ${sy(p.y) - 1})` } : {}),
         'font-size': LABEL_SIZE,
         fill: '#bd9a63',
         'text-anchor': 'middle',
@@ -801,7 +833,18 @@ export function mount(el: HTMLElement): () => void {
   function build() {
     while (svg.firstChild) svg.removeChild(svg.firstChild);
     mouths.length = 0;
-    svg.setAttribute('viewBox', `0 0 ${TW + PAD * 2} ${TH + PAD * 2}`);
+    portrait = PORTRAIT_MQ.matches;
+
+    // The canvas turns with the table; the contents do not know it happened.
+    // translate-then-rotate, in that order, because rotate(90) alone would swing
+    // the whole board off the left edge of its own viewBox.
+    svg.setAttribute(
+      'viewBox',
+      portrait ? `0 0 ${TH + PAD * 2} ${TW + PAD * 2}` : `0 0 ${TW + PAD * 2} ${TH + PAD * 2}`,
+    );
+    stage = node('g', portrait ? { transform: `translate(${TH + PAD * 2} 0) rotate(90)` } : {}) as SVGGraphicsElement;
+    svg.appendChild(stage);
+
     defs();
     furniture();
 
@@ -810,7 +853,7 @@ export function mount(el: HTMLElement): () => void {
     // mechanical panel moving under the cloth should not cover the game.
     for (const name of ['dots', 'slot', 'block', 'shutter'] as const) {
       layers[name] = node('g', name === 'shutter' ? { 'pointer-events': 'none' } : {});
-      svg.appendChild(layers[name]!);
+      stage.appendChild(layers[name]!);
     }
 
     // the chalk line: everything seen so far sits back, the last leg stays bright
@@ -818,24 +861,24 @@ export function mount(el: HTMLElement): () => void {
       d: '', fill: 'none', stroke: '#cfe0ea', 'stroke-width': 2.3,
       'stroke-opacity': 0.26, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
     });
-    svg.appendChild(layers.past);
+    stage.appendChild(layers.past);
     layers.hot = node('path', {
       d: '', fill: 'none', stroke: '#eaf4f9', 'stroke-width': 2.9,
       'stroke-opacity': 0.92, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
     });
-    svg.appendChild(layers.hot);
+    stage.appendChild(layers.hot);
     layers.marks = node('g');
-    svg.appendChild(layers.marks);
+    stage.appendChild(layers.marks);
     // The player's line sits under the pockets, so a pocket keeps its tap target.
     layers.mine = node('path', {
       d: '', fill: 'none', stroke: '#e8b44a', 'stroke-width': 3.2,
       'stroke-opacity': 0.85, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
     });
-    svg.appendChild(layers.mine);
+    stage.appendChild(layers.mine);
 
     for (const name of ['pockets', 'chalkOut', 'entry', 'puff', 'ball'] as const) {
       layers[name] = node('g', name === 'puff' ? { 'pointer-events': 'none' } : {});
-      svg.appendChild(layers[name]!);
+      stage.appendChild(layers[name]!);
     }
 
     drawDots();
@@ -1204,7 +1247,10 @@ export function mount(el: HTMLElement): () => void {
   /** Client coordinates into the SVG's own units, so the line survives any
    *  viewport width and the score is measured in dots rather than pixels. */
   function toUser(ev: PointerEvent): Pt | null {
-    const m = svg.getScreenCTM();
+    // The STAGE's matrix, not the svg's: in portrait the stage carries the
+    // rotation, so this is what returns a point in the units the line is stored
+    // and scored in. Reading the svg's matrix here would save a rotated line.
+    const m = stage.getScreenCTM();
     if (!m) return null;
     const q = new DOMPoint(ev.clientX, ev.clientY).matrixTransform(m.inverse());
     if (q.x < 0 || q.y < 0 || q.x > TW + PAD * 2 || q.y > TH + PAD * 2) return null;
@@ -1971,6 +2017,21 @@ export function mount(el: HTMLElement): () => void {
     }
   });
 
+  /* Turning the phone crosses the breakpoint, so the board is rebuilt the other
+     way up without losing the round in progress. Skipped while anything is
+     animating: build() tears down the very nodes a running frame is writing to,
+     and the next orientation change will pick it up anyway. */
+  const onOrient = () => {
+    if (portrait === PORTRAIT_MQ.matches || rolling || reracking) return;
+    build();
+    for (const i of guesses) mark(i, i === ANSWER);
+    if (over) litRim(ANSWER); // a lost day still shows where it went
+    paintMine();
+    paint(revealed);
+    syncWipe();
+  };
+  PORTRAIT_MQ.addEventListener('change', onOrient);
+
   /* ---- first paint, replaying whatever today already had ----------- */
 
   sweepOldDays();
@@ -1989,6 +2050,7 @@ export function mount(el: HTMLElement): () => void {
     rolling = false;
     window.clearTimeout(copyTimer);
     window.clearInterval(nextTimer);
+    PORTRAIT_MQ.removeEventListener('change', onOrient);
     el.innerHTML = '';
   };
 }
