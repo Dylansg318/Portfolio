@@ -204,8 +204,19 @@ const CSS = `
 .shotcall-pk { cursor: pointer; }
 .shotcall-pk.spent { cursor: default; }
 .shotcall-pk:not(.spent):hover circle.lip { stroke: var(--brass-lit); stroke-width: 3.4; }
-.shotcall-pk:focus { outline: none; }
 .shotcall-pk:focus-visible circle.lip { stroke: var(--chalk); stroke-width: 3.4; }
+/* The aim arrow goes once the ball has left: after the first leg it only sits on
+   top of the path it was predicting. The entry mark on the rail stays. */
+.shotcall-aim { transition: opacity 320ms ease; }
+/* A ruled-out pocket is chalked, so the X is drawn rather than stamped: each
+   stroke is a dash the length of itself, pulled on from one end. The second
+   stroke starts as the first one lands. */
+.shotcall-x { stroke-dasharray: 50; stroke-dashoffset: 50; animation: shotcall-draw 150ms ease-out forwards; }
+.shotcall-x.second { animation-delay: 110ms; }
+@keyframes shotcall-draw { to { stroke-dashoffset: 0; } }
+/* The pocket the ball dropped into rings once, so the eye lands on it. */
+.shotcall-ring { animation: shotcall-ring 460ms cubic-bezier(0.16, 1, 0.3, 1) forwards; transform-box: fill-box; transform-origin: center; }
+@keyframes shotcall-ring { from { transform: scale(0.5); opacity: 0.95; } to { transform: scale(2.2); opacity: 0; } }
 
 /* the scorecard: paper in the room, not a UI panel */
 .shotcall-card {
@@ -317,21 +328,35 @@ const CSS = `
 
 .shotcall [hidden] { display: none !important; }
 .shotcall :focus-visible { outline: 2px solid var(--brass-lit); outline-offset: 3px; }
+/* After the generic rule, deliberately: at equal specificity the later one wins,
+   and declared above it this lost, so Tab drew a brass box round the hit circle
+   instead of lighting the lip. A pocket's focus ring is the lip itself. */
+.shotcall-pk:focus-visible { outline: none; }
 
 @media (max-width: 560px) {
   /* Every pixel here is table. The board is upright at this width (see
      PORTRAIT_MQ) and a phone has none to spare on a gutter. */
-  .shotcall { padding-inline: 10px; }
+  .shotcall { padding-inline: 10px; padding-block: 14px 22px; }
+  /* The first screen has to hold the table AND the verdict line under it, or a
+     player taps a pocket and scrolls to find out what happened. Measured at
+     393x852 before this block existed: the verdict sat at 828px, under Safari's
+     bars. Every margin here is the smallest that still reads as a gap. */
+  .shotcall-sign { padding-bottom: 7px; margin-bottom: 12px; }
+  .shotcall-rule { margin-bottom: 12px; }
+  .shotcall-felt { margin-bottom: 14px; }
+  .shotcall-card { padding: 12px 16px 12px; }
+  .shotcall-card-head { margin-bottom: 8px; }
   /* A floor for the scorecard on a short phone. The upright table is taller than
      it is wide, so without this it can push the card off the first screen. */
   .shotcall-table { max-height: 68dvh; }
+  /* The date stays on the name's line when it fits, which it does for a plain
+     date; only the off-calendar note is long enough to wrap under it. */
   .shotcall-sign { flex-wrap: wrap; }
-  .shotcall-date { margin-left: 0; width: 100%; }
   .shotcall-card, .shotcall-slip { max-width: none; }
   .shotcall-slip-row { flex-wrap: wrap; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .shotcall * { transition-duration: 0ms !important; }
+  .shotcall * { transition-duration: 0ms !important; animation-duration: 0ms !important; animation-delay: 0ms !important; }
 }
 `;
 
@@ -469,7 +494,13 @@ export function mount(el: HTMLElement): () => void {
       <p class="shotcall-rule">${BOUNCES} bounces off anything solid &middot; each miss reveals one</p>
 
       <div class="shotcall-felt">
-        <svg class="shotcall-table" data-table role="img" aria-label="A billiards table
+        <!-- role=group, not role=img. An img's children are presentational by
+             spec, and a table with fourteen buttons on it is not a picture.
+             Checked rather than assumed: Chromium's own tree (over the DevTools
+             protocol, not a tool's DOM walk) still exposed the pockets under img,
+             because focusable descendants override that rule. So this is the
+             honest role, not a fix for a screen reader that could not find them. -->
+        <svg class="shotcall-table" data-table role="group" aria-label="A billiards table
           ${W} by ${H} dots, with ${POCKETS.length} pockets around the rim and a solid
           block on the cloth. The ball enters at a marked point on the rim at forty-five
           degrees."></svg>
@@ -692,6 +723,13 @@ export function mount(el: HTMLElement): () => void {
     grain.appendChild(node('stop', { offset: '1', 'stop-color': '#543823' }));
     d.appendChild(grain);
 
+    // The cloth, as a clip. The re-rack's panels start a block-width outside the
+    // slot they are about to cover, and without this they were painted across
+    // the rail on the way in — on a phone, poking out above the top of the table.
+    const cloth = node('clipPath', { id: 'shotcall-cloth' });
+    cloth.appendChild(node('rect', { x: PAD, y: PAD, width: TW, height: TH }));
+    d.appendChild(cloth);
+
     stage.appendChild(d);
   }
 
@@ -821,16 +859,24 @@ export function mount(el: HTMLElement): () => void {
     const aim = CELL * 1.45;
     const axp = ex + DIR.x * aim;
     const ayp = ey - DIR.y * aim;
-    g.appendChild(node('line', {
+    // The arrow is its own group so paint() can fade it once the ball has gone
+    // and there is a real path where the prediction was.
+    const arrow = node('g', { class: 'shotcall-aim' });
+    arrow.appendChild(node('line', {
       x1: ex + DIR.x * 11, y1: ey - DIR.y * 11, x2: axp, y2: ayp,
       stroke: '#eaf4f9', 'stroke-width': 2, 'stroke-opacity': 0.45,
       'stroke-linecap': 'round', 'stroke-dasharray': '6 5',
     }));
-    g.appendChild(node('path', {
+    arrow.appendChild(node('path', {
       d: 'M0 0 L-9 -3.6 L-9 3.6 Z', fill: '#eaf4f9', 'fill-opacity': 0.55,
       transform: `translate(${axp} ${ayp}) rotate(${(Math.atan2(-DIR.y, DIR.x) * 180) / Math.PI})`,
     }));
+    g.appendChild(arrow);
+    aimEl = arrow;
   }
+
+  /** The aim arrow, so paint() can hide it without redrawing the entry. */
+  let aimEl: SVGElement | null = null;
 
   function build() {
     while (svg.firstChild) svg.removeChild(svg.firstChild);
@@ -854,7 +900,11 @@ export function mount(el: HTMLElement): () => void {
     // can slide over both; the chalk and the pockets sit above it, because a
     // mechanical panel moving under the cloth should not cover the game.
     for (const name of ['slot', 'block', 'shutter'] as const) {
-      layers[name] = node('g', name === 'shutter' ? { 'pointer-events': 'none' } : {});
+      layers[name] = node('g', {
+        ...(name === 'shutter' ? { 'pointer-events': 'none' } : {}),
+        // the moving furniture never leaves the cloth; see defs()
+        ...(name === 'block' ? {} : { 'clip-path': 'url(#shotcall-cloth)' }),
+      });
       stage.appendChild(layers[name]!);
     }
 
@@ -878,8 +928,10 @@ export function mount(el: HTMLElement): () => void {
     });
     stage.appendChild(layers.mine);
 
-    for (const name of ['pockets', 'chalkOut', 'entry', 'puff', 'ball'] as const) {
-      layers[name] = node('g', name === 'puff' ? { 'pointer-events': 'none' } : {});
+    // fx is the pocket's ring when the ball drops; its own layer because ball
+    // and puff are both cleared wholesale by the things that paint them.
+    for (const name of ['pockets', 'chalkOut', 'entry', 'puff', 'ball', 'fx'] as const) {
+      layers[name] = node('g', name === 'puff' || name === 'fx' ? { 'pointer-events': 'none' } : {});
       stage.appendChild(layers[name]!);
     }
 
@@ -908,16 +960,34 @@ export function mount(el: HTMLElement): () => void {
     }
   }
 
-  function paintBall(x: number, y: number, sunk: boolean) {
+  /** `k` is the ball's size, 1 on the cloth and shrinking as it drops into a
+   *  pocket. The ball layer sits above the pockets, so a ball drawn smaller over
+   *  the hole reads as going down it. */
+  function paintBall(x: number, y: number, sunk: boolean, k = 1) {
     clear(layers.ball!);
     if (sunk) return; // it is in the pocket, out of sight
     layers.ball!.appendChild(node('ellipse', {
-      cx: x + 1.5, cy: y + 5, rx: 8, ry: 3.6, fill: '#000000', 'fill-opacity': 0.45,
+      cx: x + 1.5 * k, cy: y + 5 * k, rx: 8 * k, ry: 3.6 * k, fill: '#000000', 'fill-opacity': 0.45 * k,
     }));
-    layers.ball!.appendChild(node('circle', { cx: x, cy: y, r: 8, fill: '#dce9f0' }));
+    layers.ball!.appendChild(node('circle', { cx: x, cy: y, r: 8 * k, fill: '#dce9f0' }));
     layers.ball!.appendChild(node('circle', {
-      cx: x - 2.6, cy: y - 2.9, r: 2.7, fill: '#ffffff', 'fill-opacity': 0.8,
+      cx: x - 2.6 * k, cy: y - 2.9 * k, r: 2.7 * k, fill: '#ffffff', 'fill-opacity': 0.8,
     }));
+  }
+
+  /** One ring out from the pocket the ball dropped into. CSS does the motion, so
+   *  reduced motion zeroes it with everything else. */
+  function ringPocket(i: number) {
+    const p = POCKETS[i];
+    const g = layers.fx;
+    if (!p || !g) return;
+    clear(g);
+    const ring = node('circle', {
+      class: 'shotcall-ring', cx: sx(p.x), cy: sy(p.y), r: 12.5,
+      fill: 'none', stroke: '#e8c27a', 'stroke-width': 2.2,
+    });
+    ring.addEventListener('animationend', () => ring.remove(), { once: true });
+    g.appendChild(ring);
   }
 
   function paint(upto: number, tipX?: number, tipY?: number) {
@@ -943,6 +1013,8 @@ export function mount(el: HTMLElement): () => void {
     paintMarks(upto);
     const at = mid ? { x: tipX!, y: tipY! } : P[upto]!;
     paintBall(at.x, at.y, !mid && upto === LAST);
+    // The prediction goes as soon as the ball starts to make it real.
+    if (aimEl) aimEl.style.opacity = upto > 0 || mid ? '0' : '1';
   }
 
   /* ---- the re-rack -------------------------------------------------
@@ -1383,9 +1455,12 @@ export function mount(el: HTMLElement): () => void {
     born: number;
   };
 
-  function eraseLine(erased: Pt[][]) {
+  function eraseLine(erased: Pt[][], done?: () => void) {
     const g = layers.puff;
-    if (!g) return;
+    if (!g) {
+      done?.();
+      return;
+    }
     clear(g);
 
     const chunks: Chunk[] = [];
@@ -1404,7 +1479,10 @@ export function mount(el: HTMLElement): () => void {
         chunks.push({ el, midX: mid.x, midY: mid.y, alpha: 1, scrubs: 0 });
       }
     }
-    if (!chunks.length) return;
+    if (!chunks.length) {
+      done?.();
+      return;
+    }
 
     // It sits on the middle of the LONGEST stroke. The middle of the whole
     // collection would be a point between two strokes as often as not, and an
@@ -1529,6 +1607,7 @@ export function mount(el: HTMLElement): () => void {
       } else {
         puffRaf = 0;
         clear(g);
+        done?.();
       }
     };
 
@@ -1537,6 +1616,18 @@ export function mount(el: HTMLElement): () => void {
   }
 
   const tierOf = (score: number) => TIER_CUTS.filter((c) => score >= c).length;
+
+  /** The card goes blank the moment a re-rack starts, with the pockets. Left as
+   *  it was, four crosses and a share slip sat under a table being wiped for
+   *  two seconds, then jumped away when the new board landed. The record is not
+   *  touched: the day's guesses are already saved, and a practice board has none. */
+  function clearCard() {
+    guesses = [];
+    revealed = 0;
+    renderTallies();
+    scoreEl.hidden = true;
+    slipBox.hidden = true;
+  }
 
   /** Everything that must be true before a fresh board is playable. */
   function resetForNewBoard(tier: number) {
@@ -1587,6 +1678,7 @@ export function mount(el: HTMLElement): () => void {
     window.clearInterval(nextTimer);
     nextTimer = 0;
     nextEl.hidden = true;
+    clearCard();
     say('Re-racking&hellip;');
 
     if (reducedMotion()) {
@@ -1608,8 +1700,17 @@ export function mount(el: HTMLElement): () => void {
     stroke = [];
     save();
     paintMine();
-    syncWipe();
-    if (!reducedMotion() && erased.length) eraseLine(erased);
+    if (reducedMotion() || !erased.length) {
+      syncWipe();
+      return;
+    }
+    // The button stays put, greyed, until the eraser has finished. Hiding it at
+    // once reflowed the row while the line was still being rubbed out.
+    wipeBtn.disabled = true;
+    eraseLine(erased, () => {
+      wipeBtn.disabled = false;
+      syncWipe();
+    });
   });
 
   /**
@@ -1690,32 +1791,62 @@ export function mount(el: HTMLElement): () => void {
       return;
     }
 
+    /* One speed, every shot. The duration used to be a budget per leg, so a
+       short single leg crawled and the three-leg finish sprinted past it at
+       three times the pace; it is now distance over a fixed speed, clamped so a
+       one-dot leg is not a blink and a long finish is not a wait. The ball also
+       eases in over its first RAMP ms rather than leaving at full speed, and
+       stops dead at the cushion, which is right: the next miss picks it up. */
+    const SPEED = 0.6; // user units per ms
+    const RAMP = 90;
+    const DUR = Math.max(320, Math.min(2200, total / SPEED));
+    // velocity climbs linearly over RAMP then holds; V is what makes the
+    // distance come out to `total` at DUR
+    const V = total / (DUR - RAMP / 2);
+    const dist = (ms: number) => (ms < RAMP ? (V * ms * ms) / (2 * RAMP) : (V * RAMP) / 2 + V * (ms - RAMP));
+    const sinks = to === LAST;
+    const SINK = 170;
+    let rang = false;
+
     rolling = true;
     let t0: number | null = null;
-    const DUR = 430 * legs.length + 300;
     raf = requestAnimationFrame(function frame(t) {
       if (t0 === null) t0 = t;
-      const pr = Math.min(1, (t - t0) / DUR);
-      const travelled = pr * total;
-      let acc = 0;
-      let seg = 0;
-      while (seg < legs.length - 1 && acc + legs[seg]! < travelled) {
-        acc += legs[seg]!;
-        seg++;
-      }
-      const f = legs[seg] ? (travelled - acc) / legs[seg]! : 1;
-      const A = P[from + seg]!;
-      const B = P[from + seg + 1]!;
-      paint(from + seg, A.x + (B.x - A.x) * f, A.y + (B.y - A.y) * f);
-      if (pr < 1) {
+      const ms = t - t0;
+      if (ms < DUR) {
+        const travelled = Math.min(total, dist(ms));
+        let acc = 0;
+        let seg = 0;
+        while (seg < legs.length - 1 && acc + legs[seg]! < travelled) {
+          acc += legs[seg]!;
+          seg++;
+        }
+        const f = legs[seg] ? (travelled - acc) / legs[seg]! : 1;
+        const A = P[from + seg]!;
+        const B = P[from + seg + 1]!;
+        paint(from + seg, A.x + (B.x - A.x) * f, A.y + (B.y - A.y) * f);
         raf = requestAnimationFrame(frame);
-      } else {
-        raf = 0;
-        rolling = false;
-        revealed = to;
-        paint(to);
-        done?.();
+        return;
       }
+      // Into the pocket: the ball shrinks over the hole instead of vanishing
+      // between two frames, and the rim rings once as it goes.
+      if (sinks && ms < DUR + SINK) {
+        const s = (ms - DUR) / SINK;
+        if (!rang) {
+          rang = true;
+          ringPocket(ANSWER);
+        }
+        const end = P[to]!;
+        paint(to - 1, end.x, end.y); // the path complete, the ball still drawn
+        paintBall(end.x, end.y, false, 1 - easeOut(s) * 0.75);
+        raf = requestAnimationFrame(frame);
+        return;
+      }
+      raf = 0;
+      rolling = false;
+      revealed = to;
+      paint(to);
+      done?.();
     });
   }
 
@@ -1739,7 +1870,9 @@ export function mount(el: HTMLElement): () => void {
 
   /** A ruled-out pocket gets chalked out. It carries the most information on the
    *  board, so it has to read at a glance — a dulled rim did not. */
-  function chalkOut(i: number) {
+  /** `drawn` animates the two strokes on; off when a saved day is replayed or the
+   *  board is rebuilt for a turned phone, where a flourish would be a lie. */
+  function chalkOut(i: number, drawn = true) {
     const p = POCKETS[i]!;
     const cx = sx(p.x);
     const cy = sy(p.y);
@@ -1748,10 +1881,12 @@ export function mount(el: HTMLElement): () => void {
     layers.chalkOut!.appendChild(node('path', {
       d: `M${cx - r + j[0]!} ${cy - r + j[1]!}L${cx + r + j[2]!} ${cy + r + j[3]!}`,
       stroke: '#eaf4f9', 'stroke-width': 3, 'stroke-opacity': 0.88, 'stroke-linecap': 'round',
+      ...(drawn ? { class: 'shotcall-x' } : {}),
     }));
     layers.chalkOut!.appendChild(node('path', {
       d: `M${cx + r + j[1]!} ${cy - r + j[2]!}L${cx - r + j[3]!} ${cy + r + j[0]!}`,
       stroke: '#eaf4f9', 'stroke-width': 3, 'stroke-opacity': 0.88, 'stroke-linecap': 'round',
+      ...(drawn ? { class: 'shotcall-x second' } : {}),
     }));
   }
 
@@ -1763,13 +1898,13 @@ export function mount(el: HTMLElement): () => void {
     mouths[i]?.querySelector('text.lbl')?.setAttribute('fill', '#f0d79a');
   }
 
-  function mark(i: number, hit: boolean) {
+  function mark(i: number, hit: boolean, drawn = true) {
     const g = mouths[i];
     if (!g) return;
     g.classList.add('spent');
     g.setAttribute('aria-disabled', 'true');
     if (hit) litRim(i);
-    else chalkOut(i);
+    else chalkOut(i, drawn);
   }
 
   function guess(i: number) {
@@ -1926,7 +2061,7 @@ export function mount(el: HTMLElement): () => void {
     if (rec.guesses.length) {
       for (const i of rec.guesses) {
         guesses.push(i);
-        mark(i, i === ANSWER);
+        mark(i, i === ANSWER, false);
       }
       if (guesses.includes(ANSWER) || guesses.length >= TRIES) {
         revealed = LAST;
@@ -1988,6 +2123,7 @@ export function mount(el: HTMLElement): () => void {
     todayBtn.disabled = true;
     rackBtn.disabled = true;
     chalkBtn.disabled = true;
+    clearCard();
     say('Re-racking&hellip;');
 
     if (reducedMotion()) {
@@ -2031,7 +2167,7 @@ export function mount(el: HTMLElement): () => void {
   const onOrient = () => {
     if (portrait === PORTRAIT_MQ.matches || rolling || reracking) return;
     build();
-    for (const i of guesses) mark(i, i === ANSWER);
+    for (const i of guesses) mark(i, i === ANSWER, false);
     if (over) litRim(ANSWER); // a lost day still shows where it went
     paintMine();
     paint(revealed);

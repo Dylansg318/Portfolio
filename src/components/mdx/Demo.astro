@@ -32,17 +32,31 @@ interface Props {
   title?: string;
   /** Slug for the fullscreen link. */
   slug?: string;
+  /**
+   * The demo is the page (/play/<slug>). On a phone that page is edge to edge,
+   * so the card chrome comes off — no rounded corners or side border hanging
+   * at the screen edge — and the section's margin goes, because 40px of dark
+   * band above the game was the first thing a cold visitor saw. Both come
+   * back from `sm` up, where the page has gutters again.
+   */
+  flush?: boolean;
 }
 
-const { demo, title, slug } = Astro.props;
+const { demo, title, slug, flush = false } = Astro.props;
 ---
 
 {
   demo.kind === 'none' ? null : (
-    <section class="not-prose my-10" aria-label={title ?? 'Interactive demo'}>
+    <section
+      class:list={['not-prose', flush ? 'my-0 sm:my-10' : 'my-10']}
+      aria-label={title ?? 'Interactive demo'}
+    >
       {demo.kind === 'island' && (
         <div
-          class="relative min-h-64 overflow-hidden rounded-xl border border-border bg-surface"
+          class:list={[
+            'relative min-h-64 overflow-hidden border border-border bg-surface',
+            flush ? 'border-x-0 sm:rounded-xl sm:border-x' : 'rounded-xl',
+          ]}
           data-demo-island={demo.entry}
         >
           <div class="grid min-h-64 place-items-center p-8 text-sm text-ink-muted" data-demo-loading>
