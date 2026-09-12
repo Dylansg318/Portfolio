@@ -46,145 +46,42 @@ import { writeFileSync, mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-// The reflection rule lives beside the demo that ships it, so the boards dealt
-// here and the ball the browser rolls cannot disagree. See that file's header.
+// Both of these live beside the demo that ships them, so the boards dealt here
+// and the boards the browser builds for "Rack another" cannot diverge — same
+// reflection rule, same definition of a fair board. See those files' headers.
+import {
+  BOUNCES, CONTACTS, POCKET_COUNT, SIZES, BLOCK_SHAPES,
+  gcd, rimContext, blockPositions, inwardDirs, evaluate, difficulty,
+} from "../src/demos/shotcall/board.mjs";
+// for the assertion at the bottom, which re-traces every board that ships
 import { contacts } from "../src/demos/shotcall/trace.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT = resolve(HERE, "../src/demos/shotcall/boards.json");
 
-/* ------------------------------------------------------------------ shape */
-
-const BOUNCES = 3;            // fixed, so every day's score is out of the same 4
-const CONTACTS = BOUNCES + 1; // three bounces then the pocket
-const MIN_LEG = 2;            // a 1-dot leg is over before you can read it
-const MAX_LEG = 7;            // past this, counting dots stops being a puzzle
-const POCKETS = 14;           // 1-in-14 odds of a lucky first guess
-const MIN_POCKET_GAP = 2;     // rim steps, so two pockets never crowd each other
-const MIN_RING_DIST = 8;      // answer this far around the rim from the entry
-
-// coprime, and small enough that no leg runs long. See the header.
-const SIZES = [[10, 7], [11, 7], [11, 8], [11, 9], [10, 9], [12, 7], [13, 9], [13, 10]];
-const BLOCK_SHAPES = [[1, 1], [2, 1], [1, 2], [2, 2], [3, 1], [1, 3]];
-
-/* -------------------------------------------------------------- geometry */
-
-const key = (p) => `${p.x},${p.y}`;
-const gcd = (a, b) => (b ? gcd(b, a % b) : a);
-
-/** Pockets and bounces both live on lattice points; corners are excluded because
- *  they reflect both axes at once and read ambiguously on screen. */
-function rimClockwise(W, H) {
-  const out = [];
-  for (let x = 0; x <= W; x++) out.push({ x, y: H });
-  for (let y = H - 1; y >= 0; y--) out.push({ x: W, y });
-  for (let x = W - 1; x >= 0; x--) out.push({ x, y: 0 });
-  for (let y = 1; y < H; y++) out.push({ x: 0, y });
-  return out.filter((p) => !((p.x === 0 || p.x === W) && (p.y === 0 || p.y === H)));
-}
-
-function blockPositions(W, H, bw, bh) {
-  const out = [];
-  for (let bx = 1; bx + bw <= W - 1; bx++)
-    for (let by = 1; by + bh <= H - 1; by++)
-      out.push({ bx, by, bx2: bx + bw, by2: by + bh });
-  return out;
-}
-
-function inwardDirs(W, H, p) {
-  const out = [];
-  for (const dx of [-1, 1]) for (const dy of [-1, 1]) {
-    if (p.x === 0 && dx !== 1) continue;
-    if (p.x === W && dx !== -1) continue;
-    if (p.y === 0 && dy !== 1) continue;
-    if (p.y === H && dy !== -1) continue;
-    out.push({ x: dx, y: dy });
-  }
-  return out;
-}
-
-/** Fourteen pockets, evenly spread, never closer than MIN_POCKET_GAP, always
- *  including the answer and never the first three rails the ball touches. */
-function placePockets(rim, answerIdx, forbidden) {
-  const N = rim.length;
-  const taken = new Set([answerIdx]);
-  const ok = (i) => {
-    if (forbidden.has(key(rim[i])) || taken.has(i)) return false;
-    for (const t of taken) {
-      const d = Math.abs(t - i);
-      if (Math.min(d, N - d) < MIN_POCKET_GAP) return false;
-    }
-    return true;
-  };
-  for (let k = 1; k < POCKETS; k++) {
-    const target = (answerIdx + Math.round((k * N) / POCKETS)) % N;
-    let placed = false;
-    for (let off = 0; off <= 4 && !placed; off++) {
-      for (const s of off ? [off, -off] : [0]) {
-        const i = ((target + s) % N + N) % N;
-        if (ok(i)) { taken.add(i); placed = true; break; }
-      }
-    }
-    if (!placed) return null;
-  }
-  return [...taken].sort((a, b) => a - b).map((i) => rim[i]);
-}
-
 /* ------------------------------------------------------------ candidates */
 
+/**
+ * Every legal board, once per mirror family.
+ *
+ * The whole space, brute-forced: 8 sizes x 6 block shapes x every interior block
+ * position x every rim entry x its inward diagonals. The judging is board.mjs's
+ * `evaluate`, which the browser also uses, so this is the enumeration and
+ * nothing else.
+ */
 function candidates() {
   const out = [];
   for (const [W, H] of SIZES) {
-    if (gcd(W, H) !== 1) throw new Error(`${W}x${H} is not coprime — see the header`);
-    const rim = rimClockwise(W, H);
-    const idxOf = new Map(rim.map((p, i) => [key(p), i]));
+    if (gcd(W, H) !== 1) throw new Error(`${W}x${H} is not coprime — see board.mjs`);
+    const ctx = rimContext(W, H);
 
     for (const [bw, bh] of BLOCK_SHAPES)
       for (const B of blockPositions(W, H, bw, bh))
-        for (const entry of rim) {
+        for (const entry of ctx.rim) {
           if (entry.x >= B.bx && entry.x <= B.bx2 && entry.y >= B.by && entry.y <= B.by2) continue;
           for (const dir of inwardDirs(W, H, entry)) {
-            const hits = contacts(W, H, B, entry, dir, CONTACTS);
-            if (hits.length < CONTACTS) continue;
-            if (hits.some((c) => c.corner)) continue;
-
-            const answer = hits[CONTACTS - 1];
-            if (!answer.rim) continue;                     // a pocket must be on the rim
-            const before = hits.slice(0, CONTACTS - 1).map(key);
-            // if the ball crosses its own answer early it would have dropped there,
-            // and the board would be a lie
-            if (before.includes(key(answer)) || key(answer) === key(entry)) continue;
-
-            const legs = [];
-            let prev = 0;
-            for (const c of hits) { legs.push(c.t - prev); prev = c.t; }
-            if (Math.max(...legs) > MAX_LEG || Math.min(...legs) < MIN_LEG) continue;
-
-            const blockBounces = hits.slice(0, CONTACTS - 1).filter((c) => c.block).length;
-            if (blockBounces === 0) continue;              // an untouched block is furniture
-
-            const ai = idxOf.get(key(answer)), ei = idxOf.get(key(entry));
-            const d = Math.abs(ai - ei);
-            const ringDist = Math.min(d, rim.length - d);
-            if (ringDist < MIN_RING_DIST) continue;        // else instinct finds it
-
-            const pockets = placePockets(rim, ai, new Set([...before, key(entry)]));
-            if (!pockets) continue;
-
-            out.push({
-              W, H, B, entry, dir, legs, blockBounces, ringDist,
-              pockets,
-              answerIdx: pockets.findIndex((p) => key(p) === key(answer)),
-              // identity under the rectangle's four mirrors: a board and its
-              // reflection are the same puzzle, so they must not both ship
-              canon: [[0, 0], [1, 0], [0, 1], [1, 1]]
-                .map(([fx, fy]) => {
-                  const px = fx ? W - entry.x : entry.x, py = fy ? H - entry.y : entry.y;
-                  const bx = fx ? W - B.bx2 : B.bx, by = fy ? H - B.by2 : B.by;
-                  return `${W}x${H}:${px}:${py}:${bx}:${by}`;
-                })
-                .sort()[0] + "|" + legs.join("-")
-            });
+            const b = evaluate(W, H, B, entry, dir, ctx);
+            if (b) out.push(b);
           }
         }
   }
@@ -192,40 +89,6 @@ function candidates() {
   // one board per mirror family
   const seen = new Set();
   return out.filter((b) => (seen.has(b.canon) ? false : (seen.add(b.canon), true)));
-}
-
-/* ------------------------------------------------------------ difficulty */
-
-const clamp01 = (v) => Math.max(0, Math.min(1, v));
-const norm = (v, lo, hi) => clamp01((v - lo) / (hi - lo));
-
-/**
- * What actually makes a board hard, in the order it costs the player:
- *  - how many dots there are to count in total
- *  - the single worst leg, because one long count is where you slip
- *  - bounces off the block, which you must notice before you can predict
- *  - how uneven the legs are, which makes the route harder to hold in mind
- *  - how crowded the answer is, since a lone pocket is easier to land on
- * Distance from the entry is NOT scored: it is a gate above, not a gradient.
- */
-function difficulty(b) {
-  const total = b.legs.reduce((a, c) => a + c, 0);
-  const maxLeg = Math.max(...b.legs);
-  const spread = maxLeg - Math.min(...b.legs);
-  const N = b.pockets.length;
-  const crowding = b.pockets.filter((_, i) => {
-    if (i === b.answerIdx) return false;
-    const d = Math.abs(i - b.answerIdx);
-    return Math.min(d, N - d) <= 2;
-  }).length;
-
-  return clamp01(
-    0.32 * norm(total, 10, 26) +
-    0.24 * norm(maxLeg, 3, MAX_LEG) +
-    0.20 * norm(b.blockBounces, 0, 2) +
-    0.14 * norm(spread, 0, 4) +
-    0.10 * norm(crowding, 0, 4)
-  );
 }
 
 /* ------------------------------------------------- dealing a year of days */
@@ -255,6 +118,14 @@ function deal(pool, startISO, days) {
 
   // equal-count tiers, so "Saturday" always means the top seventh of what exists
   const per = Math.floor(scored.length / TIERS);
+
+  /* The six scores that separate the seven tiers. They ship, because a board the
+     browser builds for "Rack another" is scored by the same function but has no
+     idea where it falls in a pool it never saw — and a scorecard that says
+     "Tier 5/7" on a dealt board and nothing on a practice one would be a worse
+     scorecard than one that can always answer. */
+  const cuts = Array.from({ length: TIERS - 1 }, (_, i) =>
+    Math.round(scored[(i + 1) * per].score * 1e4) / 1e4);
   const tiers = Array.from({ length: TIERS }, (_, t) =>
     seededShuffle(scored.slice(t * per, t === TIERS - 1 ? scored.length : (t + 1) * per), 0x9e3779b9 + t));
 
@@ -285,7 +156,7 @@ function deal(pool, startISO, days) {
       t: tier
     };
   }
-  return { days: out, exhausted, scored };
+  return { days: out, exhausted, scored, cuts };
 }
 
 /* ------------------------------------------------------------------ main */
@@ -296,7 +167,7 @@ if (!pool.length) throw new Error("no boards survived the filters");
 
 const START = "2026-09-11";   // the day it went up; out-of-range dates fall back, see the demo
 const DAYS = 365;
-const { days, exhausted, scored } = deal(pool, START, DAYS);
+const { days, exhausted, scored, cuts } = deal(pool, START, DAYS);
 
 // every shipped board must still trace to the pocket it was built around
 let checked = 0;
@@ -319,7 +190,8 @@ writeFileSync(OUT, JSON.stringify({
   generated: new Date().toISOString().slice(0, 10),
   bounces: BOUNCES,
   tries: BOUNCES + 1,
-  pockets: POCKETS,
+  pockets: POCKET_COUNT,
+  tierCuts: cuts,
   note: "Answers are not stored. The client traces the path to animate it, so it derives the pocket.",
   days
 }, null, 0) + "\n");

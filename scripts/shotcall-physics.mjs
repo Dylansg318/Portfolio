@@ -30,6 +30,12 @@
  * drift: boards.json is committed output, so without this a stale or
  * hand-edited file would sail through the gate.
  *
+ * Finally it audits the RUNTIME generator — the one the browser calls for "Rack
+ * another" — by making boards with it and re-deriving every rule from scratch
+ * rather than trusting the function that claimed to enforce them. A practice
+ * board that quietly skipped a filter would be an easier game wearing the same
+ * clothes, and nothing else would catch it.
+ *
  * NOTE ON (7), because it looks like a fudge and is not. Time-reversing a bounce
  * means leaving the contact along the negated INCOMING ray, not the negated
  * outgoing one — those are different rays at every contact point. The first
@@ -42,7 +48,11 @@ import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { step } from "../src/demos/shotcall/trace.mjs";
+import { contacts, step } from "../src/demos/shotcall/trace.mjs";
+import {
+  CONTACTS, MIN_LEG, MAX_LEG, POCKET_COUNT, MIN_POCKET_GAP, MIN_RING_DIST,
+  SIZES, key, rimContext, randomBoard,
+} from "../src/demos/shotcall/board.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BOARDS = resolve(HERE, "../src/demos/shotcall/boards.json");
@@ -187,6 +197,84 @@ console.log("\n" + (badBoards === 0
   ? `all ${traced} shipped boards trace to their pocket`
   : `${badBoards} shipped board(s) do not trace — regenerate with npm run shotcall:boards`));
 
+/* ------------------------------------------- the boards made in the browser --
+   Rejection sampling means every practice board is a fresh roll of the dice, so
+   the only way to trust it is to check the dice. Each rule below is re-derived
+   here, deliberately NOT by calling board.mjs's own evaluate(). */
+
+function seeded(seed) {
+  let s = seed >>> 0;
+  return () => {
+    s ^= s << 13; s >>>= 0; s ^= s >> 17; s ^= s << 5; s >>>= 0;
+    return s / 4294967296;
+  };
+}
+
+const rand = seeded(0x5ca1ab1e);
+const gen = { made: 0, failed: 0 };
+const genFails = {
+  contacts: 0, corner: 0, answerOffRim: 0, answerNotAPocket: 0, earlyPocket: 0,
+  legs: 0, blockUntouched: 0, ringDist: 0, pocketCount: 0, pocketOffRim: 0, pocketGap: 0,
+};
+const PER_SIZE = 250;
+
+for (const [W, H] of SIZES) {
+  const { rim, idxOf } = rimContext(W, H);
+  const onRim = new Set(rim.map(key));
+
+  for (let i = 0; i < PER_SIZE; i++) {
+    const b = randomBoard(W, H, rand);
+    if (!b) { gen.failed++; continue; }
+    gen.made++;
+    let bad = false;
+    const fail = (k) => { genFails[k]++; bad = true; };
+
+    const hits = contacts(W, H, b.B, b.entry, b.dir, CONTACTS);
+    if (hits.length < CONTACTS) fail("contacts");
+    else {
+      if (hits.some((c) => c.corner)) fail("corner");
+      const answer = hits[CONTACTS - 1];
+      if (!answer.rim) fail("answerOffRim");
+      if (!b.pockets.some((p) => key(p) === key(answer))) fail("answerNotAPocket");
+      if (b.pockets[b.answerIdx] === undefined || key(b.pockets[b.answerIdx]) !== key(answer))
+        fail("answerNotAPocket");
+      if (hits.slice(0, CONTACTS - 1).some((c) => b.pockets.some((p) => key(p) === key(c))))
+        fail("earlyPocket");
+
+      const legs = [];
+      let prev = 0;
+      for (const c of hits) { legs.push(c.t - prev); prev = c.t; }
+      if (Math.min(...legs) < MIN_LEG || Math.max(...legs) > MAX_LEG) fail("legs");
+      if (!hits.slice(0, CONTACTS - 1).some((c) => c.block)) fail("blockUntouched");
+
+      const ai = idxOf.get(key(answer)), ei = idxOf.get(key(b.entry));
+      const d = Math.abs(ai - ei);
+      if (Math.min(d, rim.length - d) < MIN_RING_DIST) fail("ringDist");
+    }
+
+    if (b.pockets.length !== POCKET_COUNT || new Set(b.pockets.map(key)).size !== POCKET_COUNT)
+      fail("pocketCount");
+    if (!b.pockets.every((p) => onRim.has(key(p)))) fail("pocketOffRim");
+    const idx = b.pockets.map((p) => idxOf.get(key(p))).sort((x, y) => x - y);
+    for (let j = 0; j < idx.length; j++) {
+      const a = idx[j], c = idx[(j + 1) % idx.length];
+      const d = Math.abs(c - a);
+      if (Math.min(d, rim.length - d) < MIN_POCKET_GAP) { fail("pocketGap"); break; }
+    }
+
+    if (bad) gen.failed++;
+  }
+}
+
+console.log(`\nruntime generator  (${gen.made.toLocaleString()} boards, ${PER_SIZE} per size)`);
+const genChecks = Object.entries(genFails);
+const genBad = genChecks.reduce((a, c) => a + c[1], 0);
+if (genBad === 0) {
+  console.log(`  PASS  every rule re-derived and held on all ${gen.made.toLocaleString()} boards`);
+} else {
+  for (const [name, n] of genChecks) if (n) console.log(`  FAIL  ${name}  (${n})`);
+}
+
 // the reference board, traced and printed for the record
 const W = 11, H = 9, B = { bx: 3, by: 3, bx2: 5, by2: 4 };
 const ref = run(W, H, B, { x: 1, y: 0, dx: 1, dy: 1 }, 16);
@@ -200,4 +288,4 @@ console.log("  legs: " + (() => {
   return ts.join("-");
 })());
 
-if (bad > 0 || badBoards > 0) process.exit(1);
+if (bad > 0 || badBoards > 0 || genBad > 0) process.exit(1);

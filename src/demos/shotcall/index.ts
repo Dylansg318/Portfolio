@@ -67,6 +67,7 @@
  */
 
 import { contacts } from './trace.mjs';
+import { difficulty, randomBoard } from './board.mjs';
 import data from './boards.json';
 
 /** One day's board, as scripts/shotcall-boards.mjs emits it. Arrays, not objects, because
@@ -89,6 +90,10 @@ type Day = {
 type Pt = { x: number; y: number };
 
 const DAYS = data.days as Record<string, Day>;
+/** The six scores that separate the seven tiers, from the dealt pool. Lets a
+ *  board built in the browser name its own tier on the same scale. */
+const TIER_CUTS = (data.tierCuts ?? []) as number[];
+const TIERS = TIER_CUTS.length + 1;
 const DATES = Object.keys(DAYS).sort();
 const BOUNCES = data.bounces;
 const TRIES = data.tries;
@@ -222,7 +227,9 @@ const CSS = `
 }
 /* The tally row is rebuilt with innerHTML on every guess, so the chalk toggle
    is its sibling and not its child. */
-.shotcall-row { display: flex; align-items: center; gap: 7px; margin: 0 0 9px; }
+/* Wraps because a phone cannot fit four tally boxes plus Rack another plus
+   Chalk on one line, and an overflowing row would push a control off the card. */
+.shotcall-row { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin: 0 0 9px; }
 .shotcall-tallies { display: flex; gap: 7px; align-items: center; margin-right: auto; }
 
 /* The pocket letters, in the same face as the ball numbers. */
@@ -249,6 +256,12 @@ const CSS = `
 .shotcall-chalk:hover:not(:disabled) { border-color: var(--stock-ink); }
 .shotcall-chalk[aria-pressed="true"] { background: var(--stock-ink); color: var(--stock); border-color: var(--stock-ink); }
 .shotcall-chalk:disabled { opacity: 0.4; cursor: default; }
+/* The pills are 29px tall with a mouse, which is fine to click and under the
+   44px a finger wants. Grown on coarse pointers only, so the paper scorecard
+   keeps its proportions on a desktop. */
+@media (pointer: coarse) {
+  .shotcall-chalk { padding-block: 0.72rem; }
+}
 
 /* Only while chalk is armed, so a finger can scroll the page the rest of the time. */
 .shotcall.chalking .shotcall-table { cursor: crosshair; touch-action: none; }
@@ -360,19 +373,33 @@ export function mount(el: HTMLElement): () => void {
   const iso = localISO(today);
   const { day, dealt } = pickDay(iso);
 
+  /* The table size is fixed for the life of the mount, and every later board is
+     built on it. That is not laziness: "Rack another" re-racks THIS table, and a
+     mechanical re-rack that silently changed the size of the furniture would not
+     be a re-rack. It also means the frame, the projection and the letters are all
+     stable, and only the block, the entry and the pockets move. */
   const W = day.s[0]!;
   const H = day.s[1]!;
-  const BLOCK = { bx: day.b[0]!, by: day.b[1]!, bx2: day.b[2]!, by2: day.b[3]! };
-  const ENTRY = { x: day.e[0]!, y: day.e[1]! };
-  const DIR = { x: day.d[0]!, y: day.d[1]! };
-  const POCKETS = day.p.map(([x, y]) => ({ x: x!, y: y! }));
+
+  let BLOCK = { bx: day.b[0]!, by: day.b[1]!, bx2: day.b[2]!, by2: day.b[3]! };
+  let ENTRY = { x: day.e[0]!, y: day.e[1]! };
+  let DIR = { x: day.d[0]!, y: day.d[1]! };
+  let POCKETS = day.p.map(([x, y]) => ({ x: x!, y: y! }));
 
   // The path, and therefore the answer, derived rather than read. See the header.
-  const hits = contacts(W, H, BLOCK, ENTRY, DIR, CONTACTS);
-  const PATH = [ENTRY, ...hits.map((c) => ({ x: c.x, y: c.y }))];
-  const LAST = PATH.length - 1;
-  const finalPoint = PATH[LAST]!;
-  const ANSWER = POCKETS.findIndex((p) => p.x === finalPoint.x && p.y === finalPoint.y);
+  let PATH: Pt[] = [];
+  let LAST = 0;
+  let ANSWER = -1;
+
+  /** Re-derives everything that follows from a board. */
+  function deriveBoard() {
+    const hits = contacts(W, H, BLOCK, ENTRY, DIR, CONTACTS);
+    PATH = [ENTRY, ...hits.map((c) => ({ x: c.x, y: c.y }))];
+    LAST = PATH.length - 1;
+    const end = PATH[LAST]!;
+    ANSWER = POCKETS.findIndex((p) => p.x === end.x && p.y === end.y);
+  }
+  deriveBoard();
 
   if (ANSWER === -1) {
     // Impossible for a shipped board — scripts/shotcall-physics.mjs replays all 365
@@ -413,10 +440,11 @@ export function mount(el: HTMLElement): () => void {
       </div>
 
       <div class="shotcall-card">
-        <span class="shotcall-stamp">Tier ${day.t + 1}/7</span>
-        <p class="shotcall-card-head">Scorecard &middot; ${dateLabel}</p>
+        <span class="shotcall-stamp" data-stamp>Tier ${day.t + 1}/${TIERS}</span>
+        <p class="shotcall-card-head">Scorecard &middot; <span data-cardhead>${dateLabel}</span></p>
         <div class="shotcall-row">
           <div class="shotcall-tallies" data-tallies aria-label="Tries used"></div>
+          <button class="shotcall-chalk" type="button" data-rack hidden>Rack another</button>
           <button class="shotcall-chalk" type="button" data-wipe hidden>Wipe</button>
           <button class="shotcall-chalk" type="button" data-chalk aria-pressed="false">Chalk</button>
         </div>
@@ -441,6 +469,9 @@ export function mount(el: HTMLElement): () => void {
   const copyBtn = el.querySelector<HTMLButtonElement>('[data-copy]')!;
   const chalkBtn = el.querySelector<HTMLButtonElement>('[data-chalk]')!;
   const wipeBtn = el.querySelector<HTMLButtonElement>('[data-wipe]')!;
+  const rackBtn = el.querySelector<HTMLButtonElement>('[data-rack]')!;
+  const stampEl = el.querySelector<HTMLElement>('[data-stamp]')!;
+  const cardHeadEl = el.querySelector<HTMLElement>('[data-cardhead]')!;
   const scoreEl = el.querySelector<HTMLElement>('[data-score]')!;
   const root = el.querySelector<HTMLElement>('.shotcall')!;
 
@@ -473,6 +504,10 @@ export function mount(el: HTMLElement): () => void {
   let drawn: Pt[] = [];
   /** Set by a stroke so the click that follows it does not also spend a try. */
   let swallowClick = false;
+  /** True once the day's board has been set aside for a table-made one. */
+  let practice = false;
+  /** Mirror-family ids already shown, so "Rack another" never repeats itself. */
+  const seen = new Set<string>();
 
   const mouths: SVGElement[] = [];
   const layers: Record<string, SVGElement> = {};
@@ -485,6 +520,7 @@ export function mount(el: HTMLElement): () => void {
 
   const storeKey = `shotcall:${iso}`;
   const save = () => {
+    if (practice) return; // a practice board is not the day's record
     try {
       // Rounded to whole user units: sub-pixel precision in a hand-drawn line is
       // noise, and it roughly halves what a long stroke costs to store.
@@ -551,7 +587,19 @@ export function mount(el: HTMLElement): () => void {
   function defs() {
     const d = node('defs');
 
-    const lit = node('radialGradient', { id: 'shotcall-lit', cx: '50%', cy: '40%', r: '74%' });
+    /* userSpaceOnUse, not the default objectBoundingBox, and that is load-bearing.
+       The re-rack slides cloth panels over the cloth, and a gradient measured
+       against each shape's own box paints a small panel with the whole sweep of
+       light squeezed into it — the panel then reads as a differently-lit patch
+       instead of as more table. Anchored to the table's own coordinates, a panel
+       is pixel-identical to what it covers and only its edge gives it away. */
+    const lit = node('radialGradient', {
+      id: 'shotcall-lit',
+      gradientUnits: 'userSpaceOnUse',
+      cx: PAD + TW / 2,
+      cy: PAD + TH * 0.4,
+      r: 0.62 * Math.hypot(TW, TH),
+    });
     lit.appendChild(node('stop', { offset: '0', 'stop-color': '#3f8474' }));
     lit.appendChild(node('stop', { offset: '0.62', 'stop-color': '#336a5b' }));
     lit.appendChild(node('stop', { offset: '1', 'stop-color': '#265045' }));
@@ -566,12 +614,13 @@ export function mount(el: HTMLElement): () => void {
     svg.appendChild(d);
   }
 
-  function build() {
-    while (svg.firstChild) svg.removeChild(svg.firstChild);
-    mouths.length = 0;
-    svg.setAttribute('viewBox', `0 0 ${TW + PAD * 2} ${TH + PAD * 2}`);
-    defs();
+  /* ---- the table, in layers ----------------------------------------
+     Split so the re-rack can drive the moving parts. Everything that depends on
+     the board — the dots, the block, the pockets, the entry mark — clears and
+     redraws its own layer; everything that does not (the cabinet, the frame, the
+     cloth) is built once and never touched again. */
 
+  function furniture() {
     // cabinet shadow, walnut frame, then the cloth
     svg.appendChild(node('rect', {
       x: PAD - RAIL - 7, y: PAD - RAIL - 5,
@@ -591,35 +640,140 @@ export function mount(el: HTMLElement): () => void {
       x: PAD - 4, y: PAD - 4, width: TW + 8, height: TH + 8, rx: 3, fill: '#1b3a32',
     }));
     svg.appendChild(node('rect', { x: PAD, y: PAD, width: TW, height: TH, fill: 'url(#shotcall-lit)' }));
+  }
 
-    // the spots you count
+  /** The spots you count. Skips whatever the block is currently standing on. */
+  function drawDots(hideAt = BLOCK) {
+    const g = layers.dots!;
+    clear(g);
     for (let gx = 1; gx < W; gx++) {
       for (let gy = 1; gy < H; gy++) {
-        if (gx >= BLOCK.bx && gx <= BLOCK.bx2 && gy >= BLOCK.by && gy <= BLOCK.by2) continue;
-        svg.appendChild(node('circle', {
+        if (hideAt && gx >= hideAt.bx && gx <= hideAt.bx2 && gy >= hideAt.by && gy <= hideAt.by2) continue;
+        g.appendChild(node('circle', {
           cx: sx(gx), cy: sy(gy), r: 1.35, fill: '#b9d6cc', 'fill-opacity': 0.34,
         }));
       }
     }
+  }
 
-    // the block: a walnut wedge bolted to the cloth
-    const bx = sx(BLOCK.bx);
-    const by = sy(BLOCK.by2);
-    const bw = (BLOCK.bx2 - BLOCK.bx) * CELL;
-    const bh = (BLOCK.by2 - BLOCK.by) * CELL;
-    svg.appendChild(node('rect', {
+  const blockBox = (b: typeof BLOCK) => ({
+    x: sx(b.bx), y: sy(b.by2), w: (b.bx2 - b.bx) * CELL, h: (b.by2 - b.by) * CELL,
+  });
+
+  /** The block: a walnut wedge bolted to the cloth. */
+  function drawBlock(at = BLOCK) {
+    const g = layers.block!;
+    clear(g);
+    g.removeAttribute('transform');
+    g.removeAttribute('opacity');
+    const { x: bx, y: by, w: bw, h: bh } = blockBox(at);
+    g.appendChild(node('rect', {
       x: bx + 1, y: by + 5, width: bw, height: bh, rx: 4, fill: '#000000', 'fill-opacity': 0.42,
     }));
-    svg.appendChild(node('rect', { x: bx, y: by, width: bw, height: bh, rx: 4, fill: 'url(#shotcall-grain)' }));
-    svg.appendChild(node('rect', {
+    g.appendChild(node('rect', { x: bx, y: by, width: bw, height: bh, rx: 4, fill: 'url(#shotcall-grain)' }));
+    g.appendChild(node('rect', {
       x: bx + 3, y: by + 3, width: bw - 6, height: bh - 6, rx: 2,
       fill: 'none', stroke: '#9c7551', 'stroke-width': 1, 'stroke-opacity': 0.6,
     }));
     // two bolts, inset from the short ends whichever way round the block is
     const boltInset = Math.min(9, bw / 2 - 2);
-    for (const p of [[bx + boltInset, by + bh / 2], [bx + bw - boltInset, by + bh / 2]]) {
-      svg.appendChild(node('circle', { cx: p[0]!, cy: p[1]!, r: 2.2, fill: '#3a281d' }));
-      svg.appendChild(node('circle', { cx: p[0]!, cy: p[1]! - 0.7, r: 1.5, fill: '#b08d57' }));
+    for (const q of [[bx + boltInset, by + bh / 2], [bx + bw - boltInset, by + bh / 2]]) {
+      g.appendChild(node('circle', { cx: q[0]!, cy: q[1]!, r: 2.2, fill: '#3a281d' }));
+      g.appendChild(node('circle', { cx: q[0]!, cy: q[1]! - 0.7, r: 1.5, fill: '#b08d57' }));
+    }
+  }
+
+  /** Pockets: brass rim, real hole, letter in the hole. */
+  function drawPockets() {
+    const g = layers.pockets!;
+    clear(g);
+    mouths.length = 0;
+
+    POCKETS.forEach((p, i) => {
+      const mouth = node('g', { class: 'shotcall-pk', role: 'button', tabindex: 0 });
+      const label = document.createElementNS(NS, 'title');
+      label.textContent = `Pocket ${LETTERS[i]}`;
+      mouth.appendChild(label);
+      mouth.appendChild(node('circle', { cx: sx(p.x), cy: sy(p.y), r: HIT_R, fill: 'transparent' }));
+      mouth.appendChild(node('circle', {
+        cx: sx(p.x), cy: sy(p.y) + 1.5, r: 13, fill: '#000000', 'fill-opacity': 0.55,
+      }));
+      mouth.appendChild(node('circle', {
+        class: 'lip', cx: sx(p.x), cy: sy(p.y), r: 12.5,
+        fill: '#070a09', stroke: '#b08d57', 'stroke-width': 2.6,
+      }));
+      mouth.appendChild(node('circle', {
+        cx: sx(p.x), cy: sy(p.y) - 2, r: 8.5, fill: '#000000', 'fill-opacity': 0.8,
+      }));
+
+      const tag = node('text', {
+        class: 'lbl',
+        x: sx(p.x),
+        y: sy(p.y) - 1,
+        'font-size': LABEL_SIZE,
+        fill: '#bd9a63',
+        'text-anchor': 'middle',
+        'dominant-baseline': 'central',
+        'pointer-events': 'none',
+      });
+      tag.textContent = LETTERS[i] ?? '?';
+      mouth.appendChild(tag);
+
+      g.appendChild(mouth);
+      mouths.push(mouth);
+      mouth.addEventListener('click', () => guess(i));
+      mouth.addEventListener('keydown', (ev) => {
+        const k = (ev as KeyboardEvent).key;
+        if (k === 'Enter' || k === ' ') {
+          ev.preventDefault();
+          guess(i);
+        }
+      });
+    });
+  }
+
+  /** Where it came in, and which way it is pointed — chalked on the cloth. */
+  function drawEntry() {
+    const g = layers.entry!;
+    clear(g);
+    g.removeAttribute('opacity');
+    const ex = sx(ENTRY.x);
+    const ey = sy(ENTRY.y);
+    const onSide = ENTRY.x === 0 || ENTRY.x === W;
+    g.appendChild(node('rect', {
+      x: onSide ? (ENTRY.x === 0 ? ex - RAIL + 3 : ex) : ex - 3,
+      y: onSide ? ey - 3 : (ENTRY.y === 0 ? ey : ey - RAIL + 3),
+      width: onSide ? RAIL - 3 : 6,
+      height: onSide ? 6 : RAIL - 3,
+      rx: 3, fill: '#b08d57',
+    }));
+    const aim = CELL * 1.45;
+    const axp = ex + DIR.x * aim;
+    const ayp = ey - DIR.y * aim;
+    g.appendChild(node('line', {
+      x1: ex + DIR.x * 11, y1: ey - DIR.y * 11, x2: axp, y2: ayp,
+      stroke: '#eaf4f9', 'stroke-width': 2, 'stroke-opacity': 0.45,
+      'stroke-linecap': 'round', 'stroke-dasharray': '6 5',
+    }));
+    g.appendChild(node('path', {
+      d: 'M0 0 L-9 -3.6 L-9 3.6 Z', fill: '#eaf4f9', 'fill-opacity': 0.55,
+      transform: `translate(${axp} ${ayp}) rotate(${(Math.atan2(-DIR.y, DIR.x) * 180) / Math.PI})`,
+    }));
+  }
+
+  function build() {
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    mouths.length = 0;
+    svg.setAttribute('viewBox', `0 0 ${TW + PAD * 2} ${TH + PAD * 2}`);
+    defs();
+    furniture();
+
+    // z-order, bottom to top. The shutter sits above the slot and the block so it
+    // can slide over both; the chalk and the pockets sit above it, because a
+    // mechanical panel moving under the cloth should not cover the game.
+    for (const name of ['dots', 'slot', 'block', 'shutter'] as const) {
+      layers[name] = node('g', name === 'shutter' ? { 'pointer-events': 'none' } : {});
+      svg.appendChild(layers[name]!);
     }
 
     // the chalk line: everything seen so far sits back, the last leg stays bright
@@ -642,79 +796,15 @@ export function mount(el: HTMLElement): () => void {
     });
     svg.appendChild(layers.mine);
 
-    // pockets: brass rim, real hole
-    POCKETS.forEach((p, i) => {
-      const g = node('g', { class: 'shotcall-pk', role: 'button', tabindex: 0 });
-      const label = document.createElementNS(NS, 'title');
-      label.textContent = `Pocket ${LETTERS[i]}`;
-      g.appendChild(label);
-      g.appendChild(node('circle', { cx: sx(p.x), cy: sy(p.y), r: HIT_R, fill: 'transparent' }));
-      g.appendChild(node('circle', {
-        cx: sx(p.x), cy: sy(p.y) + 1.5, r: 13, fill: '#000000', 'fill-opacity': 0.55,
-      }));
-      g.appendChild(node('circle', {
-        class: 'lip', cx: sx(p.x), cy: sy(p.y), r: 12.5,
-        fill: '#070a09', stroke: '#b08d57', 'stroke-width': 2.6,
-      }));
-      g.appendChild(node('circle', {
-        cx: sx(p.x), cy: sy(p.y) - 2, r: 8.5, fill: '#000000', 'fill-opacity': 0.8,
-      }));
+    for (const name of ['pockets', 'chalkOut', 'entry', 'puff', 'ball'] as const) {
+      layers[name] = node('g', name === 'puff' ? { 'pointer-events': 'none' } : {});
+      svg.appendChild(layers[name]!);
+    }
 
-      const tag = node('text', {
-        class: 'lbl',
-        x: sx(p.x),
-        y: sy(p.y) - 1,
-        'font-size': LABEL_SIZE,
-        fill: '#bd9a63',
-        'text-anchor': 'middle',
-        'dominant-baseline': 'central',
-        'pointer-events': 'none',
-      });
-      tag.textContent = LETTERS[i] ?? '?';
-      g.appendChild(tag);
-
-      svg.appendChild(g);
-      mouths.push(g);
-      g.addEventListener('click', () => guess(i));
-      g.addEventListener('keydown', (ev) => {
-        const k = (ev as KeyboardEvent).key;
-        if (k === 'Enter' || k === ' ') {
-          ev.preventDefault();
-          guess(i);
-        }
-      });
-    });
-    layers.chalkOut = node('g');
-    svg.appendChild(layers.chalkOut);
-
-    // where it came in, and which way it is pointed — chalked on the cloth
-    const ex = sx(ENTRY.x);
-    const ey = sy(ENTRY.y);
-    const onSide = ENTRY.x === 0 || ENTRY.x === W;
-    svg.appendChild(node('rect', {
-      x: onSide ? (ENTRY.x === 0 ? ex - RAIL + 3 : ex) : ex - 3,
-      y: onSide ? ey - 3 : (ENTRY.y === 0 ? ey : ey - RAIL + 3),
-      width: onSide ? RAIL - 3 : 6,
-      height: onSide ? 6 : RAIL - 3,
-      rx: 3, fill: '#b08d57',
-    }));
-    const aim = CELL * 1.45;
-    const axp = ex + DIR.x * aim;
-    const ayp = ey - DIR.y * aim;
-    svg.appendChild(node('line', {
-      x1: ex + DIR.x * 11, y1: ey - DIR.y * 11, x2: axp, y2: ayp,
-      stroke: '#eaf4f9', 'stroke-width': 2, 'stroke-opacity': 0.45,
-      'stroke-linecap': 'round', 'stroke-dasharray': '6 5',
-    }));
-    svg.appendChild(node('path', {
-      d: 'M0 0 L-9 -3.6 L-9 3.6 Z', fill: '#eaf4f9', 'fill-opacity': 0.55,
-      transform: `translate(${axp} ${ayp}) rotate(${(Math.atan2(-DIR.y, DIR.x) * 180) / Math.PI})`,
-    }));
-
-    layers.puff = node('g', { 'pointer-events': 'none' });
-    svg.appendChild(layers.puff);
-    layers.ball = node('g');
-    svg.appendChild(layers.ball);
+    drawDots();
+    drawBlock();
+    drawPockets();
+    drawEntry();
     paintMine();
     paint(revealed);
   }
@@ -774,6 +864,287 @@ export function mount(el: HTMLElement): () => void {
     paintBall(at.x, at.y, !mid && upto === LAST);
   }
 
+  /* ---- the re-rack -------------------------------------------------
+     The daily board is one board a day. Past that, the table builds its own:
+     board.mjs's randomBoard, on this same table, held to the same filters the
+     dealt year was held to — so a practice board is a real board and not a
+     softer one.
+
+     The transition is the point. A mechanical table clears itself: the pockets
+     shut, the block drops through the cloth, a panel slides over the hole it
+     left, another panel opens somewhere else, the block comes back up through
+     it, and the new pockets are fired out from the middle and bounce off the
+     rails until they settle into the rim.
+
+     That last part is the game's own mathematics used as an animation. To send a
+     pocket from the centre to an exact spot on the rim with real bounces on the
+     way, take the straight line to a MIRRORED image of the target and fold the
+     result back into the table — which is the unfolding trick that makes a
+     45-degree billiard path solvable in closed form, and the same idea as the
+     diamond system a player uses on a real table. Simulated bounces would land
+     wherever they landed; folded ones arrive exactly where the pocket belongs. */
+
+  /** Triangle wave: an unbounded mirrored coordinate, folded back into [0, L]. */
+  const fold = (u: number, L: number) => {
+    const period = 2 * L;
+    const r = ((u % period) + period) % period;
+    return r <= L ? r : period - r;
+  };
+  /** The image of t after m mirrorings of a length-L interval. */
+  const mirrorImage = (t: number, m: number, L: number) =>
+    m * L + (m % 2 === 0 ? t : L - t);
+
+  const easeOut = (r: number) => 1 - Math.pow(1 - r, 2.6);
+  const easeInOut = (r: number) => (r < 0.5 ? 2 * r * r : 1 - Math.pow(-2 * r + 2, 2) / 2);
+  /** 0 before `a`, 1 after `b`, eased between. */
+  const span = (ms: number, a: number, b: number) =>
+    Math.max(0, Math.min(1, (ms - a) / (b - a)));
+
+  const RERACK = { pockets: 260, sink: 540, seal: 880, open: 1160, rise: 1480, fly: 2320 };
+
+  let reracking = false;
+
+  /** A dark recess in the cloth, the size of a block footprint. */
+  function slotRect(box: { x: number; y: number; w: number; h: number }) {
+    const g = node('g', {});
+    g.appendChild(node('rect', {
+      x: box.x, y: box.y, width: box.w, height: box.h, rx: 3, fill: '#0a1512',
+    }));
+    g.appendChild(node('rect', {
+      x: box.x, y: box.y, width: box.w, height: 5, fill: '#000000', 'fill-opacity': 0.55,
+    }));
+    return g;
+  }
+
+  /** A cloth panel with a visible leading edge, so you can see it move. */
+  function shutterPanel(box: { x: number; y: number; w: number; h: number }) {
+    const g = node('g', {});
+    g.appendChild(node('rect', {
+      x: box.x - 1, y: box.y - 1, width: box.w + 2, height: box.h + 2,
+      fill: 'url(#shotcall-lit)',
+    }));
+    g.appendChild(node('rect', {
+      x: box.x + box.w - 1.6, y: box.y - 1, width: 1.6, height: box.h + 2,
+      fill: '#14312a',
+    }));
+    g.appendChild(node('rect', {
+      x: box.x + box.w, y: box.y - 1, width: 4, height: box.h + 2,
+      fill: '#000000', 'fill-opacity': 0.28,
+    }));
+    return g;
+  }
+
+  function rerack(next: ReturnType<typeof randomBoard>, done: () => void) {
+    if (!next) {
+      done();
+      return;
+    }
+    const oldBox = blockBox(BLOCK);
+    const nextBlock = next.B;
+    const newBox = blockBox(nextBlock);
+    const nextPockets = next.pockets.map((q) => ({ x: q.x, y: q.y }));
+
+    // where each new pocket comes from, and how many rails it clips on the way
+    const centre = { x: TW / 2, y: TH / 2 };
+    const flights = nextPockets.map(() => ({
+      mx: Math.floor(Math.random() * 3),
+      my: Math.floor(Math.random() * 3),
+      delay: Math.random() * 240,
+    }));
+    for (const f of flights) if (f.mx + f.my === 0) (Math.random() < 0.5 ? (f.mx = 1) : (f.my = 1));
+
+    reracking = true;
+    layers.pockets!.setAttribute('pointer-events', 'none');
+
+    const oldSlot = slotRect(oldBox);
+    layers.slot!.appendChild(oldSlot);
+    oldSlot.setAttribute('opacity', '0');
+
+    const seal = shutterPanel(oldBox);
+    layers.shutter!.appendChild(seal);
+    seal.setAttribute('opacity', '0');
+
+    let newSlot: SVGElement | null = null;
+    let reveal: SVGElement | null = null;
+    let sealing = true;
+    let swapped = false;
+    let flying = false;
+
+    let t0: number | null = null;
+    const frame = (t: number) => {
+      if (t0 === null) t0 = t;
+      const ms = t - t0;
+
+      // 1. the pockets shut, and everything drawn on the cloth goes with them
+      const p1 = span(ms, 0, RERACK.pockets);
+      if (p1 < 1 || !swapped) {
+        mouths.forEach((m, i) => {
+          const local = Math.max(0, Math.min(1, (ms - i * 9) / RERACK.pockets));
+          const k = 1 - easeInOut(local);
+          const p = POCKETS[i];
+          if (!p) return;
+          m.setAttribute(
+            'transform',
+            `translate(${sx(p.x)} ${sy(p.y)}) scale(${Math.max(0.001, k)}) translate(${-sx(p.x)} ${-sy(p.y)})`,
+          );
+          m.setAttribute('opacity', String(k));
+        });
+        for (const name of ['past', 'hot', 'marks', 'mine', 'chalkOut', 'ball', 'entry'] as const)
+          layers[name]!.setAttribute('opacity', String(1 - p1));
+      }
+
+      // 2. the block drops through the cloth
+      const p2 = span(ms, RERACK.pockets - 40, RERACK.sink);
+      if (p2 > 0 && !swapped) {
+        oldSlot.setAttribute('opacity', '1');
+        const e = easeInOut(p2);
+        layers.block!.setAttribute(
+          'transform',
+          `translate(0 ${e * 13}) translate(${oldBox.x + oldBox.w / 2} ${oldBox.y + oldBox.h / 2}) ` +
+            `scale(${1 - e * 0.14}) translate(${-(oldBox.x + oldBox.w / 2)} ${-(oldBox.y + oldBox.h / 2)})`,
+        );
+        layers.block!.setAttribute('opacity', String(1 - e));
+      }
+
+      // 3. a panel slides over the hole it left
+      const p3 = span(ms, RERACK.sink - 20, RERACK.seal);
+      if (p3 > 0 && sealing) {
+        seal.setAttribute('opacity', '1');
+        const travel = (1 - easeInOut(p3)) * (oldBox.w + 22);
+        seal.setAttribute('transform', `translate(${-travel} 0)`);
+        if (p3 === 1) {
+          // arrived: the cloth and dots underneath are already correct, so the
+          // panel has nothing left to hide and its edge would only sit there
+          sealing = false;
+          seal.remove();
+          oldSlot.remove();
+        }
+      }
+
+      // 4. another section opens up, somewhere else
+      const p4 = span(ms, RERACK.seal - 30, RERACK.open);
+      if (p4 > 0 && !newSlot) {
+        // the dots under the old block come back, the ones under the new one go
+        drawDots(nextBlock);
+        newSlot = slotRect(newBox);
+        layers.slot!.appendChild(newSlot);
+        reveal = shutterPanel(newBox);
+        layers.shutter!.appendChild(reveal);
+      }
+      if (reveal) {
+        const travel = easeInOut(p4) * (newBox.w + 22);
+        reveal.setAttribute('transform', `translate(${travel} 0)`);
+        if (p4 === 1) {
+          reveal.remove();
+          reveal = null;
+        }
+      }
+
+      // 5. the block comes back up through it
+      const p5 = span(ms, RERACK.open - 20, RERACK.rise);
+      if (p5 > 0 && !swapped) {
+        swapped = true;
+        BLOCK = nextBlock;
+        drawBlock();
+      }
+      if (swapped && p5 < 1) {
+        const e = easeOut(p5);
+        const over = Math.sin(p5 * Math.PI) * 2.5; // a little overshoot on the way up
+        layers.block!.setAttribute('transform', `translate(0 ${(1 - e) * 15 - over})`);
+        layers.block!.setAttribute('opacity', String(Math.min(1, p5 * 2.2)));
+      } else if (swapped) {
+        layers.block!.removeAttribute('transform');
+        layers.block!.setAttribute('opacity', '1');
+        if (newSlot) {
+          newSlot.remove();
+          newSlot = null;
+        }
+      }
+
+      // 6. the new pockets are fired out of the middle and bounce into the rim
+      const p6 = span(ms, RERACK.rise - 40, RERACK.fly);
+      if (p6 > 0 && !flying) {
+        flying = true;
+        POCKETS = nextPockets;
+        ENTRY = next.entry;
+        DIR = next.dir;
+        deriveBoard();
+
+        /* The last board's drawing has to go here, at the swap — not at the end.
+           Those layers were faded to nothing in phase 1 but still HELD the old
+           path, the old bounce marks and the old crossed-out pockets, so simply
+           restoring their opacity at the end painted the previous puzzle onto the
+           new table. Clearing opacity is not clearing content. */
+        guesses = [];
+        revealed = 0;
+        over = false;
+        drawn = [];
+        stroke = [];
+        clear(layers.chalkOut!);
+        drawPockets();
+        drawEntry();
+        paint(0);
+        paintMine();
+        layers.pockets!.setAttribute('pointer-events', 'none');
+      }
+      if (flying) {
+        const base = RERACK.rise - 40;
+        const flightMs = RERACK.fly - base;
+        mouths.forEach((m, i) => {
+          const f = flights[i]!;
+          const p = POCKETS[i];
+          if (!p || !f) return;
+          const r = Math.max(0, Math.min(1, (ms - base - f.delay) / (flightMs - 240)));
+          const e = easeOut(r);
+          const tx = sx(p.x) - PAD;
+          const ty = sy(p.y) - PAD;
+          const target = {
+            x: mirrorImage(tx, f.mx, TW),
+            y: mirrorImage(ty, f.my, TH),
+          };
+          const ux = centre.x + (target.x - centre.x) * e;
+          const uy = centre.y + (target.y - centre.y) * e;
+          const cx = PAD + fold(ux, TW);
+          const cy = PAD + fold(uy, TH);
+          const k = 0.35 + 0.65 * Math.min(1, r * 1.6);
+          m.setAttribute(
+            'transform',
+            `translate(${cx - sx(p.x)} ${cy - sy(p.y)}) translate(${sx(p.x)} ${sy(p.y)}) ` +
+              `scale(${k}) translate(${-sx(p.x)} ${-sy(p.y)})`,
+          );
+          m.setAttribute('opacity', String(Math.min(1, 0.2 + r * 2)));
+        });
+        const late = span(ms, RERACK.fly - 300, RERACK.fly);
+        layers.entry!.setAttribute('opacity', String(late));
+        layers.ball!.setAttribute('opacity', String(late));
+      }
+
+      if (ms < RERACK.fly) {
+        raf = requestAnimationFrame(frame);
+        return;
+      }
+
+      // settle
+      raf = 0;
+      clear(layers.slot!);
+      clear(layers.shutter!);
+      mouths.forEach((m) => {
+        m.removeAttribute('transform');
+        m.removeAttribute('opacity');
+      });
+      for (const name of ['past', 'hot', 'marks', 'mine', 'chalkOut', 'ball', 'entry'] as const)
+        layers[name]!.removeAttribute('opacity');
+      layers.pockets!.removeAttribute('pointer-events');
+      drawDots();
+      drawEntry();
+      reracking = false;
+      done();
+    };
+
+    if (raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(frame);
+  }
+
   /* ---- the player's own chalk line ---------------------------------
      Freehand: the points are where the pointer actually went, with no snapping
      to the lattice and no smoothing, because a hand-drawn guess next to an exact
@@ -811,7 +1182,7 @@ export function mount(el: HTMLElement): () => void {
 
   function onDown(ev: PointerEvent) {
     swallowClick = false;
-    if (!chalkOn || over || rolling || ev.button > 0) return;
+    if (!chalkOn || over || rolling || reracking || ev.button > 0) return;
     const q = toUser(ev);
     if (!q) return;
     /* NOT preventDefault() here. On touch, preventing the default on pointerdown
@@ -1078,6 +1449,67 @@ export function mount(el: HTMLElement): () => void {
     puffRaf = requestAnimationFrame(frame);
   }
 
+  const tierOf = (score: number) => TIER_CUTS.filter((c) => score >= c).length;
+
+  /** Everything that must be true before a fresh board is playable. */
+  function resetForNewBoard(tier: number) {
+    guesses = [];
+    revealed = 0;
+    over = false;
+    drawn = [];
+    stroke = [];
+    scoreEl.hidden = true;
+    slipBox.hidden = true;
+    rackBtn.hidden = true;
+    rackBtn.disabled = false;
+    chalkBtn.disabled = false;
+    setChalk(chalkOn);
+    stampEl.textContent = `Tier ${tier + 1}/${TIERS}`;
+    cardHeadEl.textContent = 'Practice';
+    renderTallies();
+    syncWipe();
+    paintMine();
+    say('Pick a pocket, or chalk the line you expect.');
+  }
+
+  rackBtn.addEventListener('click', () => {
+    if (reracking) return;
+    /* Same table, a board it has not just shown. randomBoard rejects about 96%
+       of what it tries, so asking it to also avoid one canon string costs
+       nothing measurable. */
+    const here = `${BLOCK.bx},${BLOCK.by},${BLOCK.bx2},${BLOCK.by2}|${ENTRY.x},${ENTRY.y}|${DIR.x},${DIR.y}`;
+    const next = randomBoard(W, H, Math.random, (b) => {
+      if (seen.has(b.canon)) return false;
+      // the day's own board has no canon here — boards.json does not ship one —
+      // so the board on the table right now is rejected by its coordinates
+      return `${b.B.bx},${b.B.by},${b.B.bx2},${b.B.by2}|${b.entry.x},${b.entry.y}|${b.dir.x},${b.dir.y}` !== here;
+    });
+    if (!next) {
+      say('This table has nothing new to rack. Try again tomorrow.', 'miss');
+      return;
+    }
+    seen.add(next.canon);
+    practice = true;
+    rackBtn.disabled = true;
+    chalkBtn.disabled = true;
+    window.clearInterval(nextTimer);
+    nextTimer = 0;
+    nextEl.hidden = true;
+    say('Re-racking&hellip;');
+
+    if (reducedMotion()) {
+      BLOCK = next.B;
+      ENTRY = next.entry;
+      DIR = next.dir;
+      POCKETS = next.pockets.map((q) => ({ x: q.x, y: q.y }));
+      deriveBoard();
+      build();
+      resetForNewBoard(tierOf(difficulty(next)));
+      return;
+    }
+    rerack(next, () => resetForNewBoard(tierOf(difficulty(next))));
+  });
+
   wipeBtn.addEventListener('click', () => {
     const erased = drawn;
     drawn = [];
@@ -1252,7 +1684,7 @@ export function mount(el: HTMLElement): () => void {
       swallowClick = false;
       return;
     }
-    if (over || rolling || guesses.includes(i)) return;
+    if (over || rolling || reracking || guesses.includes(i)) return;
     guesses.push(i);
     save();
     mark(i, i === ANSWER);
@@ -1295,6 +1727,16 @@ export function mount(el: HTMLElement): () => void {
     setChalk(chalkOn); // over now, so the cursor and touch-action come off
     chalkBtn.disabled = true;
     syncWipe();
+    rackBtn.hidden = false;
+
+    /* The share slip and the countdown belong to the day's board. A practice
+       round has nothing to post and no next-board-o'clock, so it gets neither —
+       what it gets is the button to go again. */
+    if (practice) {
+      slipBox.hidden = true;
+      nextEl.hidden = true;
+      return;
+    }
     slipText.textContent = slip();
     slipBox.hidden = false;
     startCountdown();

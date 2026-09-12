@@ -1,7 +1,7 @@
 ---
 title: Shotcall
-blurb: A daily bounce puzzle. Guess which pocket the ball drops into; every wrong guess reveals one more bounce.
-plainBlurb: A once-a-day puzzle like Wordle, but with a bouncing ball. Work out which pocket it ends up in. Guess wrong and it shows you one more bounce.
+blurb: A daily bounce puzzle. Guess which pocket the ball drops into, one more bounce shown per miss — then the table re-racks itself.
+plainBlurb: A once-a-day puzzle like Wordle, but with a bouncing ball. Work out which pocket it ends up in. Guess wrong and it shows you one more bounce. Then the table rebuilds itself for another go.
 date: 2026-09-11
 featured: 20
 status: live
@@ -43,6 +43,7 @@ learned:
   - Deduplicate before you count your supply. 84% of the boards that passed every filter were mirror images of boards already in the list. "Five years of puzzles" was 2.8 years as soon as a board and its reflection were recognised as the same puzzle.
   - A failing test is not the same as wrong code. The time-reversibility check failed on 32% of boards and the check was the thing that was broken — reversing a bounce means negating the ray the ball arrived on, not the one it left on. Changing a test until it passes is usually a fudge, so being able to say precisely why this one wasn't is the whole difference.
   - Pointer code has to be driven with the real input, not read. Two bugs existed only on the device I was not using at the time. Capturing the pointer on pointerdown retargets the click that follows it, so every pocket silently stopped accepting a tap while drawing was armed. And calling preventDefault on pointerdown suppresses the synthesised click entirely, so on a phone a finger tap on a pocket did nothing at all. Both were invisible to reading the code and obvious within seconds of driving a real mouse and a real finger at it.
+  - Hiding a thing is not emptying it. The re-rack faded the chalk path, the bounce marks and the crossed-out pockets to invisible, swapped the board underneath, then restored their opacity at the end — and painted the previous puzzle onto the new table, because the layers still held the old drawing. An animation that hides state has to reset the state, not just its opacity.
   - The best fix sometimes deletes the mechanic. The erase animation originally swept an eraser across the table, which needed careful bookkeeping about which pieces of the line each pass had already caught — and got it wrong, leaving a bright untouched tail standing whenever an animation frame missed the end of a sweep. Making the eraser stay in one place and shake instead was a better animation *and* removed the state the bug lived in.
   - Verify the thing that ships. The physics gate used to hold its own copy of the reflection rule, which meant a pass was a statement about the gate. It now imports the same module the generator deals boards with and the browser rolls the ball with, and replays all 365 committed boards through it.
 
@@ -86,7 +87,10 @@ You can also chalk the route yourself. Drag across the cloth and the line follow
 your hand — no snapping to the grid, no smoothing — and when the real path appears
 you get both lines together and a number for how far off you were. That turns out
 to be a much harder question than which pocket it lands in. One board a day, four
-tries, and then it is spent until tomorrow.
+tries, and then it is spent until tomorrow — at which point the table builds its
+own. The pockets shut, the block drops through the cloth, a panel slides over the
+hole, another opens somewhere else, and the new pockets are fired out of the
+middle and bounce off the rails until they settle into the rim.
 
 That is the entire game, and it is not the interesting part. The interesting part
 is that a daily puzzle needs a board every day, forever, and the constraint that
@@ -147,6 +151,15 @@ pocket right is luck one time in fourteen; getting the route right is not. And i
 you want another go at the drawing, an eraser drops onto the line and scrubs at one
 small spot — and the whole line comes off anyway, in three goes, the way a hand
 clears a board.
+
+When the day's board is spent there is a button that builds another one on the
+spot. It is not a softer version to keep you busy: a board made in the browser has
+to pass the same seven tests as one from the year, so it is a real puzzle — it just
+does not count towards the day. Watching it happen is half the fun, because the
+table clears itself like a machine: the pockets close, the block sinks through the
+cloth, a green panel slides over the hole it left, another section opens up
+somewhere else, the block rises back through it, and then the new pockets are shot
+out from the middle and bounce off the walls until each one lands where it belongs.
 
 And because a puzzle that sends the ball to the wrong pocket is worse than no
 puzzle, none of this is taken on trust. Every one of the 365 days that shipped is
@@ -339,6 +352,69 @@ sweep flew past from every later pass — so the erase finished with a bright,
 untouched tail still standing. I patched that by letting a later pass collect an
 earlier one's misses. Then the eraser stopped travelling, damage stopped depending
 on position at all, and the entire class of bug went with it.
+
+## The table that racks itself
+
+Past the daily board there is a button that generates another. Two things had to
+be true for that to be worth shipping.
+
+**It has to be the same game.** A practice board built in the browser must clear
+the same bar as one dealt from the year, or it is a softer game wearing the same
+clothes. So the definition of a fair board — the sizes, the eight filters, the
+pocket layout, the difficulty score — moved out of the build script into a module
+the demo imports. The enumerator and the browser now call the same `evaluate`, and
+regenerating the year after the move produced a byte-identical file, which is how
+I know the extraction changed nothing.
+
+**Generation is rejection sampling, not enumeration.** The browser does not need
+the space, it needs one board now: pick a random block shape, position, entry and
+direction, judge it, and try again if it fails. About 3.7% survive, so it lands in
+roughly 27 attempts — measured at **0.039 ms per board**, which is below the
+threshold of anything.
+
+The board's difficulty is scored by the same function as the dealt ones, but a
+browser-made board has no idea where it falls in a pool it never saw. So the six
+scores that separate the seven tiers now ship in the JSON, and a practice board
+names its own tier on exactly the same scale.
+
+It re-racks the *same table*, deliberately. Changing the size mid-animation would
+not be a re-rack, it would be different furniture — and keeping W and H fixed also
+means the frame, the projection and the pocket letters are all stable, so only the
+block, the entry and the pockets have to move.
+
+### The animation is the game's own mathematics
+
+The last phase fires fourteen pockets out of the centre and bounces them off the
+rails until each lands on its exact spot in the rim. Simulated bounces would land
+wherever they landed. These land where the pocket belongs, because the path is
+*folded* rather than simulated: take the straight line from the centre to a
+**mirrored image** of the target, then fold the result back into the table with a
+triangle wave, and you get a genuine bouncing path that terminates exactly on the
+target. That is the unfolding trick that makes a 45-degree billiard path solvable
+in closed form, and the same idea as the diamond system a player uses on a real
+table — used here as an animation.
+
+Two bugs in the transition, both worth naming because both were invisible in the
+code and obvious on screen:
+
+- **A gradient measured against the wrong box.** The re-rack slides cloth panels
+  over the cloth, and an SVG gradient defaults to `objectBoundingBox` units — so a
+  small panel got the entire sweep of light squeezed into it and read as a
+  differently-lit patch sitting on the table. Anchoring the gradient to the
+  table's own coordinates (`userSpaceOnUse`) makes a panel pixel-identical to what
+  it covers, and only its leading edge gives the movement away, which is exactly
+  the mechanical look.
+- **Clearing opacity is not clearing content.** The chalk path, the bounce marks
+  and the crossed-out pockets were faded to nothing in the first phase and then
+  restored at the end — still holding the *previous* board's drawing, which
+  painted the old puzzle onto the new table. The reset had to happen at the moment
+  the board swaps, not when the animation stops.
+
+And the gate grew a third section. It now generates **2,000 boards through the
+runtime path** — 250 per table size — and re-derives every rule from scratch
+rather than trusting the function that claims to enforce them. A practice board
+that quietly skipped a filter is exactly the kind of thing nothing else would
+catch.
 
 ## The test that was wrong
 
