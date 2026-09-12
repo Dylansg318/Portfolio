@@ -681,7 +681,7 @@ export function mount(el: HTMLElement): () => void {
 
   /* ---- the table, in layers ----------------------------------------
      Split so the re-rack can drive the moving parts. Everything that depends on
-     the board — the dots, the block, the pockets, the entry mark — clears and
+     the board — the block, the pockets, the entry mark — clears and
      redraws its own layer; everything that does not (the cabinet, the frame, the
      cloth) is built once and never touched again. */
 
@@ -705,20 +705,6 @@ export function mount(el: HTMLElement): () => void {
       x: PAD - 4, y: PAD - 4, width: TW + 8, height: TH + 8, rx: 3, fill: '#1b3a32',
     }));
     stage.appendChild(node('rect', { x: PAD, y: PAD, width: TW, height: TH, fill: 'url(#shotcall-lit)' }));
-  }
-
-  /** The spots you count. Skips whatever the block is currently standing on. */
-  function drawDots(hideAt = BLOCK) {
-    const g = layers.dots!;
-    clear(g);
-    for (let gx = 1; gx < W; gx++) {
-      for (let gy = 1; gy < H; gy++) {
-        if (hideAt && gx >= hideAt.bx && gx <= hideAt.bx2 && gy >= hideAt.by && gy <= hideAt.by2) continue;
-        g.appendChild(node('circle', {
-          cx: sx(gx), cy: sy(gy), r: 1.35, fill: '#b9d6cc', 'fill-opacity': 0.34,
-        }));
-      }
-    }
   }
 
   const blockBox = (b: typeof BLOCK) => ({
@@ -851,7 +837,7 @@ export function mount(el: HTMLElement): () => void {
     // z-order, bottom to top. The shutter sits above the slot and the block so it
     // can slide over both; the chalk and the pockets sit above it, because a
     // mechanical panel moving under the cloth should not cover the game.
-    for (const name of ['dots', 'slot', 'block', 'shutter'] as const) {
+    for (const name of ['slot', 'block', 'shutter'] as const) {
       layers[name] = node('g', name === 'shutter' ? { 'pointer-events': 'none' } : {});
       stage.appendChild(layers[name]!);
     }
@@ -881,7 +867,6 @@ export function mount(el: HTMLElement): () => void {
       stage.appendChild(layers[name]!);
     }
 
-    drawDots();
     drawBlock();
     drawPockets();
     drawEntry();
@@ -1093,7 +1078,7 @@ export function mount(el: HTMLElement): () => void {
         const travel = (1 - easeInOut(p3)) * (oldBox.w + 22);
         seal.setAttribute('transform', `translate(${-travel} 0)`);
         if (p3 === 1) {
-          // arrived: the cloth and dots underneath are already correct, so the
+          // arrived: the cloth underneath is already correct, so the
           // panel has nothing left to hide and its edge would only sit there
           sealing = false;
           seal.remove();
@@ -1104,8 +1089,6 @@ export function mount(el: HTMLElement): () => void {
       // 4. another section opens up, somewhere else
       const p4 = span(ms, RERACK.seal - 30, RERACK.open);
       if (p4 > 0 && !newSlot) {
-        // the dots under the old block come back, the ones under the new one go
-        drawDots(nextBlock);
         newSlot = slotRect(newBox);
         layers.slot!.appendChild(newSlot);
         reveal = shutterPanel(newBox);
@@ -1215,7 +1198,6 @@ export function mount(el: HTMLElement): () => void {
       for (const name of ['past', 'hot', 'marks', 'mine', 'chalkOut', 'ball', 'entry'] as const)
         layers[name]!.removeAttribute('opacity');
       layers.pockets!.removeAttribute('pointer-events');
-      drawDots();
       drawEntry();
       reracking = false;
       done();
