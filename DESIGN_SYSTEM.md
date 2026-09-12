@@ -340,7 +340,7 @@ Each page has a fixed shape. New pages pick one of these shapes or add a row to 
 | `/resume` | Rendered from `site.ts`. The print stylesheet is the PDF; one page, US Letter, checked by `pdfinfo`. No phone, no street address, on the page or in the PDF. | Full, hidden in print |
 | `/contact` | The form (Turnstile, Resend), with the email as the fallback. No reply-time promise. | Full |
 | `/desk` | Help Desk mode: the whole portfolio re-served as a ticket queue. Own name, own mark, no vendor branding. One static page, panels switched by hash; without JS the panels stack and it reads as a document. Chrome is played straight, content is not. | Bare, own router |
-| `/play/<slug>` | The demo, fullscreen. | Bare |
+| `/play/<slug>` | **The demo on its own, as a page you can send someone.** The game is the first and only thing on the first screen; the credit, the write-up link (*How it works*), the rest of the work and a Share button sit in a footer under it, where someone who has actually played will look. Indexable, in the sitemap, and its social card is the project's real cover art, not the generated text card. | Bare |
 | `/404` | Short. | Full |
 
 Recurring grammar inside pages:
@@ -489,6 +489,8 @@ The reasoning for each lives as a comment next to the code. This table is the in
 | Scroll reveal on a CSS scroll timeline, observer fallback | A debounced scroll handler is still a scroll handler and is what drops frames on a mid-range phone. | `global.css`, `Base.astro` |
 | Every DOM script binds on `astro:page-load` | View Transitions keep the JS context; a module runs once, so top-level setup dies after the first navigation. Demos also clean up on `astro:before-swap` or a game loop runs forever behind the reader. | `Header.astro`, `Demo.astro`, `Nameplate.astro` |
 | `/desk` and `/play` are `bare` | The desk runs its own hash router; the player wants the whole viewport. Astro falls back to a full navigation for pages that opted out. | `Base.astro`, `desk.astro` |
+| `/play/<slug>` is a destination, not a projection | A demo is the one thing here that gets forwarded for its own sake. It was `noindex` and out of the sitemap, with a *Back to write-up* bar on top and the site's default card — so a shared link unfurled as somebody's portfolio and opened onto portfolio chrome. It now indexes, unfurls as a picture of the game, and puts the way back into the site beneath the game rather than above it. | `pages/play/[...slug].astro`, `astro.config.mjs` |
+| The share slip carries the URL | A Wordle-style score that does not say where the game is cannot spread; whoever it is pasted to has no way to play. Built from `location.origin`, so a slip copied in dev does not send people to production. | `demos/shotcall/index.ts` |
 | The résumé PDF is a print of the page | Two documents drift; a build artefact cannot. The script fails if the PDF exceeds one page or the text does not survive extraction. | `scripts/build-resume-pdf.sh`, `global.css` `@media print` |
 | Push to `main` deploys | Public repos run Actions free (measured `billable.UBUNTU` 0 ms). Typecheck and build overlap; the deploy still refuses without a passing check. | `.github/workflows/deploy.yml`, README |
 | A Mac deploy script still exists | A push can only ship `main` as pushed. The script owns `--build-only`, `--ref`, redeploys without a commit, and the case where Actions is down. It builds in Linux because this Mac's filesystem is case-insensitive and Cloudflare's is not. | `scripts/deploy-from-mac.sh`, README |
@@ -537,6 +539,8 @@ The reasoning for each lives as a comment next to the code. This table is the in
 - Frontmatter `demo:` block; `label` in the imperative (*Play Galaxy Defense*).
 - Confirm the fullscreen route at `/play/<slug>` mounts (it has no View Transitions
   router, so the bind path is different).
+- Give the project a real `cover` capture. It is the demo's social card at `/play/<slug>`,
+  so without one a shared link unfurls as a text tile.
 
 ### 8.3 Changing the design
 
@@ -598,6 +602,7 @@ for each is in the commit, the plan, or the code comment named.
 | 2026-09-03 | Screenshots follow the site theme: paired light and dark captures swapped on `[data-theme]`. |
 | 2026-09-11 | Carom ships as the second island demo: a daily bounce puzzle with a year of boards generated at build time. The start gate is qualified — it guards expense, not arrival, so a demo with no loop may skip it with a stated reason. One reflection rule is shared by the generator, the physics gate and the demo, and the gate now replays the committed `boards.json` through it. |
 | 2026-09-11 | Carom renamed to **Shotcall**, with no redirect: the old URL was live for 47 minutes, had no inbound links and was never shared, and a redirect that protects nobody is permanent clutter in the config. (The `repricer`/`quickbooks` rows above are the opposite case — months live and linked from a résumé.) Three reasons, found by checking rather than guessing: another daily browser puzzle is already called Carom; carom billiards is specifically the *pocketless* discipline, and this table has fourteen pockets; and carom/carrom is a well-known disc-flicking board game. Shotcall is the call-shot rule the game actually implements — nominate the pocket, and the cushions on the way. Verify a game name against the daily-puzzle field before building the art around it. |
+| 2026-09-11 | `/play/<slug>` becomes a shareable page rather than a fullscreen view of the write-up. Indexed and in the sitemap, social card is the project's cover art re-encoded to 1200px, description is the Plain English blurb, and the *Back to write-up* bar is replaced by a footer under the game carrying the credit, *How it works*, the rest of the work and a Share button (native sheet where there is one, clipboard otherwise). Shotcall's score slip now ends with the game's URL. The reasoning: a demo is the only thing on this site that gets forwarded for its own sake, and every part of that page was built for a reader arriving from the write-up instead. |
 | 2026-09-11 | Shotcall's demo generates its own boards past the daily one, so what makes a board fair moved out of the build script into `src/demos/shotcall/board.mjs` — one `evaluate`, called by both the enumerator and the browser. A demo that ships generated content may generate at runtime only through the same module the build uses, and the gate must audit the runtime path by re-deriving the rules rather than trusting the function that enforces them. |
 | 2026-09-03 | CI overlaps the typecheck and the build; the wrangler-action probe dropped. |
 | 2026-09-03 | The second-brain vault written up. |
