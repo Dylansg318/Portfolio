@@ -118,9 +118,19 @@ site's build graph and never loads for someone who only came to read.
 
 Either lane also gets `/play/<slug>` for free: the demo on its own page, with the
 credit and a link back to the write-up in a footer beneath it. That is the URL to
-hand out — it is indexed, it unfurls with the project's `cover` image, and it opens
-straight onto the game. Give the project a real cover capture or the link unfurls
-as a text tile.
+hand out — it is indexed and it opens straight onto the game.
+
+What it unfurls as, best first: `shareCard` in the frontmatter, else `cover`, else
+the generated text card. A share card is composed art — the game's name and hook
+over its own capture — because a bare screenshot names nothing and reads as a
+coloured rectangle in a group chat. Add one by writing a composer beside
+`scripts/share-cards/shotcall.html` and running:
+
+```bash
+npm run share:cards        # headless Chrome -> src/content/projects/<slug>/share.png
+```
+
+Then point `shareCard: ./share.png` at it and commit the PNG with the composer.
 
 ## The résumé and its PDF
 

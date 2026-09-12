@@ -38,6 +38,20 @@ const projectSchema = ({ image }: SchemaContext) =>
      */
     coverDark: image().optional(),
     coverAlt: z.string().optional(),
+
+    /**
+     * The social card for this project's `/play` page, when it deserves one of
+     * its own.
+     *
+     * A demo's share link is forwarded for its own sake, into places where the
+     * only thing anyone sees is the picture. `cover` is a capture of the thing
+     * running, which is right above a write-up and anonymous in a group chat —
+     * it carries no name. A `shareCard` is composed: the art with the game's
+     * name and its one-line hook on it, built by scripts/build-share-cards.sh
+     * from a composer in scripts/share-cards/. Falls back to `cover`, and then
+     * to the generated text card.
+     */
+    shareCard: image().optional(),
     /** Manual ordering on the index; higher sorts first, then by date. */
     featured: z.number().default(0),
 

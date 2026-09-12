@@ -1,0 +1,125 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Shotcall — share card</title>
+<!--
+  THE SHARE CARD, COMPOSED IN THE GAME'S OWN WORLD.
+
+  Rendered to src/content/projects/shotcall/share.png by
+  scripts/build-share-cards.sh. Not hand-drawn: the art is the same cover.png
+  capture the write-up uses, and every colour and face below is lifted from
+  src/demos/shotcall/index.ts, so the card and the game cannot drift apart.
+
+  Set in Arial Black and Arial on purpose. Those ARE the game's faces — the
+  ball numbers, the sign above the table and its body copy — so the card needs
+  no webfont and still reads as the same object. Using the site's Bricolage
+  here would make it look like the portfolio, which is the thing the /play page
+  exists not to be.
+
+  1200x630 is the aspect every unfurler crops to. Captured at 2x, and Astro
+  resamples it to the served 1200px card.
+-->
+<style>
+  :root {
+    --room: #15100d;
+    --room-deep: #0b0806;
+    --brass: #b08d57;
+    --brass-lit: #e8c27a;
+    --warm-dim: #8a7a63;
+    --ball-face: "Arial Black", "Arial Bold", Arial, Helvetica, sans-serif;
+    --body-face: Arial, Helvetica, "Helvetica Neue", sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1200px; height: 630px; overflow: hidden; }
+
+  .card {
+    position: relative;
+    width: 1200px; height: 630px;
+    background:
+      radial-gradient(120% 85% at 50% 6%, #221a14 0%, var(--room) 42%, var(--room-deep) 100%)
+      var(--room);
+    font-family: var(--body-face);
+    overflow: hidden;
+  }
+
+  /* The whole table, sat to the right of the type and bleeding off that edge.
+     Sized so the WHOLE table reads: a crop tight enough to be dramatic turns a
+     billiards table into an abstract green shape, which is the one thing a card
+     for a pool game cannot be. The numbers are the capture's own geometry — the
+     table occupies the middle ~84% of cover.png, so a 798px-wide image puts
+     ~670px of table on the card with its left edge clear of the headline. */
+  .art {
+    position: absolute; left: 531px; top: 118px;
+    width: 700px; height: auto;
+  }
+
+  /* A soft ink wash under the type. Most of what it covers is the capture's own
+     dark matte, so this only has to catch the corner where the wood begins. */
+  .scrim {
+    position: absolute; inset: 0;
+    background: linear-gradient(
+      to right,
+      var(--room-deep) 0%,
+      rgba(11, 8, 6, 0.96) 34%,
+      rgba(11, 8, 6, 0.70) 43%,
+      rgba(11, 8, 6, 0) 50%
+    );
+  }
+
+  .text {
+    position: absolute; left: 72px; top: 50%;
+    transform: translateY(-50%);
+    width: 470px;
+  }
+
+  .name {
+    font-family: var(--ball-face); font-weight: 900;
+    font-size: 84px; line-height: 0.94; letter-spacing: -0.022em;
+    color: #f2e7d3;
+    text-shadow: 0 2px 0 #000, 0 0 46px rgba(232, 194, 122, 0.22);
+  }
+
+  /* The same hairline that sits under the sign above the table in the game. */
+  .rule-line {
+    height: 1px; width: 100%;
+    background: rgba(200, 179, 148, 0.28);
+    margin: 26px 0 24px;
+  }
+
+  .ask {
+    font-size: 31px; font-weight: 700; line-height: 1.24;
+    letter-spacing: -0.008em; color: #f0e6d4;
+  }
+
+  .terms {
+    margin-top: 18px;
+    font-size: 19px; letter-spacing: 0.11em; text-transform: uppercase;
+    color: var(--warm-dim);
+  }
+
+  /* A cue-ball full stop, so the card carries one piece of the game's furniture
+     rather than only its colours. */
+  .ball {
+    position: absolute; left: 72px; bottom: 46px;
+    display: flex; align-items: center; gap: 13px;
+    font-size: 18px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--brass);
+  }
+  .ball::before {
+    content: "";
+    width: 17px; height: 17px; border-radius: 50%;
+    background: radial-gradient(circle at 34% 30%, #ffffff 0%, #e8e2d6 52%, #b9b1a2 100%);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.7);
+  }
+</style>
+
+<div class="card">
+  <img class="art" src="../../src/content/projects/shotcall/cover.png" alt="" />
+  <div class="scrim"></div>
+  <div class="text">
+    <div class="name">SHOTCALL</div>
+    <div class="rule-line"></div>
+    <div class="ask">Which pocket does it drop into?</div>
+    <div class="terms">3 bounces &middot; 4 tries &middot; 14 pockets</div>
+  </div>
+  <div class="ball">A new table every day</div>
+</div>
