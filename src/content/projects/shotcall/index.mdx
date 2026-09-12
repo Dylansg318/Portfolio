@@ -1,7 +1,7 @@
 ---
 title: Shotcall
-blurb: A daily bounce puzzle. Guess which pocket the ball drops into, one more bounce shown per miss — then the table re-racks itself.
-plainBlurb: A once-a-day puzzle like Wordle, but with a bouncing ball. Work out which pocket it ends up in. Guess wrong and it shows you one more bounce. Then the table rebuilds itself for another go.
+blurb: "A daily puzzle. A ball bounces three times and drops into a pocket; you guess which one. Every miss shows you one more bounce."
+plainBlurb: "Like Wordle, but with a bouncing ball. One puzzle a day: work out which pocket it ends up in. Guess wrong and it shows you one more bounce."
 date: 2026-09-11
 featured: 20
 status: live
@@ -22,50 +22,40 @@ shareCard: ./share.png
 coverAlt: "A solved Shotcall board. The ball's real path is chalked in white from the top rail through three bounces into pocket L; a wobbly amber line, drawn freehand by the player, cuts across it. Four pockets are crossed out, fourteen are lettered A to P, and a wooden block sits on the green cloth."
 
 problem: >-
-  A daily puzzle has two requirements that fight each other. Every day has to be
-  scored on the same scale, so the shape of the puzzle must be fixed — here,
-  exactly three bounces before the pocket, four tries, out of fourteen. And there
-  has to be a board for every day, effectively forever. Fixing the shape is what
-  makes a score mean something, and it is also what destroys the supply: on a
-  plain rectangle only about 91 genuinely distinct boards exist once mirror
-  images are collapsed, which is three months and then the game is over. There is
-  no server to appeal to either. The site is prerendered, so whatever answers
-  tomorrow's puzzle has to already be in the page — without the answer being in
-  the page.
+  A daily puzzle has to be the same kind of hard every day or the score means
+  nothing, so the shape is fixed: three bounces, four tries, fourteen pockets.
+  Fixing the shape also fixes the supply. On a plain rectangle there are only
+  about 91 different boards once mirror images count as one, which is three
+  months of puzzles. And there's no server. The site is prerendered, so
+  tomorrow's board has to already be in the page without the answer being in it.
 
 unique: >-
-  Two findings did the work, and neither was about the game. Board quality is
-  governed by gcd(W, H) rather than table size: a shared factor makes the ball
-  close its cycle early, so it can only ever reach a fraction of the rim, which
-  starves both the pocket count and the supply. A 12×6 table is bigger than 11×9
-  and useless. Every table here is coprime for that reason. And the supply problem
-  is solved by one block bolted to the cloth, which takes 91 boards to 1,037 and
-  costs the player no new rule to learn, because bouncing off solid things is
-  already the whole game. The block also cost me the elegant solution, which is
-  the part I'd tell someone about first.
+  Two things did the work, and neither is about the game. Board quality comes
+  down to gcd(W, H), not table size: a shared factor closes the ball's cycle
+  early, so a 12×6 table is bigger than 11×9 and worse. Every table shipped is
+  coprime. And one block bolted to the cloth takes 91 boards to 1,037 with
+  nothing new for the player to learn, since bouncing off solid things is already
+  the whole game. The block also killed the closed-form version, and that was
+  fine.
 
 learned:
-  - Generating content is a filtering problem, not a creative one. 170,356 board shapes go in and 1,037 come out — 0.6%. All the interesting code is in the eight reasons a board gets thrown away, and the single biggest reason, a bounce that lands exactly on a corner and reflects both ways at once, accounts for 59% on its own.
-  - Deduplicate before you count your supply. 84% of the boards that passed every filter were mirror images of boards already in the list. "Five years of puzzles" was 2.8 years as soon as a board and its reflection were recognised as the same puzzle.
-  - A failing test is not the same as wrong code. The time-reversibility check failed on 32% of boards and the check was the thing that was broken — reversing a bounce means negating the ray the ball arrived on, not the one it left on. Changing a test until it passes is usually a fudge, so being able to say precisely why this one wasn't is the whole difference.
-  - Pointer code has to be driven with the real input, not read. Two bugs existed only on the device I was not using at the time. Capturing the pointer on pointerdown retargets the click that follows it, so every pocket silently stopped accepting a tap while drawing was armed. And calling preventDefault on pointerdown suppresses the synthesised click entirely, so on a phone a finger tap on a pocket did nothing at all. Both were invisible to reading the code and obvious within seconds of driving a real mouse and a real finger at it.
-  - Hiding a thing is not emptying it. The re-rack faded the chalk path, the bounce marks and the crossed-out pockets to invisible, swapped the board underneath, then restored their opacity at the end — and painted the previous puzzle onto the new table, because the layers still held the old drawing. An animation that hides state has to reset the state, not just its opacity.
-  - The best fix sometimes deletes the mechanic. The erase animation originally swept an eraser across the table, which needed careful bookkeeping about which pieces of the line each pass had already caught — and got it wrong, leaving a bright untouched tail standing whenever an animation frame missed the end of a sweep. Making the eraser stay in one place and shake instead was a better animation *and* removed the state the bug lived in.
-  - Verify the thing that ships. The physics gate used to hold its own copy of the reflection rule, which meant a pass was a statement about the gate. It now imports the same module the generator deals boards with and the browser rolls the ball with, and replays all 365 committed boards through it.
+  - Generating content is mostly filtering. 170,356 board shapes go in and 1,037 come out, about 0.6%. Nearly all the real code is the eight reasons a board gets thrown out, and one of them, a bounce landing dead on a corner, is 59% on its own.
+  - Dedupe before you count. 84% of the boards that passed every filter were mirror images of one already kept. "Five years of puzzles" was 2.8 years once I checked.
+  - A failing test isn't always wrong code. The reversibility check failed on 32% of boards and the check was the bug — reversing a bounce means flipping the ray the ball came in on, not the one it left on. I only changed the test because I could say exactly which line was wrong.
+  - Drive pointer code with a real mouse and a real finger. Two bugs only existed on the input I wasn't using, and both were invisible in the code.
+  - Sometimes the fix is deleting the mechanic. The eraser used to sweep across the table and kept leaving the tail of a line standing. Making it stay in one place and shake was a better animation and removed the state the bug lived in.
 
 aiNote: >-
-  Built with Claude Code in one session, and the useful part is which decisions
-  were mine. I turned down two of its concepts as too complex before proposing the
-  bouncing ball myself, asked for the progressive reveal that makes a wrong guess
-  worth something instead of just costing a life, and rejected its first interface
-  outright — it had used this site's own design system as a layout template, and
-  the result looked like every other machine-generated page. The freehand chalk
-  line and the puff of dust when you rub it out are mine too. I also caught two
-  things it had shipped blind: pockets named by letters that appeared nowhere on
-  the board, so the scorecard kept saying "Not J" about nothing, and a chalk line
-  with no way to erase it. The generator, the grading and the physics are its work
-  under my direction, and they are the parts I wanted provable rather than
-  plausible: seven invariants over 1.55 million ball positions, and every shipped
+  Built with Claude Code in one session. The concept was mine — I turned down two
+  of its ideas as too complicated before suggesting the bouncing ball — and so was
+  the rule that a miss shows you one more bounce, the freehand chalk line, and the
+  puff of dust when you rub it out. I threw out its first interface: it had used
+  this site's design system as a template and looked like every other generated
+  page. It also shipped two things blind that I caught: pocket letters that
+  weren't on the board, so the scorecard said "Not J" about nothing, and a chalk
+  line you couldn't erase. The generator, the grading and the physics are its
+  work under my direction, and those are the parts I wanted proved rather than
+  plausible: seven checks over 1.55 million ball positions, and every shipped
   board replayed through the same rule the browser runs.
 
 metrics:
@@ -79,126 +69,82 @@ demo:
   label: Play Shotcall
 ---
 
-A ball rolls onto a billiards table at forty-five degrees. It bounces three times
-off anything solid — the rails, or the block bolted to the cloth — and drops into
-the first pocket it reaches. There are fourteen pockets. You get four guesses, and
-each wrong one rolls the ball forward by one bounce, so a miss buys you information
-instead of just costing you a life.
+A ball rolls onto a pool table at forty-five degrees, bounces three times off
+anything solid — the rails or the block in the middle — and drops into the first
+pocket it reaches. Fourteen pockets, four guesses. Each miss rolls the ball forward
+one bounce, so a wrong guess still buys you something.
 
-The name is the pool rule it borrows: under call-shot rules you have to nominate
-the pocket before you shoot, and the cushions on the way, which is exactly what
-this asks of you.
+The name is the pool rule. Under call-shot rules you name the pocket before you
+shoot, and the cushions on the way.
 
-You can also chalk the route yourself. Drag across the cloth and the line follows
-your hand — no snapping to the grid, no smoothing — and when the real path appears
-you get both lines together and a number for how far off you were. That turns out
-to be a much harder question than which pocket it lands in. One board a day, four
-tries, and then it is spent until tomorrow — at which point the table builds its
-own. The pockets shut, the block drops through the cloth, a panel slides over the
-hole, another opens somewhere else, and the new pockets are fired out of the
-middle and bounce off the rails until they settle into the rim.
-
-That is the entire game, and it is not the interesting part. The interesting part
-is that a daily puzzle needs a board every day, forever, and the constraint that
-makes it scoreable is the same constraint that makes boards scarce.
+You can also chalk the route yourself. Drag across the cloth and the line goes
+where your hand went. When the real path shows up you get both lines and a number
+for how far off you were, which is a much harder question than which pocket. One
+board a day, then it's spent until tomorrow — or the table can build another one
+on the spot.
 
 <Demo demo={frontmatter.demo} title={frontmatter.title} />
 
 <PlainOnly>
 
-## Where a new puzzle comes from every day
+## Where a new puzzle comes from
 
-The hard part of a daily puzzle isn't the puzzle. It's having a fresh one every
-morning, forever, that's *the same kind of hard* as yesterday's — otherwise the
-score you post doesn't mean anything.
+The hard part isn't the puzzle. It's having a fresh one every morning that's the
+same kind of hard as yesterday's, or the score you post doesn't mean anything.
 
-Everything here has exactly three bounces. That's what makes Tuesday comparable to
-Monday, and it's also what nearly killed the idea: on a plain rectangular table
-there are only about 91 genuinely different puzzles. Three months and the game is
-finished. Putting one solid block in the middle of the table took that to 1,037 —
-a bit under three years — and it asks nothing new of the player, because bouncing
-off solid things is the entire game already.
+Every board has exactly three bounces. That keeps Tuesday comparable to Monday,
+and it's also what nearly killed the idea: on a plain rectangular table there are
+only about 91 different puzzles. Three months and the game's over. One solid block
+in the middle of the table took that to 1,037, a bit under three years, and it
+doesn't ask anything new of the player. Bouncing off solid things is already the
+game.
 
-The puzzle-maker is brute force and makes no apology for it. It builds every
-combination of table size, block shape, block position, and where the ball comes
-in — **170,356 possible puzzles** — rolls each one, and throws away anything not
-worth playing:
+The puzzle-maker just tries everything. Every combination of table size, block
+shape, block position and where the ball comes in — **170,356 boards** — gets rolled,
+and anything not worth playing gets thrown out: the ball hits an exact corner and
+you can't tell what happened (100,472), a leg too short to notice or too long to
+count (39,964), the ball never touches the block (12,092), and so on. 6,392 make it
+through. Then it turned out **84% of those were mirror images of each other**, so one
+of each pair goes. **1,037 left, about 0.6% of what went in.**
 
-- **100,472** because the ball hits an exact corner, where it bounces off two walls
-  at once and you can't tell by looking what happened.
-- **39,964** because one of the four legs is too short to notice or too long to
-  count comfortably.
-- **12,092** because the ball never touches the block, which makes it decoration
-  that looks like it matters.
-- **5,352** because the ball ends up on the block instead of in a pocket.
-- **4,140** because the answer sits too close to where the ball came in, so you'd
-  get it by feel.
-- **1,488** because the ball would roll straight over its own answer earlier in the
-  journey — meaning the stated answer is a lie.
-- **456** because fourteen properly spaced pockets won't fit.
+Those get sorted by difficulty into seven equal groups, one per weekday. Easiest
+Monday, hardest Saturday, Sunday a step back down, the way crosswords do it.
 
-That leaves 6,392 — and then the surprise. **84% of those were mirror images of
-each other.** A puzzle flipped left-to-right is the same puzzle with the letters
-moved, so only one of each pair survives. Final count: **1,037 genuinely different
-puzzles, about 0.6% of what it started with.** The "five years of puzzles" I
-thought I had was under three.
+Drawing is the other thing to do with a board. Guessing the pocket is a
+one-in-fourteen shot; drawing the route isn't. Drag across the cloth, and when the
+real path appears you see both lines and how far off you were. An eraser rubs it
+out in three scrubs if you want another go.
 
-The last step sorts all 1,037 by how hard they are, cuts them into seven equal
-groups, and gives each day of the week its own group — easiest on Monday, hardest
-on Saturday, Sunday a step back down, the way crosswords do it. So "Saturday"
-means the genuinely hardest seventh of what exists, not a difficulty number I
-invented. All 365 days got one from the group they asked for.
+When the day's board is spent, a button builds another one right there. It has to
+pass the same tests as the ones from the year, so it's a real puzzle, it just
+doesn't count for the day. The table clears itself like a machine: the pockets
+close, the block sinks through the cloth, a new section opens up, and the new
+pockets get fired out from the middle and bounce off the rails until they land.
 
-There is a second thing to do with a board besides guessing. Drag across the
-cloth and you draw on it, freehand, exactly where your hand went — so you can
-trace the route you think the ball takes. Draw as many strokes as you want — each
-one stays where you put it, and nothing you draw rubs out what was already there.
-When the real path appears you see both lines at once and get a number for how far
-off you were, in dots. Getting the pocket right is luck one time in fourteen;
-getting the route right is not. And if you want another go at the drawing, an
-eraser drops onto the chalk and scrubs at one small spot — and every bit of it
-comes off anyway, in three goes, the way a hand clears a board.
-
-When the day's board is spent there is a button that builds another one on the
-spot. It is not a softer version to keep you busy: a board made in the browser has
-to pass the same seven tests as one from the year, so it is a real puzzle — it just
-does not count towards the day. Watching it happen is half the fun, because the
-table clears itself like a machine: the pockets close, the block sinks through the
-cloth, a green panel slides over the hole it left, another section opens up
-somewhere else, the block rises back through it, and then the new pockets are shot
-out from the middle and bounce off the walls until each one lands where it belongs.
-
-And because a puzzle that sends the ball to the wrong pocket is worse than no
-puzzle, none of this is taken on trust. Every one of the 365 days that shipped is
-re-played by a separate checker that confirms the ball still lands where the
-puzzle says it does — and the build refuses to finish if a single one doesn't.
+And every one of the 365 boards that shipped gets re-played by a separate checker
+before the site builds. If the ball doesn't land where the puzzle says, the build
+stops.
 
 </PlainOnly>
 
 <EngOnly>
 
-## The rule everything rests on
+## The rule
 
-The ball travels the forty-five degree lattice: one unit sideways for every unit
-forward, always. That single restriction is what makes the whole thing exact. The
-ball lands on every whole number of dots along both axes as it goes, so no
-position is ever a fraction, it can never slip through a surface before touching
-it, and there is no tolerance anywhere in the code to tune.
-
-A block face needs no rule of its own either. An axis-aligned surface flips the
-perpendicular component of the motion and leaves the parallel one alone, whichever
-side of it you are standing on — so the block's vertical faces do exactly what the
-left and right rails do, its horizontal faces do what the top and bottom do, and
-its corner flips both. That is why an obstacle in the middle of the table adds
+The ball moves on the 45° lattice: one unit sideways for every unit forward. So
+it's on a whole number of dots on both axes at every step, it can't slip through a
+surface, and there's no tolerance anywhere to tune. A block face doesn't need its
+own rule either. An axis-aligned surface flips the perpendicular component and
+leaves the other alone, whichever side you're on, which is why the block adds
 nothing for the player to learn.
 
 ## Why the tables are odd sizes
 
-The first thing I assumed was that a bigger table means a harder puzzle. It
-doesn't. The governing variable is the greatest common divisor of the two sides,
-and it decides how much of the rim the ball can ever reach:
+I assumed a bigger table meant a harder puzzle. It doesn't. What matters is
+gcd(W, H), because it decides how much of the rim the ball can reach before its
+cycle closes and it starts retracing itself:
 
-| gcd(W, H) | share of the rim the ball can reach |
+| gcd(W, H) | rim the ball can reach |
 |---|---|
 | 1 | ~50% |
 | 2 | ~41% |
@@ -206,21 +152,17 @@ and it decides how much of the rim the ball can ever reach:
 | 4 | ~28% |
 | 6 | ~19% |
 
-A shared factor closes the ball's cycle early, and once the cycle closes the ball
-retraces a path it has already walked. So a 12×6 table has more cloth than an
-11×9 and is worth less: fewer reachable pockets, fewer distinct boards, and a
-visible bias in where the ball tends to end up. Every table in the shipped set —
+A 12×6 has more cloth than an 11×9 and is worth less: fewer reachable pockets,
+fewer boards, and a visible bias in where the ball ends up. Every shipped table —
 10×7, 11×7, 11×8, 11×9, 10×9, 12×7, 13×9, 13×10 — is coprime, and the generator
-throws if anyone adds one that isn't.
+throws if you add one that isn't.
 
 ## Where the boards come from
 
-The generator is brute force with hard filters, and it is not apologetic about it.
-It builds every combination of table size, block shape, block position, entry
-point on the rim and inward diagonal — 170,356 boards — walks each one, and throws
-away almost all of them:
+Brute force with hard filters. Every combination of table size, block shape, block
+position, entry point and direction gets walked, and most of it goes:
 
-| what happened | boards |
+| | boards |
 |---|---|
 | considered | 170,356 |
 | a bounce landed exactly on a corner | −100,472 |
@@ -229,235 +171,132 @@ away almost all of them:
 | the fourth contact was the block, not a pocket | −5,352 |
 | the answer sits too close to the entry | −4,140 |
 | the ball crosses its own answer early | −1,488 |
-| fourteen spread pockets would not fit | −456 |
+| fourteen spread pockets won't fit | −456 |
 | **survived** | **6,392** |
 | mirror images of a board already kept | −5,355 |
 | **shipped** | **1,037** |
 
-Corners alone kill 59%. A ball arriving exactly at a corner reflects off both
-faces at once, which is correct physics and unreadable on screen — you cannot tell
-by looking whether it bounced or reversed — so every one of them goes.
+Corners alone are 59%. A ball arriving dead on a corner reflects off both faces at
+once, which is correct and unreadable on screen. Two of the filters are about
+honesty, not solvability: if the ball rolls over its own answer on an earlier leg
+it would've dropped in there, so the stated answer is a lie, and a block the ball
+never touches is furniture that looks like it matters.
 
-Two of those filters exist because a puzzle has to be *honest* rather than merely
-solvable. A board where the ball rolls over its own answer on an earlier leg would
-have dropped in there, so the stated answer is a lie; 1,488 of those. And a board
-whose block the ball never touches is worse than a board with no block at all,
-because it is furniture that looks like it matters; 12,092.
+The mirrors surprised me. 84% of everything that passed was a flip of a board
+already in the list, same puzzle with different letters. Each board reduces to one
+identity under the four reflections of a rectangle and one per family ships. That's
+what turned "about five years of supply" into 2.8, and it's the number I'd have got
+wrong if I hadn't checked.
 
-Then the surprise. 84% of everything that passed every filter was a mirror image
-of a board already in the list. A table flipped left-to-right is the same puzzle
-with different letters on the pockets, so each board is reduced to an identity
-under all four reflections of a rectangle and only one member of each family
-ships. That is what turned "about five years of supply" into 2.8 years, and it is
-the number I would have got wrong if I hadn't checked.
+## The clever version I didn't ship
 
-<Takeaway>
-  Counting your supply before deduplicating it is how you end up confidently
-  quoting a figure that is six times too big.
-</Takeaway>
+On a bare rectangle you never simulate. Unfold the table — mirror it instead of
+bouncing the ball — and the path is a straight line, so rail contacts fall where
+`t` is congruent to minus the entry coordinate, mod the width or the height. Two
+arithmetic progressions merged, no loop.
 
-## The elegant version, and why it isn't the one that shipped
+The block breaks that. Its faces aren't on either progression, and a bounce off one
+restarts the ball from a new point, so everything downstream would have to be
+re-derived. The shipped version steps one diagonal unit at a time and checks what
+it's touching. The whole search is about eight million steps and runs in a fifth
+of a second, so the closed form would've bought nothing measurable and added a
+second way to be wrong.
 
-On a bare rectangle you never simulate anything. Unfold the table — mirror it
-repeatedly instead of bouncing the ball — and the path becomes a straight line, so
-rail contacts fall exactly where `t` is congruent to minus the entry coordinate,
-modulo the width or the height. The whole contact sequence is two arithmetic
-progressions merged together, and you can read off the answer in closed form with
-no loop at all.
+## Grading the year
 
-The block destroys that. Its faces are not on either progression, and a bounce off
-one restarts the ball from a new point in a new direction, so every progression
-downstream of it would have to be re-derived. The version that shipped steps the
-ball one diagonal unit at a time and checks what it is touching.
+Difficulty is weighted by what actually costs the player: total dots to count, the
+single longest leg (one long count is where you slip), how many bounces are off
+the block, how uneven the legs are, and how crowded the answer's neighbourhood is.
+Scores split into seven equal-count tiers, not fixed thresholds, so Saturday is
+the hardest seventh of the boards that exist rather than the ones over a cutoff I
+guessed at. A deterministic shuffle inside each tier means the same commit deals
+the same year. All 365 days drew from the tier their weekday asked for.
 
-That is less clever, and it was the right call. The entire search space is about
-eight million steps, which runs in a fifth of a second, so the closed form would
-have bought nothing measurable and introduced a second way to be wrong. Keeping it
-would have been keeping it for my benefit, not the game's.
-
-## Grading a year of days
-
-A difficulty score out of thin air would be a number I made up. This one is
-weighted by what each factor actually costs the player: the total number of dots
-to count, the single longest leg — one long count is where you slip — how many
-bounces are off the block, since you have to notice it before you can predict it,
-how uneven the legs are, and how crowded the answer's neighbourhood is, because a
-lone pocket is easier to land on.
-
-The scores then get split into seven **equal-count** tiers rather than fixed
-thresholds, which matters more than it sounds. It means Saturday is the hardest
-seventh of the boards that actually exist, not the boards that clear a cutoff I
-guessed at. Monday through Saturday ramp up and Sunday steps back down — the
-crossword habit — and a deterministic shuffle inside each tier means the same
-commit always deals the same year. All 365 days drew from the tier their weekday
-asked for; none had to fall back to a neighbour.
-
-The answer is deliberately not in the file. The browser has to trace the path
-anyway in order to animate it, so storing the pocket index would be redundant data
-that also happened to be tomorrow's answer. The generator asserts it instead.
-
-Where I'll be straight about a limit: a prerendered site with no server ships the
-whole year's *boards* to anyone who opens the demo, so a determined reader can
-work out next Tuesday for themselves. That is inherent to the architecture, and a
-puzzle for fun doesn't need me to pretend otherwise.
+The answer isn't in the file. The browser has to trace the path anyway to animate
+it, so a stored pocket index would be redundant data that also happens to be
+tomorrow's answer. The generator asserts it instead. One limit I'll be straight
+about: a prerendered site ships the whole year's boards to anyone who opens the
+demo, so a determined reader can work out next Tuesday. That's the architecture,
+and a puzzle for fun doesn't need me to pretend otherwise.
 
 ## Drawing your own line
 
-Naming a pocket is a one-in-fourteen guess. Drawing the route is not, so the cloth
-takes a freehand line: the points are wherever the pointer actually went, with no
-snapping to the lattice and no smoothing, because the whole value of the thing is
-a hand-drawn curve sitting next to an exact one.
+The cloth takes a freehand line — points are wherever the pointer went, no
+snapping, no smoothing — because the whole point is a hand-drawn curve next to an
+exact one.
 
-Scoring it is where the judgement is. The obvious measure — average distance from
-each drawn point to the nearest point on the true path — is worthless, and
-worthless in a way that looks fine until you try to cheat it. A one-inch scribble
-sitting on top of the path scores nearly perfect, because every point of the
-scribble is indeed close to the path. So the measure runs both ways: the drawing
-against the path *and* the path against the drawing, averaged. The second half is
-what makes a line that didn't go anywhere score like one, and it costs nothing —
-the path is sampled every quarter dot, which is about a hundred points against a
-few hundred drawn ones.
+Scoring it is where the judgement is. Average distance from each drawn point to
+the nearest point on the true path looks fine and is worthless: a one-inch scribble
+sitting on the path scores nearly perfect. So it runs both ways, drawing against
+path and path against drawing, averaged. The second half is what makes a line that
+didn't go anywhere score like one.
 
-Drawing is a toggle rather than always-on, and that is a phone decision. A finger
-can only draw where the page has given up its own scrolling (`touch-action: none`),
-and the cloth is most of a phone screen — always-on would mean a reader who
-scrolled onto the table could not scroll off it. So it defaults on for a mouse,
-where a drag never scrolled anything, and off for touch, and either way it is one
-tap. A tap on a pocket still guesses while chalk is armed, because a tap is not a
-stroke: strokes under two dots of travel are discarded, which is also what stops a
-stray twitch from wiping a line someone worked on.
+Drawing is a toggle, and that's a phone decision. A finger can only draw where the
+page gives up scrolling (`touch-action: none`), and the cloth is most of a phone
+screen, so always-on would trap anyone who scrolled onto it. It defaults on for a
+mouse and off for touch. Two bugs here only existed on the input I wasn't using:
 
-Two bugs in that only existed on the input I wasn't using, and both were invisible
-to reading the code:
+- Capturing the pointer on `pointerdown` retargets the `click` that follows, so
+  every pocket quietly stopped taking a tap while chalk was armed. Capture now
+  happens on the first move.
+- `preventDefault()` on `pointerdown` suppresses the synthesised click entirely, so
+  on a phone a tap on a pocket did nothing. That moved to the move handler too.
 
-- **Capturing the pointer on `pointerdown`** retargets the `click` that follows it
-  to the capture element, so every pocket silently stopped accepting a tap the
-  moment drawing was armed. Capture now happens on the first *move*, by which point
-  it is a stroke and the click doesn't matter.
-- **Calling `preventDefault()` on `pointerdown`** suppresses the synthesised click
-  altogether, so on a phone a finger tap on a pocket did nothing at all. That call
-  moved to the move handler too.
-
-The erase is one eraser that does not travel. It lands on the middle of the
-longest stroke — the one place certain to have chalk under it, however many strokes
-are on the cloth — and shakes, the tight, slightly impatient motion of someone
-rubbing at one small mark, and every stroke degrades anyway, wherever on the board
-it happens to be.
-The gap between a tiny gesture and a total effect is the joke, and it only works
-because the eraser stays put.
-
-It is still three discrete scrubs with a beat of nothing between them, because a
-fade is what a computer does and a board being cleared goes in strokes. The line is
-redrawn as short pieces rather than one path so it can *break* rather than dim: each
-scrub takes whole pieces out, leaves the survivors on a broken dasharray with a
-thinner stroke, and puffs dust at the eraser. Faded-but-solid chalk does not read as
-chalk.
-
-The first version of this swept across the table instead, and it carried a real bug
-that is worth recording because the fix was to delete the mechanic. A piece in the
-last few percent of a sweep is only damaged if an animation frame happens to land on
-it, and pinning pieces to "damaged by this pass only" then excluded anything the
-sweep flew past from every later pass — so the erase finished with a bright,
-untouched tail still standing. I patched that by letting a later pass collect an
-earlier one's misses. Then the eraser stopped travelling, damage stopped depending
-on position at all, and the entire class of bug went with it.
+The eraser doesn't travel. It lands on the middle of the longest stroke and
+shakes, and every stroke on the cloth breaks up anyway, in three scrubs with a
+beat between them. The first version swept across the table and had a real bug: a
+piece the sweep flew past in its last few percent never got damaged, so the erase
+ended with a bright tail still standing. Once the eraser stayed put, damage
+stopped depending on position and that whole class of bug went away.
 
 ## The table that racks itself
 
-Past the daily board there is a button that generates another. Two things had to
-be true for that to be worth shipping.
+Past the daily board there's a button that generates another. It has to be the
+same game, so the definition of a fair board — sizes, the eight filters, pocket
+layout, difficulty score — moved out of the build script into a module the demo
+imports. Generator and browser call the same `evaluate`, and regenerating the year
+afterwards produced a byte-identical file, which is how I know the move changed
+nothing.
 
-**It has to be the same game.** A practice board built in the browser must clear
-the same bar as one dealt from the year, or it is a softer game wearing the same
-clothes. So the definition of a fair board — the sizes, the eight filters, the
-pocket layout, the difficulty score — moved out of the build script into a module
-the demo imports. The enumerator and the browser now call the same `evaluate`, and
-regenerating the year after the move produced a byte-identical file, which is how
-I know the extraction changed nothing.
+In the browser it's rejection sampling: pick a random block, entry and direction,
+judge it, try again on a fail. About 3.7% survive, so it lands in roughly 27
+attempts, 0.039 ms per board. The six tier cutoffs ship in the JSON so a practice
+board can name its tier on the same scale.
 
-**Generation is rejection sampling, not enumeration.** The browser does not need
-the space, it needs one board now: pick a random block shape, position, entry and
-direction, judge it, and try again if it fails. About 3.7% survive, so it lands in
-roughly 27 attempts — measured at **0.039 ms per board**, which is below the
-threshold of anything.
+The pockets at the end get fired out of the centre and bounce off the rails to
+their exact spot in the rim. They're not simulated: take the straight line to a
+mirrored image of the target and fold it back into the table with a triangle wave,
+and you get a real bouncing path that ends exactly where the pocket goes. Same
+unfolding trick as above, used as an animation.
 
-The board's difficulty is scored by the same function as the dealt ones, but a
-browser-made board has no idea where it falls in a pool it never saw. So the six
-scores that separate the seven tiers now ship in the JSON, and a practice board
-names its own tier on exactly the same scale.
+Two bugs in the transition, both invisible in the code and obvious on screen. An
+SVG gradient defaults to `objectBoundingBox`, so a small cloth panel got the whole
+sweep of light squeezed into it and read as a patch; `userSpaceOnUse` fixed it.
+And the old chalk, bounce marks and crossed-out pockets were faded to zero, the
+board swapped, and then faded back in with the previous puzzle still on them.
+Opacity isn't a reset.
 
-It re-racks the *same table*, deliberately. Changing the size mid-animation would
-not be a re-rack, it would be different furniture — and keeping W and H fixed also
-means the frame, the projection and the pocket letters are all stable, so only the
-block, the entry and the pockets have to move.
-
-### The animation is the game's own mathematics
-
-The last phase fires fourteen pockets out of the centre and bounces them off the
-rails until each lands on its exact spot in the rim. Simulated bounces would land
-wherever they landed. These land where the pocket belongs, because the path is
-*folded* rather than simulated: take the straight line from the centre to a
-**mirrored image** of the target, then fold the result back into the table with a
-triangle wave, and you get a genuine bouncing path that terminates exactly on the
-target. That is the unfolding trick that makes a 45-degree billiard path solvable
-in closed form, and the same idea as the diamond system a player uses on a real
-table — used here as an animation.
-
-Two bugs in the transition, both worth naming because both were invisible in the
-code and obvious on screen:
-
-- **A gradient measured against the wrong box.** The re-rack slides cloth panels
-  over the cloth, and an SVG gradient defaults to `objectBoundingBox` units — so a
-  small panel got the entire sweep of light squeezed into it and read as a
-  differently-lit patch sitting on the table. Anchoring the gradient to the
-  table's own coordinates (`userSpaceOnUse`) makes a panel pixel-identical to what
-  it covers, and only its leading edge gives the movement away, which is exactly
-  the mechanical look.
-- **Clearing opacity is not clearing content.** The chalk path, the bounce marks
-  and the crossed-out pockets were faded to nothing in the first phase and then
-  restored at the end — still holding the *previous* board's drawing, which
-  painted the old puzzle onto the new table. The reset had to happen at the moment
-  the board swaps, not when the animation stops.
-
-And the gate grew a third section. It now generates **2,000 boards through the
-runtime path** — 250 per table size — and re-derives every rule from scratch
-rather than trusting the function that claims to enforce them. A practice board
-that quietly skipped a filter is exactly the kind of thing nothing else would
-catch.
-
-## The test that was wrong
+## The gate, and the test that was wrong
 
 The physics gate checks seven invariants over every board shape the generator can
-produce — 25,448 boards and 1.55 million ball positions, in 0.19 seconds. Six of
-them are the obvious ones: the ball stays on the table, never ends up inside the
-block, never tunnels through a face, every step is exactly one diagonal unit, the
-direction flips at a surface and only at a surface, and it never turns in open
-space.
+produce — 25,448 boards, 1.55 million ball positions, 0.19 seconds. Six are the
+obvious ones: the ball stays on the table, never ends up inside the block, never
+tunnels through a face, every step is one diagonal unit, direction flips at a
+surface and only there. The seventh is reversibility: run the path backwards from
+its end and it has to retrace itself exactly.
 
-The seventh is the one that earns its keep. Run the path backwards from its end
-point and it must retrace itself exactly. A reflection that is wrong at any single
-face or corner breaks that, and nothing else will catch it.
+That one failed on 32% of boards, and the test was the bug. Reversing at a contact
+means negating the ray the ball *arrived* on, not the one it left on, and I'd
+negated the wrong one. Changing a test until it passes is usually how you ship a
+bug with a green check, so it mattered that I could say exactly which line was
+wrong.
 
-It failed on 32% of boards, and the test was the thing that was broken. Leaving a
-contact point in reverse means negating the direction the ball *arrived* on, not
-the one it bounced away on — at a contact those are two different rays. My first
-version negated the wrong one. Changing a test until it passes is usually how you
-ship a bug with a green checkmark, so it mattered to be able to say exactly which
-line was wrong and why the physics was never in question.
-
-## One copy of the rule
-
-Three things have to agree about where the ball goes: the generator that deals a
-year of boards, the gate that proves the physics, and the demo the browser runs.
-For a while each of them had its own copy of the reflection rule, which is two
-extra chances for the shipped game to disagree with the board it was dealt — and
-that disagreement would look to a player like a wrong answer, not like a bug.
-
-They now import one module. The refactor's proof was that regenerating the year
-produced a byte-identical file. The gate gained something real from it too: it used
-to verify its own private copy of the rule, so a pass was a statement about the
-gate. It now verifies the code that ships, and replays all 365 committed boards
-through it — which closes a hole where a stale or hand-edited `boards.json` would
-have sailed through the build untouched.
+The generator, the gate and the demo each used to have their own copy of the
+reflection rule, which is two extra chances for the shipped game to disagree with
+the board it was dealt — and to a player that's a wrong answer, not a bug. They
+import one module now. The gate verifies the code that ships, replays all 365
+committed boards through it, and generates 2,000 more through the runtime path
+with every rule re-derived from scratch, so a practice board that skipped a filter
+gets caught.
 
 </EngOnly>
