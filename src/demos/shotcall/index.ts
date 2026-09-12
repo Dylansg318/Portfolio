@@ -52,10 +52,11 @@
  *   board it sweeps. The board is made HERE, from the date, by board.mjs's
  *   hardBoardFor — nothing ships and nothing runs out — and it is the same board
  *   on every device because the seed is the date. Its record is kept beside the
- *   day's under its own key, so the two boards are two games and the key can go
- *   back and forth without spending either. Sight diamonds appear on the rails
- *   for it, because at a free angle the arrow is the whole question and the eye
- *   needs a scale; the daily keeps its bare rails.
+ *   day's under its own key, so the two boards are two games: "Today's board" and
+ *   "Today's hard" go between them without spending either, and the one you were
+ *   on comes back on a reload. Sight diamonds sit in the rails on every board, one
+ *   per dot, the way a real table carries them — the scale a free angle needs,
+ *   on the wood so the cloth stays bare.
  *
  * WHERE THE BOARD COMES FROM
  *   ./boards.json, a year of boards dealt at build time by scripts/shotcall-boards.mjs
@@ -264,9 +265,6 @@ const CSS = `
 /* The aim arrow goes once the ball has left: after the first leg it only sits on
    top of the path it was predicting. The entry mark on the rail stays. */
 .shotcall-aim { transition: opacity 320ms ease; }
-/* Sight diamonds arrive with a hard board, fading in as its pockets fly. */
-.shotcall-diamonds { animation: shotcall-diamonds 900ms ease both; }
-@keyframes shotcall-diamonds { from { opacity: 0; } to { opacity: 1; } }
 /* A ruled-out pocket is chalked, so the X is drawn rather than stamped: each
    stroke is a dash the length of itself, pulled on from one end. The second
    stroke starts as the first one lands. */
@@ -309,6 +307,11 @@ const CSS = `
 /* Wraps because a phone cannot fit four tally boxes plus Rack another plus
    Chalk on one line, and an overflowing row would push a control off the card. */
 .shotcall-row { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin: 0 0 9px; }
+/* Two rows on purpose. The first is this game: the tallies, and the chalk keys.
+   The second is which board: today's, today's hard, another. On one row the
+   four keys wrapped wherever the width happened to fall, so Chalk sat alone
+   under a tally and Hard beside Rack another, which reads as a fault. */
+.shotcall-boards { margin-top: -2px; }
 .shotcall-tallies { display: flex; gap: 7px; align-items: center; margin-right: auto; }
 
 /* The pocket letters, in the same face as the ball numbers. */
@@ -650,11 +653,13 @@ export function mount(el: HTMLElement): () => void {
         <p class="shotcall-card-head">Scorecard &middot; <span data-cardhead>${headLabel}</span></p>
         <div class="shotcall-row">
           <div class="shotcall-tallies" data-tallies aria-label="Tries used"></div>
-          <button class="shotcall-chalk" type="button" data-rack hidden>Rack another</button>
-          <button class="shotcall-chalk" type="button" data-today hidden>Today's board</button>
           <button class="shotcall-chalk" type="button" data-wipe hidden>Wipe</button>
-          <button class="shotcall-chalk" type="button" data-hard aria-pressed="false">Hard</button>
           <button class="shotcall-chalk" type="button" data-chalk aria-pressed="false">Chalk</button>
+        </div>
+        <div class="shotcall-row shotcall-boards">
+          <button class="shotcall-chalk" type="button" data-today hidden>Today's board</button>
+          <button class="shotcall-chalk" type="button" data-hard>Today's hard</button>
+          <button class="shotcall-chalk" type="button" data-rack hidden>Rack another</button>
         </div>
         <p class="shotcall-verdict" data-verdict aria-live="polite">Pick a pocket, or chalk the line you expect.</p>
         <p class="shotcall-score" data-score hidden></p>
@@ -785,6 +790,15 @@ export function mount(el: HTMLElement): () => void {
   /** The hard board is a second game on the same day, so it keeps a second record. */
   const hardKey = `${storeKey}:hard`;
   const keyFor = () => (hard ? hardKey : storeKey);
+  /** Which of the two daily boards was on the table, so a reload lands on it —
+   *  the regular daily always came back; the hard one now does too. */
+  const onKey = `${storeKey}:on`;
+  const rememberOn = (which: 'day' | 'hard') => {
+    try { localStorage.setItem(onKey, which); } catch { /* as save() */ }
+  };
+  const wasOn = (): 'day' | 'hard' => {
+    try { return localStorage.getItem(onKey) === 'hard' ? 'hard' : 'day'; } catch { return 'day'; }
+  };
   const save = () => {
     if (practice) return; // a practice board is not the day's record
     try {
@@ -833,7 +847,7 @@ export function mount(el: HTMLElement): () => void {
         // played it in that window has a dead entry that nothing else will ever
         // read or remove, so it goes too.
         if (k.startsWith('carom:')) stale.push(k);
-        else if (k.startsWith('shotcall:') && k !== storeKey && k !== hardKey) stale.push(k);
+        else if (k.startsWith('shotcall:') && k !== storeKey && k !== hardKey && k !== onKey) stale.push(k);
       }
       for (const k of stale) localStorage.removeItem(k);
     } catch {
@@ -906,6 +920,32 @@ export function mount(el: HTMLElement): () => void {
       x: PAD - 4, y: PAD - 4, width: TW + 8, height: TH + 8, rx: 3, fill: '#1b3a32',
     }));
     stage.appendChild(node('rect', { x: PAD, y: PAD, width: TW, height: TH, fill: 'url(#shotcall-lit)' }));
+
+    /* Sight diamonds: one per dot along each rail, set into the wood, the way a
+       real table carries them — equal spacing on both axes, which is what makes
+       the diamond system work for bank shots. Furniture, not a layer: they are
+       on every board and a re-rack never moves them. Drawn under the pockets, so
+       one that shares a pocket's spot is simply under its brass. They are the
+       scale a free angle needs, and they stay off the cloth, which is the line
+       the "no dots" decision actually drew. */
+    const diamond = (cx: number, cy: number) => {
+      stage.appendChild(node('path', {
+        d: `M${cx} ${cy - 4.2}L${cx + 3} ${cy}L${cx} ${cy + 4.2}L${cx - 3} ${cy}Z`,
+        fill: '#e8c27a', 'fill-opacity': 0.55,
+      }));
+      stage.appendChild(node('path', {
+        d: `M${cx} ${cy - 2.2}L${cx + 1.5} ${cy}L${cx} ${cy + 2.2}L${cx - 1.5} ${cy}Z`,
+        fill: '#3a281d', 'fill-opacity': 0.5,
+      }));
+    };
+    for (let x = 1; x < W; x++) {
+      diamond(sx(x), PAD - RAIL / 2 - 1);
+      diamond(sx(x), PAD + TH + RAIL / 2 + 1);
+    }
+    for (let y = 1; y < H; y++) {
+      diamond(PAD - RAIL / 2 - 1, sy(y));
+      diamond(PAD + TW + RAIL / 2 + 1, sy(y));
+    }
   }
 
   const blockBox = (b: typeof BLOCK) => ({
@@ -1044,10 +1084,6 @@ export function mount(el: HTMLElement): () => void {
 
     defs();
     furniture();
-    // Sight diamonds live between the wood and everything else, so a pocket's
-    // brass always sits on top of one that shares its spot.
-    layers.diamonds = node('g', { class: 'shotcall-diamonds' });
-    stage.appendChild(layers.diamonds);
 
     // z-order, bottom to top. The shutter sits above the slot and the block so it
     // can slide over both; the chalk and the pockets sit above it, because a
@@ -1091,43 +1127,8 @@ export function mount(el: HTMLElement): () => void {
     drawBlock();
     drawPockets();
     drawEntry();
-    syncDiamonds();
     paintMine();
     paint(revealed);
-  }
-
-  /** Sight diamonds: one per dot along each rail, set into the wood, the way a
-   *  real table carries them for bank shots. Hard boards only. The daily took its
-   *  dots off the cloth so the player would see the angle rather than count it,
-   *  and at 45 degrees the eye can; at a free angle it cannot, and a scale on the
-   *  RAIL gives one back without putting anything on the cloth. Skipped where a
-   *  pocket sits, since the pocket's brass would cover it anyway. */
-  function syncDiamonds() {
-    // A fresh group each time, not a cleared one: the fade-in is a CSS animation
-    // on the group, and an animation runs when its element is created.
-    const g = node('g', { class: 'shotcall-diamonds' });
-    layers.diamonds!.replaceWith(g);
-    layers.diamonds = g;
-    if (FREE === null) return;
-    const has = (x: number, y: number) => POCKETS.some((p) => p.x === x && p.y === y);
-    const one = (cx: number, cy: number) => {
-      g.appendChild(node('path', {
-        d: `M${cx} ${cy - 4.2}L${cx + 3} ${cy}L${cx} ${cy + 4.2}L${cx - 3} ${cy}Z`,
-        fill: '#e8c27a', 'fill-opacity': 0.55,
-      }));
-      g.appendChild(node('path', {
-        d: `M${cx} ${cy - 2.2}L${cx + 1.5} ${cy}L${cx} ${cy + 2.2}L${cx - 1.5} ${cy}Z`,
-        fill: '#3a281d', 'fill-opacity': 0.5,
-      }));
-    };
-    for (let x = 1; x < W; x++) {
-      if (!has(x, H)) one(sx(x), PAD - RAIL / 2 - 1);
-      if (!has(x, 0)) one(sx(x), PAD + TH + RAIL / 2 + 1);
-    }
-    for (let y = 1; y < H; y++) {
-      if (!has(0, y)) one(PAD - RAIL / 2 - 1, sy(y));
-      if (!has(W, y)) one(PAD + TW + RAIL / 2 + 1, sy(y));
-    }
   }
 
   /* ---- painting ---------------------------------------------------- */
@@ -1409,9 +1410,6 @@ export function mount(el: HTMLElement): () => void {
         DIR = next.dir;
         FREE = next.bounces ?? null;
         deriveBoard();
-        // The diamonds come with the hard board and go with it; the CSS animation
-        // fades them in with the pockets' flight rather than popping them.
-        syncDiamonds();
 
         /* The last board's drawing has to go here, at the swap — not at the end.
            Those layers were faded to nothing in phase 1 but still HELD the old
@@ -1841,8 +1839,8 @@ export function mount(el: HTMLElement): () => void {
     // accident should not have to finish the accident first.
     todayBtn.hidden = !(practice || hard);
     todayBtn.disabled = false;
+    hardBtn.hidden = false;
     hardBtn.disabled = false;
-    hardBtn.setAttribute('aria-pressed', String(hard));
     setChalk(chalkOn);
     stampEl.textContent = stamp;
     cardHeadEl.textContent = hard ? 'Practice · hard' : 'Practice';
@@ -2336,8 +2334,9 @@ export function mount(el: HTMLElement): () => void {
     todayBtn.hidden = true;
     todayBtn.disabled = false;
     chalkBtn.disabled = false;
+    hardBtn.hidden = false;
     hardBtn.disabled = false;
-    hardBtn.setAttribute('aria-pressed', 'false');
+    rememberOn('day');
     stampEl.textContent = `Tier ${day.t + 1}/${TIERS}`;
     cardHeadEl.textContent = headLabel;
     setChalk(chalkOn);
@@ -2366,8 +2365,9 @@ export function mount(el: HTMLElement): () => void {
     todayBtn.hidden = false;
     todayBtn.disabled = false;
     chalkBtn.disabled = false;
+    hardBtn.hidden = true;
     hardBtn.disabled = false;
-    hardBtn.setAttribute('aria-pressed', 'true');
+    rememberOn('hard');
     stampEl.textContent = 'Hard';
     cardHeadEl.textContent = `${headLabel} · hard`;
     setChalk(chalkOn);
@@ -2402,15 +2402,12 @@ export function mount(el: HTMLElement): () => void {
     goTo(DAY, restoreDay);
   });
 
-  /* The key goes both ways: from the day's board (or any practice board) to the
-     day's hard board, and from the hard board back. Nothing is spent by going:
-     each board's record is its own and replays when the table lands. */
+  /* "Today's hard" is the mirror of "Today's board": shown whenever the day's
+     hard board is not on the table, and hidden while it is. Nothing is spent by
+     going either way; each board's record is its own and replays when the table
+     lands. */
   hardBtn.addEventListener('click', () => {
-    if (reracking || rolling) return;
-    if (hard && !practice) {
-      goTo(DAY, restoreDay);
-      return;
-    }
+    if (reracking || rolling || (hard && !practice)) return;
     const next = hardBoard();
     if (!next) {
       say('No hard board fits this table today.', 'miss');
@@ -2459,11 +2456,26 @@ export function mount(el: HTMLElement): () => void {
   /* ---- first paint, replaying whatever today already had ----------- */
 
   sweepOldDays();
+  /* The hard board comes back on a reload the way the regular one always has.
+     Placed before the first paint rather than re-racked into, because there is
+     nothing on the table yet to rack away from. */
+  const startHard = wasOn() === 'hard' ? hardBoard() : null;
+  if (startHard) {
+    hard = true;
+    placeBoard(startHard);
+  }
   const saved = load();
   drawn = saved.line;
   build();
   setChalk(chalkOn);
   syncWipe();
+  if (startHard) {
+    todayBtn.hidden = false;
+    hardBtn.hidden = true;
+    stampEl.textContent = 'Hard';
+    cardHeadEl.textContent = `${headLabel} · hard`;
+    say('Pick a pocket. The arrow is the angle; the diamonds are the scale.');
+  }
   replaySaved(saved);
 
   /* Arm the invite, but only on a board nobody has called yet. A player with a
