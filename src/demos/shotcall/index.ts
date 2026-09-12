@@ -154,6 +154,10 @@ const CSS = `
   --room: #15100d; --room-deep: #0b0806;
   --brass: #b08d57; --brass-lit: #e8c27a;
   --chalk: #eaf4f9;
+  /* Cue chalk, and the only blue the room does not already own. --chalk marks a
+     ruled-out pocket, draws the player's line and rings a focused one, so the
+     invite had to be a blue that cannot be mistaken for any of those. */
+  --cue: #4f93c7; --cue-lit: #8fd3ff;
   --stock: #e8e0cd; --stock-ink: #332c24; --ruled: #b5534a;
   --warm: #c8b394; --warm-dim: #8a7a63;
   --ball-face: "Arial Black", "Arial Bold", Arial, Helvetica, sans-serif;
@@ -172,11 +176,11 @@ const CSS = `
 }
 .shotcall * { box-sizing: border-box; }
 
-/* the sign above the table */
+/* the sign above the table: the title, and the one thing to do */
 .shotcall-sign {
-  display: flex; align-items: baseline; gap: 14px;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
   border-bottom: 1px solid rgba(200, 179, 148, 0.22);
-  padding-bottom: 9px; margin-bottom: 20px;
+  padding-bottom: 11px; margin-bottom: 18px; text-align: center;
 }
 .shotcall-name {
   font-family: var(--ball-face); font-weight: 900;
@@ -184,18 +188,16 @@ const CSS = `
   letter-spacing: -0.018em; color: #f2e7d3;
   text-shadow: 0 1px 0 #000, 0 0 22px rgba(232, 194, 122, 0.16);
 }
-.shotcall-date {
-  margin-left: auto; font-family: var(--ball-face); font-weight: 900;
-  font-size: 0.78rem; letter-spacing: 0.04em;
-  color: var(--warm-dim); white-space: nowrap;
-}
+/* The only sentence above the cloth, and the one the player was missing.
+   The date, the bounce count and "each miss reveals one" all moved off: they
+   were three lines of chrome between the title and the table, and on a phone
+   they cost the scorecard its place on the first screen. The date is on the
+   scorecard, which is where a scorecard's date belongs, and the bounce count is
+   taught by the first miss — "Bounce 1 of 3" says it while it matters. */
 .shotcall-ask {
-  margin: 0 0 5px; font-size: clamp(1rem, 3.2vw, 1.15rem);
-  font-weight: 700; letter-spacing: -0.008em; color: #f0e6d4;
-}
-.shotcall-rule {
-  margin: 0 0 18px; font-size: 0.76rem;
-  letter-spacing: 0.08em; color: var(--warm-dim);
+  margin: 0; font-size: clamp(0.8rem, 2.8vw, 0.9rem);
+  font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--warm);
 }
 
 /* the table */
@@ -205,6 +207,33 @@ const CSS = `
 .shotcall-pk.spent { cursor: default; }
 .shotcall-pk:not(.spent):hover circle.lip { stroke: var(--brass-lit); stroke-width: 3.4; }
 .shotcall-pk:focus-visible circle.lip { stroke: var(--chalk); stroke-width: 3.4; }
+/* THE INVITE.
+ *
+ * The table is the only thing on the page that looks like a picture and is in
+ * fact fourteen buttons, so a first-time player taps the ball — the one object
+ * on the cloth that looks like a thing you press. The rims breathe cue blue
+ * until the player touches anything, which is the cheapest way to say "these".
+ *
+ * All fourteen together rather than walked round the rim: a wave is prettier and
+ * reads as a decorative loop, where one breath reads as one instruction.
+ *
+ * Six cycles, not infinite. A hint that never gives up is a nag, and sixteen
+ * seconds is longer than anyone looks at a still table without acting.
+ */
+.shotcall.inviting .shotcall-pk circle.lip {
+  animation: shotcall-invite 2.6s cubic-bezier(0.4, 0, 0.2, 1) 6;
+}
+.shotcall.inviting .shotcall-pk text.lbl {
+  animation: shotcall-invite-lbl 2.6s cubic-bezier(0.4, 0, 0.2, 1) 6;
+}
+@keyframes shotcall-invite {
+  0%, 66%, 100% { stroke: var(--brass); stroke-width: 2.6; }
+  30% { stroke: var(--cue-lit); stroke-width: 4.1; }
+}
+@keyframes shotcall-invite-lbl {
+  0%, 66%, 100% { fill: #bd9a63; }
+  30% { fill: #d8ecff; }
+}
 /* The aim arrow goes once the ball has left: after the first leg it only sits on
    top of the path it was predicting. The entry mark on the rail stays. */
 .shotcall-aim { transition: opacity 320ms ease; }
@@ -266,16 +295,45 @@ const CSS = `
 .shotcall-verdict.miss b { color: var(--ruled); }
 
 /* the chalk toggle, and the cursor it implies */
+/* A key sticks up off the paper and presses into it.
+ *
+ * Before this it was a 1.5px outline on paper sitting seven pixels from a tally
+ * box, which is a 1px outline on paper: the card read as four blanks and two
+ * more blanks, and nobody pressed Chalk because nothing said it could be
+ * pressed. Nothing else on the card carries a shadow, so a shadow now means
+ * "press me" and the blanks stay blank.
+ *
+ * The face is filled rather than transparent so the ruled lines run behind the
+ * key instead of through it — an object on the paper, not a box drawn on it. */
 .shotcall-chalk {
   font: inherit; font-size: 0.64rem; font-weight: 700;
   letter-spacing: 0.12em; text-transform: uppercase;
-  background: none; color: var(--stock-ink);
-  border: 1.5px solid rgba(51, 44, 36, 0.5); border-radius: 2px;
+  background: var(--stock); color: var(--stock-ink);
+  border: 1.5px solid var(--stock-ink); border-radius: 2px;
   padding: 0.3rem 0.55rem; cursor: pointer; flex: none;
+  box-shadow: 2.5px 2.5px 0 0 rgba(51, 44, 36, 0.85);
+  transform: translate(-1px, -1px);
+  transition: transform 120ms cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 120ms cubic-bezier(0.4, 0, 0.2, 1);
 }
-.shotcall-chalk:hover:not(:disabled) { border-color: var(--stock-ink); }
-.shotcall-chalk[aria-pressed="true"] { background: var(--stock-ink); color: var(--stock); border-color: var(--stock-ink); }
-.shotcall-chalk:disabled { opacity: 0.4; cursor: default; }
+.shotcall-chalk:hover:not(:disabled) {
+  box-shadow: 3.5px 3.5px 0 0 rgba(51, 44, 36, 0.9);
+  transform: translate(-1.5px, -1.5px);
+}
+/* Travels the full height of its own shadow, so the press lands on the paper. */
+.shotcall-chalk:active:not(:disabled) {
+  box-shadow: 0 0 0 0 rgba(51, 44, 36, 0.85);
+  transform: translate(1px, 1px);
+}
+.shotcall-chalk[aria-pressed="true"] {
+  background: var(--stock-ink); color: var(--stock); border-color: var(--stock-ink);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.45);
+  transform: translate(1px, 1px);
+}
+.shotcall-chalk:disabled {
+  opacity: 0.4; cursor: default;
+  box-shadow: none; transform: translate(1px, 1px);
+}
 /* The pills are 29px tall with a mouse, which is fine to click and under the
    44px a finger wants. Grown on coarse pointers only, so the paper scorecard
    keeps its proportions on a desktop. */
@@ -341,22 +399,28 @@ const CSS = `
      player taps a pocket and scrolls to find out what happened. Measured at
      393x852 before this block existed: the verdict sat at 828px, under Safari's
      bars. Every margin here is the smallest that still reads as a gap. */
-  .shotcall-sign { padding-bottom: 7px; margin-bottom: 12px; }
-  .shotcall-rule { margin-bottom: 12px; }
+  .shotcall-sign { gap: 4px; padding-bottom: 8px; margin-bottom: 12px; }
   .shotcall-felt { margin-bottom: 14px; }
   .shotcall-card { padding: 12px 16px 12px; }
   .shotcall-card-head { margin-bottom: 8px; }
   /* A floor for the scorecard on a short phone. The upright table is taller than
-     it is wide, so without this it can push the card off the first screen. */
-  .shotcall-table { max-height: 68dvh; }
-  /* The date stays on the name's line when it fits, which it does for a plain
-     date; only the off-calendar note is long enough to wrap under it. */
-  .shotcall-sign { flex-wrap: wrap; }
+     it is wide, so without this it can push the card off the first screen.
+     62dvh, and not a number either side of it: measured at 375x600, the worst
+     case that still has to work, the verdict lands at 599 and a pocket's tap
+     target measures 44px across. Lower and the verdict fits with room but the
+     targets drop under the 44px a finger wants; higher and the targets are
+     comfortable and the verdict is under the browser's bar. Both constraints
+     are met at 62 and only at 62. */
+  .shotcall-table { max-height: 62dvh; }
   .shotcall-card, .shotcall-slip { max-width: none; }
   .shotcall-slip-row { flex-wrap: wrap; }
 }
 @media (prefers-reduced-motion: reduce) {
   .shotcall * { transition-duration: 0ms !important; animation-duration: 0ms !important; animation-delay: 0ms !important; }
+  /* Zeroing the duration above leaves the rims brass, which would turn the
+     message off along with the movement. The pockets still say "these", they
+     just say it without moving. */
+  .shotcall.inviting .shotcall-pk circle.lip { stroke: var(--cue); }
 }
 `;
 
@@ -481,17 +545,22 @@ export function mount(el: HTMLElement): () => void {
     }
   })();
 
+  /** What the scorecard's date reads, off-calendar note included.
+   *
+   *  The note used to sit beside the title above the table. The sign carries the
+   *  title and the instruction now and nothing else, so the note came down here
+   *  with the date it qualifies — which is the honest place for it anyway: it is
+   *  a fact about which board you are scoring, not about the game. */
+  const headLabel = `${dateLabel}${dealt ? '' : ' · off-calendar'}`;
+
   /* ---- shell ------------------------------------------------------- */
 
   el.innerHTML = `
     <div class="shotcall">
       <div class="shotcall-sign">
         <span class="shotcall-name">Shotcall</span>
-        <p class="shotcall-date">${dateLabel}${dealt ? '' : ' · off-calendar board'}</p>
+        <p class="shotcall-ask">Choose the landing hole</p>
       </div>
-
-      <p class="shotcall-ask">Which pocket does it drop into?</p>
-      <p class="shotcall-rule">${BOUNCES} bounces off anything solid &middot; each miss reveals one</p>
 
       <div class="shotcall-felt">
         <!-- role=group, not role=img. An img's children are presentational by
@@ -508,7 +577,7 @@ export function mount(el: HTMLElement): () => void {
 
       <div class="shotcall-card">
         <span class="shotcall-stamp" data-stamp>Tier ${day.t + 1}/${TIERS}</span>
-        <p class="shotcall-card-head">Scorecard &middot; <span data-cardhead>${dateLabel}</span></p>
+        <p class="shotcall-card-head">Scorecard &middot; <span data-cardhead>${headLabel}</span></p>
         <div class="shotcall-row">
           <div class="shotcall-tallies" data-tallies aria-label="Tries used"></div>
           <button class="shotcall-chalk" type="button" data-rack hidden>Rack another</button>
@@ -1337,6 +1406,9 @@ export function mount(el: HTMLElement): () => void {
 
   function onDown(ev: PointerEvent) {
     swallowClick = false;
+    // Before the chalk gate, deliberately: a finger on the cloth has understood
+    // the table whether or not it was drawing, and the hint has done its job.
+    retireInvite();
     if (!chalkOn || over || rolling || reracking || ev.button > 0) return;
     const q = toUser(ev);
     if (!q) return;
@@ -1907,6 +1979,20 @@ export function mount(el: HTMLElement): () => void {
     else chalkOut(i, drawn);
   }
 
+  /** Stop the pockets asking.
+   *
+   *  The invite is a class on the root, not a mark on each mouth, because
+   *  build() throws the mouths away and redraws them — a turned phone, a re-rack
+   *  — and the root survives all of it.
+   *
+   *  Called from the first pointer on the cloth, the first pocket to take focus,
+   *  and every accepted guess. The last of those is the one that matters: an X
+   *  is chalk white, the invite is cue blue, and the two must never be on the
+   *  table together or the player has to work out which blue means what. */
+  function retireInvite() {
+    root.classList.remove('inviting');
+  }
+
   function guess(i: number) {
     // The click that ends a stroke lands on whatever was under the pointer, which
     // is often a pocket. Drawing a line is not guessing.
@@ -1914,6 +2000,7 @@ export function mount(el: HTMLElement): () => void {
       swallowClick = false;
       return;
     }
+    retireInvite();
     if (over || rolling || reracking || guesses.includes(i)) return;
     guesses.push(i);
     save();
@@ -2107,7 +2194,7 @@ export function mount(el: HTMLElement): () => void {
     todayBtn.disabled = false;
     chalkBtn.disabled = false;
     stampEl.textContent = `Tier ${day.t + 1}/${TIERS}`;
-    cardHeadEl.textContent = dateLabel;
+    cardHeadEl.textContent = headLabel;
     setChalk(chalkOn);
 
     const rec = load();
@@ -2184,6 +2271,13 @@ export function mount(el: HTMLElement): () => void {
   setChalk(chalkOn);
   syncWipe();
   replaySaved(saved);
+
+  /* Arm the invite, but only on a board nobody has called yet. A player with a
+     guess already on the card has found the buttons, and replaySaved() has just
+     put an X on the cloth for every miss — exactly what the invite must not
+     share a screen with. Keyboard players retire it by arriving at a pocket. */
+  if (!guesses.length && !over) root.classList.add('inviting');
+  svg.addEventListener('focusin', retireInvite);
 
   return () => {
     if (raf) cancelAnimationFrame(raf);
