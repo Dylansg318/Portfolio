@@ -565,8 +565,11 @@ export function mount(el: HTMLElement): () => void {
   let drawing = false;
   let captured = false;
   let stroke: Pt[] = [];
-  /** The kept line, in SVG user units. One stroke at a time. */
-  let drawn: Pt[] = [];
+  /** The kept chalk, in SVG user units: one entry per stroke, in the order
+   *  they were drawn. Strokes accumulate — only Wipe takes them off. */
+  let drawn: Pt[][] = [];
+  /** Whether there is any chalk on the cloth. Every stroke kept has >1 point. */
+  const hasChalk = () => drawn.length > 0;
   /** Set by a stroke so the click that follows it does not also spend a try. */
   let swallowClick = false;
   /** True once the day's board has been set aside for a table-made one. */
@@ -583,22 +586,42 @@ export function mount(el: HTMLElement): () => void {
      clean and yesterday is not resurrected. Every access is guarded: private
      windows and blocked site data both throw here. */
 
+  /** One stroke out of stored [x, y] pairs, dropping anything malformed. */
+  const readStroke = (v: unknown): Pt[] =>
+    Array.isArray(v)
+      ? v
+          .filter(
+            (q): q is [number, number] =>
+              Array.isArray(q) && typeof q[0] === 'number' && typeof q[1] === 'number',
+          )
+          .map(([x, y]) => ({ x, y }))
+      : [];
+
+  /** The stored chalk, either shape. Until strokes accumulated, `l` was one flat
+   *  list of pairs; now it is a list of those. A first element whose own first
+   *  element is a number is the old shape, and becomes a single stroke. */
+  const readStrokes = (v: unknown): Pt[][] => {
+    if (!Array.isArray(v) || !v.length) return [];
+    const flat = Array.isArray(v[0]) && typeof (v[0] as unknown[])[0] === 'number';
+    return (flat ? [readStroke(v)] : v.map(readStroke)).filter((st) => st.length > 1);
+  };
+
   const storeKey = `shotcall:${iso}`;
   const save = () => {
     if (practice) return; // a practice board is not the day's record
     try {
       // Rounded to whole user units: sub-pixel precision in a hand-drawn line is
       // noise, and it roughly halves what a long stroke costs to store.
-      const line = drawn.map((q) => [Math.round(q.x), Math.round(q.y)]);
+      const line = drawn.map((st) => st.map((q) => [Math.round(q.x), Math.round(q.y)]));
       localStorage.setItem(storeKey, JSON.stringify({ g: guesses, l: line }));
     } catch {
       /* not important enough to interrupt a game over */
     }
   };
 
-  /** Accepts the bare array the first shipped version wrote, as well as the
-   *  object that carries the drawn line. */
-  const load = (): { guesses: number[]; line: Pt[] } => {
+  /** Accepts the bare array the first shipped version wrote, the object with a
+   *  single flat line that followed it, and the list of strokes written now. */
+  const load = (): { guesses: number[]; line: Pt[][] } => {
     const empty = { guesses: [], line: [] };
     try {
       const raw = localStorage.getItem(storeKey);
@@ -613,14 +636,7 @@ export function mount(el: HTMLElement): () => void {
         guesses: rawGuesses
           .filter((n): n is number => typeof n === 'number' && n >= 0 && n < POCKETS.length)
           .slice(0, TRIES),
-        line: Array.isArray(rawLine)
-          ? rawLine
-              .filter(
-                (q): q is [number, number] =>
-                  Array.isArray(q) && typeof q[0] === 'number' && typeof q[1] === 'number',
-              )
-              .map(([x, y]) => ({ x, y }))
-          : [],
+        line: readStrokes(rawLine),
       };
     } catch {
       return empty;
@@ -1216,14 +1232,16 @@ export function mount(el: HTMLElement): () => void {
   const DEDUP = 3;               // user units between kept points
   const MIN_STROKE = 2 * CELL;   // 2 dots of travel, below which it was a tap
 
+  const subpath = (pts: Pt[]) =>
+    pts.length < 2 ? '' : `M${pts[0]!.x} ${pts[0]!.y}` + pts.slice(1).map((q) => `L${q.x} ${q.y}`).join('');
+
+  /** Every kept stroke as its own subpath of the one chalk path, with the stroke
+   *  currently under the pointer on the end so it draws as the hand moves. */
   function paintMine() {
     const g = layers.mine;
     if (!g) return;
-    const pts = drawing && stroke.length ? stroke : drawn;
-    g.setAttribute(
-      'd',
-      pts.length < 2 ? '' : `M${pts[0]!.x} ${pts[0]!.y}` + pts.slice(1).map((q) => `L${q.x} ${q.y}`).join(''),
-    );
+    const live = drawing && stroke.length > 1 ? [stroke] : [];
+    g.setAttribute('d', [...drawn, ...live].map(subpath).join(''));
   }
 
   /** Client coordinates into the SVG's own units, so the line survives any
@@ -1297,7 +1315,7 @@ export function mount(el: HTMLElement): () => void {
     // A tap is not a stroke. Discarding short ones is also what stops a stray
     // twitch from wiping a line the player spent real effort on.
     if (stroke.length > 1 && strokeLength(stroke) >= MIN_STROKE) {
-      drawn = stroke;
+      drawn.push(stroke);
       swallowClick = true;
       save();
       syncWipe();
@@ -1323,7 +1341,7 @@ export function mount(el: HTMLElement): () => void {
   /** A line you cannot erase is a line you get one attempt at. Only offered while
    *  there is something to erase and the day is still open. */
   function syncWipe() {
-    wipeBtn.hidden = over || drawn.length < 2;
+    wipeBtn.hidden = over || !hasChalk();
   }
 
   /**
@@ -1365,30 +1383,34 @@ export function mount(el: HTMLElement): () => void {
     born: number;
   };
 
-  function eraseLine(erased: Pt[]) {
+  function eraseLine(erased: Pt[][]) {
     const g = layers.puff;
     if (!g) return;
     clear(g);
 
     const chunks: Chunk[] = [];
     const PER = 2; // segments per piece
-    for (let i = 0; i < erased.length - 1; i += PER) {
-      const seg = erased.slice(i, Math.min(erased.length, i + PER + 1));
-      if (seg.length < 2) continue;
-      const el = node('path', {
-        d: `M${seg[0]!.x} ${seg[0]!.y}` + seg.slice(1).map((q) => `L${q.x} ${q.y}`).join(''),
-        fill: 'none', stroke: '#e8b44a', 'stroke-width': 3.2,
-        'stroke-opacity': 0.85, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
-      });
-      g.appendChild(el);
-      const mid = seg[Math.floor(seg.length / 2)]!;
-      chunks.push({ el, midX: mid.x, midY: mid.y, alpha: 1, scrubs: 0 });
+    for (const st of erased) {
+      for (let i = 0; i < st.length - 1; i += PER) {
+        const seg = st.slice(i, Math.min(st.length, i + PER + 1));
+        if (seg.length < 2) continue;
+        const el = node('path', {
+          d: `M${seg[0]!.x} ${seg[0]!.y}` + seg.slice(1).map((q) => `L${q.x} ${q.y}`).join(''),
+          fill: 'none', stroke: '#e8b44a', 'stroke-width': 3.2,
+          'stroke-opacity': 0.85, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+        });
+        g.appendChild(el);
+        const mid = seg[Math.floor(seg.length / 2)]!;
+        chunks.push({ el, midX: mid.x, midY: mid.y, alpha: 1, scrubs: 0 });
+      }
     }
     if (!chunks.length) return;
 
-    // it sits on the middle of the line, which is the one spot that always has
-    // chalk under it whatever shape was drawn
-    const anchor = erased[Math.floor(erased.length / 2)]!;
+    // It sits on the middle of the LONGEST stroke. The middle of the whole
+    // collection would be a point between two strokes as often as not, and an
+    // eraser scrubbing at bare cloth while chalk lifts elsewhere reads as a bug.
+    const longest = erased.reduce((a, b) => (strokeLength(b) > strokeLength(a) ? b : a));
+    const anchor = longest[Math.floor(longest.length / 2)]!;
 
     const eraser = node('g', {});
     eraser.appendChild(node('rect', { x: -23, y: -3, width: 46, height: 13, rx: 3, fill: '#d8cdb4' }));
@@ -1587,7 +1609,7 @@ export function mount(el: HTMLElement): () => void {
     save();
     paintMine();
     syncWipe();
-    if (!reducedMotion() && erased.length > 1) eraseLine(erased);
+    if (!reducedMotion() && erased.length) eraseLine(erased);
   });
 
   /**
@@ -1599,7 +1621,10 @@ export function mount(el: HTMLElement): () => void {
    * what makes a line that did not go anywhere score like one.
    */
   function chalkError(): number | null {
-    if (drawn.length < 2) return null;
+    // Every stroke counts, as one drawing. Two strokes that together trace the
+    // route should score like the route, and a second stray mark should cost.
+    const mineP = drawn.flat();
+    if (mineP.length < 2) return null;
 
     const P = screenPath();
     const samples: Pt[] = [];
@@ -1622,11 +1647,11 @@ export function mount(el: HTMLElement): () => void {
     };
 
     let mine = 0;
-    for (const q of drawn) mine += nearest(q, samples);
+    for (const q of mineP) mine += nearest(q, samples);
     let theirs = 0;
-    for (const q of samples) theirs += nearest(q, drawn);
+    for (const q of samples) theirs += nearest(q, mineP);
 
-    return (mine / drawn.length + theirs / samples.length) / 2 / CELL;
+    return (mine / mineP.length + theirs / samples.length) / 2 / CELL;
   }
 
   function showScore() {
@@ -1897,7 +1922,7 @@ export function mount(el: HTMLElement): () => void {
    *
    *  Assumes the day's board is already there. Called at first paint, and again
    *  by "Today's board" once a practice rack has been sent away. */
-  function replaySaved(rec: { guesses: number[]; line: Pt[] }) {
+  function replaySaved(rec: { guesses: number[]; line: Pt[][] }) {
     if (rec.guesses.length) {
       for (const i of rec.guesses) {
         guesses.push(i);
