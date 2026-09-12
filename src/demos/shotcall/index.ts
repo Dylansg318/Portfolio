@@ -38,6 +38,25 @@
  *   for touch, and either way one tap changes it. A tap on a pocket still guesses
  *   while chalk is on, because a tap is not a stroke.
  *
+ * HARD MODE — the same table, off the grid
+ *   The "Hard" key on the scorecard re-racks the table into the day's hard board:
+ *   the ball comes in at ANY angle, bounces two to six times, and the card never
+ *   says how many. Same four tries, same reveal per miss — and if the ball has no
+ *   bounce left to show when you miss, it drops in and the day is lost, so you
+ *   never know whether the next miss is the last one. That is where the hardness
+ *   is: the daily's "three" is a checksum on your trace, and every board has a
+ *   pocket one step from an earlier bounce for a slipped trace to stop in.
+ *
+ *   The physics is trace.mjs's freeContacts, the same law as the stepping tracer
+ *   with nothing to step; the gate proves it reproduces the lattice one on every
+ *   board it sweeps. The board is made HERE, from the date, by board.mjs's
+ *   hardBoardFor — nothing ships and nothing runs out — and it is the same board
+ *   on every device because the seed is the date. Its record is kept beside the
+ *   day's under its own key, so the two boards are two games and the key can go
+ *   back and forth without spending either. Sight diamonds appear on the rails
+ *   for it, because at a free angle the arrow is the whole question and the eye
+ *   needs a scale; the daily keeps its bare rails.
+ *
  * WHERE THE BOARD COMES FROM
  *   ./boards.json, a year of boards dealt at build time by scripts/shotcall-boards.mjs
  *   out of the 1,037 that survive its filters. Nothing is solved at request time;
@@ -66,8 +85,8 @@
  * Contract: export mount(el) => cleanup. See src/components/mdx/Demo.astro.
  */
 
-import { contacts } from './trace.mjs';
-import { difficulty, randomBoard } from './board.mjs';
+import { contacts, freeContacts } from './trace.mjs';
+import { difficulty, randomBoard, freeBoard, hardBoardFor, MOUTH } from './board.mjs';
 import data from './boards.json';
 
 /** One day's board, as scripts/shotcall-boards.mjs emits it. Arrays, not objects, because
@@ -96,7 +115,15 @@ type Box = { bx: number; by: number; bx2: number; by2: number };
  *  difficulty); the day's board, rebuilt from boards.json, carries exactly this
  *  and nothing else. Typing the parameter by what it reads rather than by where
  *  it usually comes from is what lets the table rack BACK to the day's board. */
-type Rack = { B: Box; entry: Pt; dir: Pt; pockets: Pt[] };
+type Rack = {
+  B: Box;
+  entry: Pt;
+  dir: Pt;
+  pockets: Pt[];
+  /** Present on a HARD board: free physics, this many bounces, `dir` a unit
+   *  velocity and `entry` anywhere on a rail. Absent: the lattice, BOUNCES. */
+  bounces?: number;
+};
 
 const DAYS = data.days as Record<string, Day>;
 /** The six scores that separate the seven tiers, from the dealt pool. Lets a
@@ -237,6 +264,9 @@ const CSS = `
 /* The aim arrow goes once the ball has left: after the first leg it only sits on
    top of the path it was predicting. The entry mark on the rail stays. */
 .shotcall-aim { transition: opacity 320ms ease; }
+/* Sight diamonds arrive with a hard board, fading in as its pockets fly. */
+.shotcall-diamonds { animation: shotcall-diamonds 900ms ease both; }
+@keyframes shotcall-diamonds { from { opacity: 0; } to { opacity: 1; } }
 /* A ruled-out pocket is chalked, so the X is drawn rather than stamped: each
    stroke is a dash the length of itself, pulled on from one end. The second
    stroke starts as the first one lands. */
@@ -499,6 +529,9 @@ export function mount(el: HTMLElement): () => void {
   let ENTRY = { x: day.e[0]!, y: day.e[1]! };
   let DIR = { x: day.d[0]!, y: day.d[1]! };
   let POCKETS = day.p.map(([x, y]) => ({ x: x!, y: y! }));
+  /** The bounce count when the board on the table is a HARD board, null for a
+   *  lattice board. deriveBoard() reads it to choose the tracer. */
+  let FREE: number | null = null;
 
   /* The day's board, kept whole so the table can rack BACK to it.
      Copied rather than aliased: BLOCK, ENTRY, DIR and POCKETS are all reassigned
@@ -518,13 +551,50 @@ export function mount(el: HTMLElement): () => void {
 
   /** Re-derives everything that follows from a board. */
   function deriveBoard() {
-    const hits = contacts(W, H, BLOCK, ENTRY, DIR, CONTACTS);
+    const hits = FREE === null
+      ? contacts(W, H, BLOCK, ENTRY, DIR, CONTACTS)
+      : freeContacts(W, H, BLOCK, ENTRY, DIR, FREE + 1);
     PATH = [ENTRY, ...hits.map((c) => ({ x: c.x, y: c.y }))];
     LAST = PATH.length - 1;
     const end = PATH[LAST]!;
-    ANSWER = POCKETS.findIndex((p) => p.x === end.x && p.y === end.y);
+    // A lattice answer IS a pocket point. A free one is inside a pocket's mouth —
+    // the generator keeps it within 0.3 of the centre, but the test is the mouth.
+    ANSWER = FREE === null
+      ? POCKETS.findIndex((p) => p.x === end.x && p.y === end.y)
+      : POCKETS.findIndex((p) => Math.hypot(p.x - end.x, p.y - end.y) <= MOUTH);
   }
   deriveBoard();
+
+  /** Everything that follows from putting a board on the table. The reduced-
+   *  motion paths call this directly; the re-rack does the same work at its swap. */
+  function placeBoard(next: Rack) {
+    BLOCK = next.B;
+    ENTRY = next.entry;
+    DIR = next.dir;
+    POCKETS = next.pockets.map((q) => ({ ...q }));
+    FREE = next.bounces ?? null;
+    deriveBoard();
+  }
+
+  /** The day's hard board, made on first use rather than at mount: it costs up to
+   *  a couple of hundred milliseconds on the smallest table, which a player who
+   *  never presses the key should not pay. null if nothing fits, which the gate
+   *  says does not happen but the key handles anyway. */
+  let HARD: Rack | null | undefined;
+  function hardBoard(): Rack | null {
+    if (HARD !== undefined) return HARD;
+    const made = hardBoardFor(W, H, iso, today);
+    HARD = made
+      ? {
+          B: { ...made.board.B },
+          entry: { ...made.board.entry },
+          dir: { ...made.board.dir },
+          pockets: made.board.pockets.map((q) => ({ ...q })),
+          bounces: made.board.bounces,
+        }
+      : null;
+    return HARD;
+  }
 
   if (ANSWER === -1) {
     // Impossible for a shipped board — scripts/shotcall-physics.mjs replays all 365
@@ -583,6 +653,7 @@ export function mount(el: HTMLElement): () => void {
           <button class="shotcall-chalk" type="button" data-rack hidden>Rack another</button>
           <button class="shotcall-chalk" type="button" data-today hidden>Today's board</button>
           <button class="shotcall-chalk" type="button" data-wipe hidden>Wipe</button>
+          <button class="shotcall-chalk" type="button" data-hard aria-pressed="false">Hard</button>
           <button class="shotcall-chalk" type="button" data-chalk aria-pressed="false">Chalk</button>
         </div>
         <p class="shotcall-verdict" data-verdict aria-live="polite">Pick a pocket, or chalk the line you expect.</p>
@@ -609,6 +680,7 @@ export function mount(el: HTMLElement): () => void {
   const slipUrl = el.querySelector<HTMLAnchorElement>('[data-slip-url]')!;
   const copyBtn = el.querySelector<HTMLButtonElement>('[data-copy]')!;
   const chalkBtn = el.querySelector<HTMLButtonElement>('[data-chalk]')!;
+  const hardBtn = el.querySelector<HTMLButtonElement>('[data-hard]')!;
   const wipeBtn = el.querySelector<HTMLButtonElement>('[data-wipe]')!;
   const rackBtn = el.querySelector<HTMLButtonElement>('[data-rack]')!;
   const todayBtn = el.querySelector<HTMLButtonElement>('[data-today]')!;
@@ -674,6 +746,9 @@ export function mount(el: HTMLElement): () => void {
   let swallowClick = false;
   /** True once the day's board has been set aside for a table-made one. */
   let practice = false;
+  /** True while a HARD board is on the table — the day's, or a hard practice one.
+   *  Decides the record key, the stamp, the slip, and whether the count is said. */
+  let hard = false;
   /** Mirror-family ids already shown, so "Rack another" never repeats itself. */
   const seen = new Set<string>();
 
@@ -707,13 +782,16 @@ export function mount(el: HTMLElement): () => void {
   };
 
   const storeKey = `shotcall:${iso}`;
+  /** The hard board is a second game on the same day, so it keeps a second record. */
+  const hardKey = `${storeKey}:hard`;
+  const keyFor = () => (hard ? hardKey : storeKey);
   const save = () => {
     if (practice) return; // a practice board is not the day's record
     try {
       // Rounded to whole user units: sub-pixel precision in a hand-drawn line is
       // noise, and it roughly halves what a long stroke costs to store.
       const line = drawn.map((st) => st.map((q) => [Math.round(q.x), Math.round(q.y)]));
-      localStorage.setItem(storeKey, JSON.stringify({ g: guesses, l: line }));
+      localStorage.setItem(keyFor(), JSON.stringify({ g: guesses, l: line }));
     } catch {
       /* not important enough to interrupt a game over */
     }
@@ -724,7 +802,7 @@ export function mount(el: HTMLElement): () => void {
   const load = (): { guesses: number[]; line: Pt[][] } => {
     const empty = { guesses: [], line: [] };
     try {
-      const raw = localStorage.getItem(storeKey);
+      const raw = localStorage.getItem(keyFor());
       if (!raw) return empty;
       const parsed: unknown = JSON.parse(raw);
       const rawGuesses: unknown = Array.isArray(parsed)
@@ -755,7 +833,7 @@ export function mount(el: HTMLElement): () => void {
         // played it in that window has a dead entry that nothing else will ever
         // read or remove, so it goes too.
         if (k.startsWith('carom:')) stale.push(k);
-        else if (k.startsWith('shotcall:') && k !== storeKey) stale.push(k);
+        else if (k.startsWith('shotcall:') && k !== storeKey && k !== hardKey) stale.push(k);
       }
       for (const k of stale) localStorage.removeItem(k);
     } catch {
@@ -925,7 +1003,9 @@ export function mount(el: HTMLElement): () => void {
       height: onSide ? 6 : RAIL - 3,
       rx: 3, fill: '#b08d57',
     }));
-    const aim = CELL * 1.45;
+    // A lattice DIR is (±1, ±1), so its arrow runs 1.45·√2 cells; a free DIR is a
+    // unit vector and gets 1.8, because at a free angle the arrow is the question.
+    const aim = CELL * (FREE === null ? 1.45 : 1.8);
     const axp = ex + DIR.x * aim;
     const ayp = ey - DIR.y * aim;
     // The arrow is its own group so paint() can fade it once the ball has gone
@@ -964,6 +1044,10 @@ export function mount(el: HTMLElement): () => void {
 
     defs();
     furniture();
+    // Sight diamonds live between the wood and everything else, so a pocket's
+    // brass always sits on top of one that shares its spot.
+    layers.diamonds = node('g', { class: 'shotcall-diamonds' });
+    stage.appendChild(layers.diamonds);
 
     // z-order, bottom to top. The shutter sits above the slot and the block so it
     // can slide over both; the chalk and the pockets sit above it, because a
@@ -1007,8 +1091,43 @@ export function mount(el: HTMLElement): () => void {
     drawBlock();
     drawPockets();
     drawEntry();
+    syncDiamonds();
     paintMine();
     paint(revealed);
+  }
+
+  /** Sight diamonds: one per dot along each rail, set into the wood, the way a
+   *  real table carries them for bank shots. Hard boards only. The daily took its
+   *  dots off the cloth so the player would see the angle rather than count it,
+   *  and at 45 degrees the eye can; at a free angle it cannot, and a scale on the
+   *  RAIL gives one back without putting anything on the cloth. Skipped where a
+   *  pocket sits, since the pocket's brass would cover it anyway. */
+  function syncDiamonds() {
+    // A fresh group each time, not a cleared one: the fade-in is a CSS animation
+    // on the group, and an animation runs when its element is created.
+    const g = node('g', { class: 'shotcall-diamonds' });
+    layers.diamonds!.replaceWith(g);
+    layers.diamonds = g;
+    if (FREE === null) return;
+    const has = (x: number, y: number) => POCKETS.some((p) => p.x === x && p.y === y);
+    const one = (cx: number, cy: number) => {
+      g.appendChild(node('path', {
+        d: `M${cx} ${cy - 4.2}L${cx + 3} ${cy}L${cx} ${cy + 4.2}L${cx - 3} ${cy}Z`,
+        fill: '#e8c27a', 'fill-opacity': 0.55,
+      }));
+      g.appendChild(node('path', {
+        d: `M${cx} ${cy - 2.2}L${cx + 1.5} ${cy}L${cx} ${cy + 2.2}L${cx - 1.5} ${cy}Z`,
+        fill: '#3a281d', 'fill-opacity': 0.5,
+      }));
+    };
+    for (let x = 1; x < W; x++) {
+      if (!has(x, H)) one(sx(x), PAD - RAIL / 2 - 1);
+      if (!has(x, 0)) one(sx(x), PAD + TH + RAIL / 2 + 1);
+    }
+    for (let y = 1; y < H; y++) {
+      if (!has(0, y)) one(PAD - RAIL / 2 - 1, sy(y));
+      if (!has(W, y)) one(PAD + TW + RAIL / 2 + 1, sy(y));
+    }
   }
 
   /* ---- painting ---------------------------------------------------- */
@@ -1288,7 +1407,11 @@ export function mount(el: HTMLElement): () => void {
         POCKETS = nextPockets;
         ENTRY = next.entry;
         DIR = next.dir;
+        FREE = next.bounces ?? null;
         deriveBoard();
+        // The diamonds come with the hard board and go with it; the CSS animation
+        // fades them in with the pockets' flight rather than popping them.
+        syncDiamonds();
 
         /* The last board's drawing has to go here, at the swap — not at the end.
            Those layers were faded to nothing in phase 1 but still HELD the old
@@ -1702,7 +1825,7 @@ export function mount(el: HTMLElement): () => void {
   }
 
   /** Everything that must be true before a fresh board is playable. */
-  function resetForNewBoard(tier: number) {
+  function resetForNewBoard(stamp: string) {
     guesses = [];
     revealed = 0;
     over = false;
@@ -1716,11 +1839,13 @@ export function mount(el: HTMLElement): () => void {
     // The day's board is off the table. Offer the way back to it for as long as
     // that is true — including mid-practice-round, because someone who racked by
     // accident should not have to finish the accident first.
-    todayBtn.hidden = !practice;
+    todayBtn.hidden = !(practice || hard);
     todayBtn.disabled = false;
+    hardBtn.disabled = false;
+    hardBtn.setAttribute('aria-pressed', String(hard));
     setChalk(chalkOn);
-    stampEl.textContent = `Tier ${tier + 1}/${TIERS}`;
-    cardHeadEl.textContent = 'Practice';
+    stampEl.textContent = stamp;
+    cardHeadEl.textContent = hard ? 'Practice · hard' : 'Practice';
     renderTallies();
     syncWipe();
     paintMine();
@@ -1729,21 +1854,35 @@ export function mount(el: HTMLElement): () => void {
 
   rackBtn.addEventListener('click', () => {
     if (reracking) return;
-    /* Same table, a board it has not just shown. randomBoard rejects about 96%
-       of what it tries, so asking it to also avoid one canon string costs
-       nothing measurable. */
-    const here = `${BLOCK.bx},${BLOCK.by},${BLOCK.bx2},${BLOCK.by2}|${ENTRY.x},${ENTRY.y}|${DIR.x},${DIR.y}`;
-    const next = randomBoard(W, H, Math.random, (b) => {
-      if (seen.has(b.canon)) return false;
-      // the day's own board has no canon here — boards.json does not ship one —
-      // so the board on the table right now is rejected by its coordinates
-      return `${b.B.bx},${b.B.by},${b.B.bx2},${b.B.by2}|${b.entry.x},${b.entry.y}|${b.dir.x},${b.dir.y}` !== here;
-    });
+    let next: Rack | null = null;
+    let stamp = 'Hard';
+    if (hard) {
+      /* A hard practice board: any count the table will hold, unseeded, uncounted.
+         Two real boards in a row cannot repeat by accident at these odds, so there
+         is no canon to avoid. */
+      for (let n = 2 + Math.floor(Math.random() * 5); n >= 2 && !next; n--)
+        next = freeBoard(W, H, Math.random, n);
+    } else {
+      /* Same table, a board it has not just shown. randomBoard rejects about 96%
+         of what it tries, so asking it to also avoid one canon string costs
+         nothing measurable. */
+      const here = `${BLOCK.bx},${BLOCK.by},${BLOCK.bx2},${BLOCK.by2}|${ENTRY.x},${ENTRY.y}|${DIR.x},${DIR.y}`;
+      const lattice = randomBoard(W, H, Math.random, (b) => {
+        if (seen.has(b.canon)) return false;
+        // the day's own board has no canon here — boards.json does not ship one —
+        // so the board on the table right now is rejected by its coordinates
+        return `${b.B.bx},${b.B.by},${b.B.bx2},${b.B.by2}|${b.entry.x},${b.entry.y}|${b.dir.x},${b.dir.y}` !== here;
+      });
+      if (lattice) {
+        seen.add(lattice.canon);
+        stamp = `Tier ${tierOf(difficulty(lattice)) + 1}/${TIERS}`;
+        next = lattice;
+      }
+    }
     if (!next) {
       say('This table has nothing new to rack. Try again tomorrow.', 'miss');
       return;
     }
-    seen.add(next.canon);
     practice = true;
     rackBtn.disabled = true;
     chalkBtn.disabled = true;
@@ -1754,16 +1893,12 @@ export function mount(el: HTMLElement): () => void {
     say('Re-racking&hellip;');
 
     if (reducedMotion()) {
-      BLOCK = next.B;
-      ENTRY = next.entry;
-      DIR = next.dir;
-      POCKETS = next.pockets.map((q) => ({ x: q.x, y: q.y }));
-      deriveBoard();
+      placeBoard(next);
       build();
-      resetForNewBoard(tierOf(difficulty(next)));
+      resetForNewBoard(stamp);
       return;
     }
-    rerack(next, () => resetForNewBoard(tierOf(difficulty(next))));
+    rerack(next, () => resetForNewBoard(stamp));
   });
 
   wipeBtn.addEventListener('click', () => {
@@ -2019,15 +2154,25 @@ export function mount(el: HTMLElement): () => void {
       shoot(revealed, LAST, finish);
       return;
     }
+    if (revealed >= LAST - 1) {
+      /* Every bounce has been shown, so the next thing the ball reaches is the
+         pocket — and a miss rolls it there. On the daily this cannot happen before
+         the fourth try (three bounces, four tries); on a hard board it can, and
+         the player was not told how many bounces there were. That is the point. */
+      over = true;
+      say('Nothing left to bounce off.', 'miss');
+      shoot(revealed, LAST, finish);
+      return;
+    }
     say('Rolling&hellip;');
-    shoot(revealed, revealed + 1, () => {
-      say(
-        `Not <b>${LETTERS[i]}</b>. Bounce ${revealed} of ${LAST - 1}, ` +
-          `${TRIES - guesses.length} tries left.`,
-        'miss',
-      );
-    });
+    shoot(revealed, revealed + 1, () => say(missLine(i), 'miss'));
   }
+
+  /** "Not J. Bounce 2 of 3, 2 tries left." — and on a hard board no "of 3",
+   *  because the count is the one thing hard mode keeps to itself. */
+  const missLine = (i: number) =>
+    `Not <b>${LETTERS[i]}</b>. Bounce ${revealed}${FREE === null ? ` of ${LAST - 1}` : ''}, ` +
+    `${TRIES - guesses.length} tries left.`;
 
   function finish() {
     const won = guesses.includes(ANSWER);
@@ -2117,7 +2262,7 @@ export function mount(el: HTMLElement): () => void {
     const won = guesses.includes(ANSWER);
     const off = chalkError();
     return (
-      `Shotcall · ${dateLabel}\n${row}   ${won ? `${guesses.length}/${TRIES}` : `x/${TRIES}`}` +
+      `Shotcall · ${dateLabel}${hard ? ' · hard' : ''}\n${row}   ${won ? `${guesses.length}/${TRIES}` : `x/${TRIES}`}` +
       (off === null ? '' : `\nchalk line ${off.toFixed(1)} dots off`)
     );
   }
@@ -2150,20 +2295,17 @@ export function mount(el: HTMLElement): () => void {
         guesses.push(i);
         mark(i, i === ANSWER, false);
       }
-      if (guesses.includes(ANSWER) || guesses.length >= TRIES) {
+      // LAST misses on a hard board is the ball rolling into the pocket (see
+      // guess()); on the daily LAST equals TRIES, so this is the old rule.
+      if (guesses.includes(ANSWER) || guesses.length >= Math.min(TRIES, LAST)) {
         revealed = LAST;
         paint(LAST);
         over = true;
         finish();
       } else {
-        revealed = Math.min(guesses.length, LAST);
+        revealed = Math.min(guesses.length, LAST - 1);
         paint(revealed);
-        const lastGuess = guesses[guesses.length - 1]!;
-        say(
-          `Not <b>${LETTERS[lastGuess]}</b>. Bounce ${revealed} of ${LAST - 1}, ` +
-            `${TRIES - guesses.length} tries left.`,
-          'miss',
-        );
+        say(missLine(guesses[guesses.length - 1]!), 'miss');
       }
     }
     renderTallies();
@@ -2182,6 +2324,7 @@ export function mount(el: HTMLElement): () => void {
    *  day's geometry and restores the record when the animation lands. */
   function restoreDay() {
     practice = false;
+    hard = false;
     guesses = [];
     revealed = 0;
     over = false;
@@ -2193,6 +2336,8 @@ export function mount(el: HTMLElement): () => void {
     todayBtn.hidden = true;
     todayBtn.disabled = false;
     chalkBtn.disabled = false;
+    hardBtn.disabled = false;
+    hardBtn.setAttribute('aria-pressed', 'false');
     stampEl.textContent = `Tier ${day.t + 1}/${TIERS}`;
     cardHeadEl.textContent = headLabel;
     setChalk(chalkOn);
@@ -2205,25 +2350,74 @@ export function mount(el: HTMLElement): () => void {
     replaySaved(rec);
   }
 
-  todayBtn.addEventListener('click', () => {
-    if (reracking || !practice) return;
+  /** The day's hard board back on the table with its own record — the mirror of
+   *  restoreDay(), for the second game of the day. */
+  function restoreHard() {
+    practice = false;
+    hard = true;
+    guesses = [];
+    revealed = 0;
+    over = false;
+    stroke = [];
+    scoreEl.hidden = true;
+    slipBox.hidden = true;
+    rackBtn.hidden = true;
+    rackBtn.disabled = false;
+    todayBtn.hidden = false;
+    todayBtn.disabled = false;
+    chalkBtn.disabled = false;
+    hardBtn.disabled = false;
+    hardBtn.setAttribute('aria-pressed', 'true');
+    stampEl.textContent = 'Hard';
+    cardHeadEl.textContent = `${headLabel} · hard`;
+    setChalk(chalkOn);
+
+    const rec = load();
+    drawn = rec.line;
+    paintMine();
+    syncWipe();
+    say('Pick a pocket. The arrow is the angle; the diamonds are the scale.');
+    replaySaved(rec);
+  }
+
+  /** Leave whatever is on the table for `next`, by the re-rack, and land in `then`. */
+  function goTo(next: Rack, then: () => void) {
     todayBtn.disabled = true;
     rackBtn.disabled = true;
     chalkBtn.disabled = true;
+    hardBtn.disabled = true;
     clearCard();
     say('Re-racking&hellip;');
-
     if (reducedMotion()) {
-      BLOCK = DAY.B;
-      ENTRY = DAY.entry;
-      DIR = DAY.dir;
-      POCKETS = DAY.pockets.map((q) => ({ ...q }));
-      deriveBoard();
+      placeBoard(next);
       build();
-      restoreDay();
+      then();
       return;
     }
-    rerack(DAY, restoreDay);
+    rerack(next, then);
+  }
+
+  todayBtn.addEventListener('click', () => {
+    if (reracking || rolling || !(practice || hard)) return;
+    goTo(DAY, restoreDay);
+  });
+
+  /* The key goes both ways: from the day's board (or any practice board) to the
+     day's hard board, and from the hard board back. Nothing is spent by going:
+     each board's record is its own and replays when the table lands. */
+  hardBtn.addEventListener('click', () => {
+    if (reracking || rolling) return;
+    if (hard && !practice) {
+      goTo(DAY, restoreDay);
+      return;
+    }
+    const next = hardBoard();
+    if (!next) {
+      say('No hard board fits this table today.', 'miss');
+      return;
+    }
+    hard = true; // before the swap, so the landing reads the right record
+    goTo(next, restoreHard);
   });
 
   /* ---- controls ---------------------------------------------------- */

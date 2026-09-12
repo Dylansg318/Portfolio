@@ -141,3 +141,76 @@ export function contacts(W, H, B, entry, dir, max) {
   }
   return out;
 }
+
+/**
+ * The same law, off the grid.
+ *
+ * `contacts()` steps the lattice one diagonal unit at a time. This one takes a
+ * ball at any real position with any velocity and asks, per leg, which surface
+ * it reaches first — then flips the perpendicular component exactly as `step()`
+ * does. It exists for HARD MODE, where the entry angle is free and the ball is
+ * not on the grid, so there is nothing to step.
+ *
+ * It is a strict generalisation, and the physics gate proves it: fed a lattice
+ * board (integer entry, direction ±1/±1) every intermediate value is a small
+ * integer, so it reproduces `contacts()` to the bit — positions, times and every
+ * flag — on all 25,448 boards the gate sweeps. That is what lets the daily game
+ * keep its stepping tracer untouched while the hard mode shares its rule.
+ *
+ * WHAT IS DIFFERENT OFF THE GRID
+ *   Exactness becomes margins. On the lattice a pocket either IS the contact
+ *   point or is not. Here the answer is inside a mouth of radius MOUTH and every
+ *   earlier contact is kept a full dot clear of every other mouth; a contact that
+ *   would land within half a dot of a corner is rejected, because on screen it
+ *   reads as a corner hit whether or not it is one. board.mjs's freeBoard()
+ *   enforces those; this function only reports where the ball goes.
+ *
+ *   `t` is the time along the velocity vector. With a unit velocity that is the
+ *   distance in dots; with the lattice's (±1, ±1) it is the step count, which is
+ *   what keeps the parity check exact.
+ *
+ * @param {number} W
+ * @param {number} H
+ * @param {Block | null} B
+ * @param {Point} entry  any point on the rim
+ * @param {Point} vel    the velocity; sign and ratio matter, magnitude scales `t`
+ * @param {number} max
+ * @returns {Contact[]}
+ */
+export function freeContacts(W, H, B, entry, vel, max) {
+  const EPS = 1e-9;
+  /** @type {Contact[]} */
+  const out = [];
+  let x = entry.x, y = entry.y, dx = vel.x, dy = vel.y, T = 0;
+  for (let n = 0; n < max; n++) {
+    /** @type {{ t: number, v: boolean, h: boolean, rim: boolean }[]} */
+    const c = [];
+    if (dx > 0) c.push({ t: (W - x) / dx, v: true, h: false, rim: true });
+    if (dx < 0) c.push({ t: (0 - x) / dx, v: true, h: false, rim: true });
+    if (dy > 0) c.push({ t: (H - y) / dy, v: false, h: true, rim: true });
+    if (dy < 0) c.push({ t: (0 - y) / dy, v: false, h: true, rim: true });
+    if (B) {
+      // a block face counts only where the ball would actually cross its span
+      for (const fx of [B.bx, B.bx2]) if (dx !== 0) {
+        const t = (fx - x) / dx, yy = y + dy * t;
+        if (t > EPS && yy >= B.by - EPS && yy <= B.by2 + EPS) c.push({ t, v: true, h: false, rim: false });
+      }
+      for (const fy of [B.by, B.by2]) if (dy !== 0) {
+        const t = (fy - y) / dy, xx = x + dx * t;
+        if (t > EPS && xx >= B.bx - EPS && xx <= B.bx2 + EPS) c.push({ t, v: false, h: true, rim: false });
+      }
+    }
+    const live = c.filter((k) => k.t > EPS).sort((a, b) => a.t - b.t);
+    if (!live.length) break;
+    const t = live[0].t;
+    // everything reached at the same instant is one contact: two faces at once
+    // is a corner, exactly as the stepping tracer sees it
+    const at = live.filter((k) => Math.abs(k.t - t) < 1e-7);
+    const v = at.some((k) => k.v), h = at.some((k) => k.h), rim = at.some((k) => k.rim);
+    x += dx * t; y += dy * t; T += t;
+    out.push({ x, y, t: T, rim, block: !rim, corner: v && h });
+    if (v) dx = -dx;
+    if (h) dy = -dy;
+  }
+  return out;
+}
