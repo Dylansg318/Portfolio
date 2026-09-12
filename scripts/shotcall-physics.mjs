@@ -30,11 +30,20 @@
  * drift: boards.json is committed output, so without this a stale or
  * hand-edited file would sail through the gate.
  *
- * Finally it audits the RUNTIME generator — the one the browser calls for "Rack
+ * Then it audits the RUNTIME generator — the one the browser calls for "Rack
  * another" — by making boards with it and re-deriving every rule from scratch
  * rather than trusting the function that claimed to enforce them. A practice
  * board that quietly skipped a filter would be an easier game wearing the same
  * clothes, and nothing else would catch it.
+ *
+ * HARD MODE adds two sections. First, PARITY: trace.mjs's freeContacts — the
+ * off-grid tracer hard mode rolls the ball with — is run on every lattice board
+ * of the sweep above and must reproduce the stepping tracer to the bit. That is
+ * the statement that the two are one rule and not two. Second, the hard boards
+ * themselves: made with board.mjs's freeBoard from fixed seeds, every margin
+ * re-derived here without calling anything that claims to enforce it, and the
+ * free path run backwards to prove it retraces — the same (7) as above, with a
+ * tolerance of 1e-9 because the positions are real numbers now.
  *
  * NOTE ON (7), because it looks like a fudge and is not. Time-reversing a bounce
  * means leaving the contact along the negated INCOMING ray, not the negated
@@ -48,10 +57,11 @@ import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { contacts, step } from "../src/demos/shotcall/trace.mjs";
+import { contacts, freeContacts, step } from "../src/demos/shotcall/trace.mjs";
 import {
   CONTACTS, MIN_LEG, MAX_LEG, POCKET_COUNT, MIN_POCKET_GAP, MIN_RING_DIST,
   SIZES, key, rimContext, randomBoard,
+  freeBoard, seeded as seededHard, MOUTH, MOUTH_CLEAR, CORNER_CLEAR, HARD_MIN_LEG, HARD_MAX_LEG,
 } from "../src/demos/shotcall/board.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -67,7 +77,7 @@ function run(W, H, B, start, steps) {
 }
 
 const fails = { contained: 0, insideBlock: 0, tunnel: 0, unitStep: 0, reflect: 0, reversible: 0, freeTurn: 0 };
-let cases = 0, stepsChecked = 0;
+let cases = 0, stepsChecked = 0, parityCases = 0, parityFails = 0;
 
 function blocksFor(W, H) {
   const out = [null];
@@ -93,6 +103,17 @@ for (const [W, H] of [[11, 9], [8, 6], [10, 7], [13, 9], [12, 8], [7, 5]]) {
         const N = 60;
         const fwd = run(W, H, B, { x: ex, y: ey, dx, dy }, N);
         cases++;
+
+        // PARITY: the off-grid tracer, fed this lattice board, must agree exactly
+        {
+          const a = contacts(W, H, B, { x: ex, y: ey }, { x: dx, y: dy }, 8);
+          const b = freeContacts(W, H, B, { x: ex, y: ey }, { x: dx, y: dy }, 8);
+          const same = a.length === b.length && a.every((c, i) =>
+            c.x === b[i].x && c.y === b[i].y && c.t === b[i].t &&
+            c.rim === b[i].rim && c.block === b[i].block && c.corner === b[i].corner);
+          if (!same) parityFails++;
+          parityCases++;
+        }
 
         for (let i = 0; i < fwd.length; i++) {
           const p = fwd[i];
@@ -152,7 +173,9 @@ const checks = [
 for (const [name, n] of checks)
   console.log(`  ${n === 0 ? "PASS" : "FAIL"}  ${name}${n ? "  (" + n + " violations)" : ""}`);
 
-const bad = checks.reduce((a, c) => a + c[1], 0);
+console.log(`  ${parityFails === 0 ? "PASS" : "FAIL"}  the off-grid tracer reproduces the lattice one on all ${parityCases.toLocaleString()} boards${parityFails ? "  (" + parityFails + " differ)" : ""}`);
+
+const bad = checks.reduce((a, c) => a + c[1], 0) + parityFails;
 console.log("\n" + (bad === 0 ? "all invariants hold" : bad + " violations total"));
 
 /* ------------------------------------------------ the boards that ship ----
@@ -275,6 +298,96 @@ if (genBad === 0) {
   for (const [name, n] of genChecks) if (n) console.log(`  FAIL  ${name}  (${n})`);
 }
 
+/* ------------------------------------------------------------ hard boards --
+   Off the grid, exactness is margins, so the margins are what get re-derived.
+   Every distance below is recomputed here from the traced path and the placed
+   pockets; freeBoard's own bookkeeping is not consulted. */
+
+const hard = { made: 0, failed: 0, attempts: 0 };
+const hardFails = {
+  contacts: 0, corner: 0, nearCorner: 0, answerOffRim: 0, answerNotInMouth: 0, earlyNearMouth: 0,
+  entryNearMouth: 0, legs: 0, blockUntouched: 0, ringDist: 0, pocketCount: 0, pocketOffRim: 0,
+  pocketGap: 0, reversible: 0,
+};
+const HARD_PER_SIZE = 10; // per bounce count, so 50 a size, 400 in all
+const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+for (const [W, H] of SIZES) {
+  const { rim, idxOf } = rimContext(W, H);
+  const onRim = new Set(rim.map(key));
+  for (let n = 2; n <= 6; n++) for (let i = 0; i < HARD_PER_SIZE; i++) {
+    const b = freeBoard(W, H, seededHard(0xbadc0de ^ (W * 131 + H * 17 + n * 1009 + i)), n);
+    if (!b) { hard.failed++; continue; }
+    hard.made++;
+    hard.attempts += b.attempts;
+    let bad = false;
+    const fail = (k) => { hardFails[k]++; bad = true; };
+
+    const hits = freeContacts(W, H, b.B, b.entry, b.dir, n + 1);
+    if (hits.length < n + 1) fail("contacts");
+    else {
+      if (hits.some((c) => c.corner)) fail("corner");
+      const corners = [[0, 0], [W, 0], [0, H], [W, H],
+        [b.B.bx, b.B.by], [b.B.bx2, b.B.by], [b.B.bx, b.B.by2], [b.B.bx2, b.B.by2]].map(([x, y]) => ({ x, y }));
+      if (hits.some((c) => corners.some((k) => dist(c, k) < CORNER_CLEAR))) fail("nearCorner");
+      const answer = hits[n];
+      if (!answer.rim) fail("answerOffRim");
+      const mouth = b.pockets[b.answerIdx];
+      if (!mouth || dist(answer, mouth) > MOUTH * 0.6) fail("answerNotInMouth");
+      const early = hits.slice(0, n).filter((c) => c.rim);
+      if (early.some((c) => b.pockets.some((p) => dist(c, p) < MOUTH_CLEAR))) fail("earlyNearMouth");
+      if (b.pockets.some((p) => dist(b.entry, p) < MOUTH_CLEAR)) fail("entryNearMouth");
+      const legs = hits.map((c, j) => c.t - (j ? hits[j - 1].t : 0));
+      if (Math.min(...legs) < HARD_MIN_LEG || Math.max(...legs) > HARD_MAX_LEG) fail("legs");
+      if (!hits.slice(0, n).some((c) => c.block)) fail("blockUntouched");
+      if (mouth) {
+        let ei = 0;
+        for (let j = 1; j < rim.length; j++) if (dist(b.entry, rim[j]) < dist(b.entry, rim[ei])) ei = j;
+        const ai = idxOf.get(key(mouth)), d = Math.abs(ai - ei);
+        if (Math.min(d, rim.length - d) < MIN_RING_DIST) fail("ringDist");
+      }
+
+      // (7) again, off the grid: leave the answer along the negated arriving ray and
+      // the ball must retrace every contact, to a billionth of a dot. The arriving
+      // ray is re-derived by replaying the flips from the entry, face by face.
+      let vx = b.dir.x, vy = b.dir.y, dx = b.dir.x, dy = b.dir.y;
+      for (const c of hits) {
+        vx = dx; vy = dy;
+        const onV = Math.abs(c.x) < 1e-9 || Math.abs(c.x - W) < 1e-9 ||
+          (c.block && (Math.abs(c.x - b.B.bx) < 1e-9 || Math.abs(c.x - b.B.bx2) < 1e-9));
+        const onH = Math.abs(c.y) < 1e-9 || Math.abs(c.y - H) < 1e-9 ||
+          (c.block && (Math.abs(c.y - b.B.by) < 1e-9 || Math.abs(c.y - b.B.by2) < 1e-9));
+        if (onV) dx = -dx;
+        if (onH) dy = -dy;
+      }
+      const back = freeContacts(W, H, b.B, { x: answer.x, y: answer.y }, { x: -vx, y: -vy }, n + 1);
+      const fwdPts = [...hits.slice(0, n).reverse(), b.entry];
+      const okBack = back.length === n + 1 && fwdPts.every((p, j) => dist(p, back[j]) < 1e-9);
+      if (!okBack) fail("reversible");
+    }
+
+    if (b.pockets.length !== POCKET_COUNT || new Set(b.pockets.map(key)).size !== POCKET_COUNT) fail("pocketCount");
+    if (!b.pockets.every((p) => onRim.has(key(p)))) fail("pocketOffRim");
+    const idx = b.pockets.map((p) => idxOf.get(key(p))).sort((x, y) => x - y);
+    for (let j = 0; j < idx.length; j++) {
+      const a = idx[j], c = idx[(j + 1) % idx.length], d = Math.abs(c - a);
+      if (Math.min(d, rim.length - d) < MIN_POCKET_GAP) { fail("pocketGap"); break; }
+    }
+    if (bad) hard.failed++;
+  }
+}
+
+console.log(`\nhard boards  (${hard.made} boards, 2 to 6 bounces, ${HARD_PER_SIZE} of each per size, ` +
+  `${Math.round(hard.attempts / Math.max(1, hard.made)).toLocaleString()} attempts each on average)`);
+const hardChecks = Object.entries(hardFails);
+const hardBad = hardChecks.reduce((a, c) => a + c[1], 0) + (hard.made === 0 ? 1 : 0);
+if (hardBad === 0) {
+  console.log(`  PASS  every margin re-derived and held, and every free path retraces, on all ${hard.made} boards`);
+} else {
+  for (const [name, n] of hardChecks) if (n) console.log(`  FAIL  ${name}  (${n})`);
+  if (hard.made === 0) console.log("  FAIL  no hard board could be made");
+}
+
 // the reference board, traced and printed for the record
 const W = 11, H = 9, B = { bx: 3, by: 3, bx2: 5, by2: 4 };
 const ref = run(W, H, B, { x: 1, y: 0, dx: 1, dy: 1 }, 16);
@@ -288,4 +401,4 @@ console.log("  legs: " + (() => {
   return ts.join("-");
 })());
 
-if (bad > 0 || badBoards > 0 || genBad > 0) process.exit(1);
+if (bad > 0 || badBoards > 0 || genBad > 0 || hardBad > 0) process.exit(1);

@@ -121,6 +121,17 @@ doesn't count for the day. The table clears itself like a machine: the pockets
 close, the block sinks through the cloth, a new section opens up, and the new
 pockets get fired out from the middle and bounce off the rails until they land.
 
+There's a **Hard** key on the scorecard too. Same table, but the ball comes in at
+any angle, bounces anywhere from two to six times, and the card never says how
+many. Each miss still shows you one more bounce — and if there were none left to
+show, the ball drops in and that's the day. The daily's "three" was doing more
+work than it looked: it told you when to stop tracing, and it caught you when a
+slipped line reached a pocket too early. Without it, both are on you. Small sight
+marks appear on the rails for it, the way a real table has them, because judging
+an odd angle by eye needs a scale. The hard board isn't shipped at all: it's made
+from the date on your own device in a fraction of a second, so it's the same for
+everyone and it never runs out. It keeps its own score and its own share slip.
+
 And every one of the 365 boards that shipped gets re-played by a separate checker
 before the site builds. If the ball doesn't land where the puzzle says, the build
 stops.
@@ -133,7 +144,8 @@ stops.
 
 The ball moves on the 45° lattice: one unit sideways for every unit forward. So
 it's on a whole number of dots on both axes at every step, it can't slip through a
-surface, and there's no tolerance anywhere to tune. A block face doesn't need its
+surface, and there's no tolerance anywhere to tune — on the daily board; hard mode
+gives that up on purpose, below. A block face doesn't need its
 own rule either. An axis-aligned surface flips the perpendicular component and
 leaves the other alone, whichever side you're on, which is why the block adds
 nothing for the player to learn.
@@ -276,6 +288,44 @@ And the old chalk, bounce marks and crossed-out pockets were faded to zero, the
 board swapped, and then faded back in with the previous puzzle still on them.
 Opacity isn't a reset.
 
+## Hard mode, off the grid
+
+The grid was never needed for the bounce. A constant-velocity tracer — real-valued
+position, which surface comes first, flip the perpendicular component — reproduces
+every one of the 365 dealt boards to the bit, and the gate now proves the same on
+all 25,448 lattice boards it sweeps. What the grid bought was everything else: a
+finite space to count and dedupe, pockets that either are the contact point or
+aren't, and a puzzle you could count when the dots were on the cloth. Those are
+the right constraints for a daily with a provable supply. They're the wrong ones
+for a mode whose point is variety.
+
+So hard mode lets all three go. Any entry angle from 12° off the rail. Two to six
+bounces, climbing through the week in ranges rather than fixed numbers, and never
+printed — the daily's "three" is a checksum on your trace, and every board has a
+pocket one step from an earlier bounce for a slipped trace to stop in. A miss
+with no bounce left to show rolls the ball into the pocket and ends the day, so
+you don't know whether the next miss is the last one. And no `boards.json`: the
+board is made from the date with a seeded PRNG on the player's device, by
+rejection, and it's the same board on every device because the seed is the date.
+
+Exactness becomes margins, and the margins are physical things. The answer lands
+within 0.3 dots of its pocket's centre; every earlier rail contact stays a full dot
+from every other mouth; nothing comes within 0.6 of a corner, because on screen
+that reads as a corner hit whether or not it is one. Fourteen mouths on a 30-point
+rim leave almost no room for a long path, which is why 10×7 tops out at four
+bounces and the count steps down there — three days a year on the dealt calendar.
+A two-bounce board lands in about a hundred attempts, a six-bounce one in a few
+thousand on a big table and thirty thousand on 11×7, under a tenth of a second.
+One thing I got wrong first: drawing the count per attempt let short paths, which
+clear the margins far more easily, crowd out the long ones — forty of sixty boards
+came out two-bounce. The count is drawn once, then the search is for a board with
+that count.
+
+Sight diamonds go on the rails for it, one per dot, the way a real table carries
+them for bank shots. The daily took its dots off the cloth so you'd see the angle
+rather than count it, and at 45° the eye can. At a free angle it can't, and a
+scale on the wood gives one back without putting anything on the cloth.
+
 ## The gate, and the test that was wrong
 
 The physics gate checks seven invariants over every board shape the generator can
@@ -297,6 +347,10 @@ the board it was dealt — and to a player that's a wrong answer, not a bug. The
 import one module now. The gate verifies the code that ships, replays all 365
 committed boards through it, and generates 2,000 more through the runtime path
 with every rule re-derived from scratch, so a practice board that skipped a filter
-gets caught.
+gets caught. For hard mode it does two more things: runs the off-grid tracer on
+every lattice board and demands bit-for-bit agreement with the stepping one, and
+makes hard boards from fixed seeds — 373 of them, two to six bounces on every
+table — re-deriving each margin from the traced path and running every free path
+backwards to a billionth of a dot.
 
 </EngOnly>

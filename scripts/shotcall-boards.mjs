@@ -50,7 +50,7 @@ import { fileURLToPath } from "node:url";
 // and the boards the browser builds for "Rack another" cannot diverge — same
 // reflection rule, same definition of a fair board. See those files' headers.
 import {
-  BOUNCES, CONTACTS, POCKET_COUNT, SIZES, BLOCK_SHAPES,
+  BOUNCES, CONTACTS, POCKET_COUNT, SIZES, BLOCK_SHAPES, TIER_BY_WEEKDAY,
   gcd, rimContext, blockPositions, inwardDirs, evaluate, difficulty,
 } from "../src/demos/shotcall/board.mjs";
 // for the assertion at the bottom, which re-traces every board that ships
@@ -94,8 +94,8 @@ function candidates() {
 /* ------------------------------------------------- dealing a year of days */
 
 // Mon easiest through Sat hardest, Sun a step back down — the crossword habit,
-// so a streak feels like it has a shape instead of being flat noise.
-const TIER_BY_WEEKDAY = { 1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 6, 0: 5 };
+// so a streak feels like it has a shape instead of being flat noise. The ladder
+// itself lives in board.mjs now, because the hard mode climbs it too.
 const TIERS = 7;
 
 /** Deterministic shuffle, so the same commit always produces the same year. */
