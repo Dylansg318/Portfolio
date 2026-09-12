@@ -43,6 +43,7 @@ title: Thing I Built
 blurb: One sentence, max 160 characters. Used on cards and as the meta description.
 date: 2026-08-30
 status: live            # live | archived | wip
+category: work          # work | tool | game — the tab it sits under on /projects
 stack: [TypeScript, Postgres]
 
 problem: What was actually wrong or needed. Not "I built an X".
