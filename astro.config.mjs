@@ -50,7 +50,11 @@ export default defineConfig({
     // that mdx then uses. Its options live in ec.config.mjs (see that file).
     expressiveCode(),
     mdx(),
-    sitemap({ filter: (page) => !page.includes('/play/') }),
+    // No filter. `/play/<slug>` used to be excluded — it was a fullscreen
+    // projection of the write-up and had no business competing with it in
+    // search. It is now a shareable destination in its own right, so it is
+    // indexed and listed like any other page.
+    sitemap(),
   ],
 
   fonts: [

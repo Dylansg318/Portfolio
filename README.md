@@ -115,6 +115,12 @@ site's build graph and never loads for someone who only came to read.
 > Cloudflare caps a single static asset at **25 MiB**. Large engine builds need
 > chunking or an external origin.
 
+Either lane also gets `/play/<slug>` for free: the demo on its own page, with the
+credit and a link back to the write-up in a footer beneath it. That is the URL to
+hand out — it is indexed, it unfurls with the project's `cover` image, and it opens
+straight onto the game. Give the project a real cover capture or the link unfurls
+as a text tile.
+
 ## The résumé and its PDF
 
 `/resume` is rendered from `src/lib/site.ts` (`experience`, `resumeSummary`,

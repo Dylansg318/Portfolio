@@ -279,8 +279,9 @@ const CSS = `
 .shotcall-slip {
   margin-top: 22px; max-width: 25rem;
   border: 1px dashed rgba(200, 179, 148, 0.4); padding: 13px 16px;
-  display: flex; align-items: center; gap: 14px;
+  display: flex; flex-direction: column; gap: 10px;
 }
+.shotcall-slip-row { display: flex; align-items: center; gap: 14px; }
 .shotcall-slip pre {
   margin: 0; flex: 1 1 auto; min-width: 0;
   font-family: var(--card-face); font-size: 0.82rem; line-height: 1.65;
@@ -294,6 +295,16 @@ const CSS = `
   cursor: pointer; flex: none;
 }
 .shotcall-copy:hover { background: var(--brass-lit); }
+/* Where to play, under the score. break-word, not anywhere: anywhere breaks at
+   the last character that fits and so ignores the <wbr> offered before the path,
+   which is the whole point of putting one there. (No backticks in this block --
+   it is a template literal.) */
+.shotcall-slip-url {
+  font-family: var(--card-face); font-size: 0.72rem; line-height: 1.5;
+  color: var(--warm-dim); text-decoration: none; overflow-wrap: break-word;
+  border-top: 1px dashed rgba(200, 179, 148, 0.22); padding-top: 9px;
+}
+.shotcall-slip-url:hover { color: var(--brass-lit); }
 
 .shotcall [hidden] { display: none !important; }
 .shotcall :focus-visible { outline: 2px solid var(--brass-lit); outline-offset: 3px; }
@@ -303,7 +314,7 @@ const CSS = `
   .shotcall-sign { flex-wrap: wrap; }
   .shotcall-date { margin-left: 0; width: 100%; }
   .shotcall-card, .shotcall-slip { max-width: none; }
-  .shotcall-slip { flex-wrap: wrap; }
+  .shotcall-slip-row { flex-wrap: wrap; }
 }
 @media (prefers-reduced-motion: reduce) {
   .shotcall * { transition-duration: 0ms !important; }
@@ -454,8 +465,11 @@ export function mount(el: HTMLElement): () => void {
       </div>
 
       <div class="shotcall-slip" data-slip hidden>
-        <pre data-slip-text></pre>
-        <button class="shotcall-copy" type="button" data-copy>Copy</button>
+        <div class="shotcall-slip-row">
+          <pre data-slip-text></pre>
+          <button class="shotcall-copy" type="button" data-copy>Copy</button>
+        </div>
+        <a class="shotcall-slip-url" data-slip-url href="/play/shotcall"></a>
       </div>
     </div>
   `;
@@ -466,6 +480,7 @@ export function mount(el: HTMLElement): () => void {
   const nextEl = el.querySelector<HTMLElement>('[data-next]')!;
   const slipBox = el.querySelector<HTMLElement>('[data-slip]')!;
   const slipText = el.querySelector<HTMLElement>('[data-slip-text]')!;
+  const slipUrl = el.querySelector<HTMLAnchorElement>('[data-slip-url]')!;
   const copyBtn = el.querySelector<HTMLButtonElement>('[data-copy]')!;
   const chalkBtn = el.querySelector<HTMLButtonElement>('[data-chalk]')!;
   const wipeBtn = el.querySelector<HTMLButtonElement>('[data-wipe]')!;
@@ -1738,6 +1753,21 @@ export function mount(el: HTMLElement): () => void {
       return;
     }
     slipText.textContent = slip();
+    // Shown without the scheme, the way a browser's address bar does it: the
+    // full URL is 12px too wide for the slip on a desktop and needs two lines on
+    // a phone, and https:// is the half nobody reads. The href and the copied
+    // text both keep it, so the link still works and still linkifies when pasted.
+    //
+    // The <wbr> is the break the host would otherwise not get: 46 characters of
+    // monospace do not fit a phone, and without an offered break point the line
+    // splits in the middle of the domain. With it the domain stays whole and the
+    // path drops to the next line. Appended as nodes rather than innerHTML.
+    // appendChild, not append: wrangler's generated worker types put an
+    // HTMLRewriter `Element.append(content, options?)` in scope, and it wins the
+    // overload here, so the three-node form fails to typecheck.
+    slipUrl.textContent = location.host;
+    slipUrl.appendChild(document.createElement('wbr'));
+    slipUrl.appendChild(document.createTextNode(PLAY_PATH));
     slipBox.hidden = false;
     startCountdown();
   }
@@ -1774,7 +1804,8 @@ export function mount(el: HTMLElement): () => void {
   }
 
   /** The bounce count stays out of the slip: everyone plays the same table, so it
-   *  would hand the next person a real clue. */
+   *  would hand the next person a real clue.
+   */
   function slip() {
     let row = '';
     for (let i = 0; i < TRIES; i++) {
@@ -1789,10 +1820,26 @@ export function mount(el: HTMLElement): () => void {
     );
   }
 
+  /** What Copy actually puts on the clipboard: the score, and then where to play.
+   *
+   *  A score with nowhere to go is a dead end — whoever it is pasted to is told
+   *  someone got it in three and given no way to try. The link always points at
+   *  /play/shotcall, the bare game page, even when this demo is running inside the
+   *  write-up: the person being sent a score wants the table, not two thousand
+   *  words about how the boards are generated. Built off `location.origin`, so a
+   *  slip copied in dev points at dev and one copied in production at production.
+   *
+   *  It is rendered UNDER the slip rather than as a fourth line inside it because
+   *  the production URL is wider than the slip at any width the slip can have on a
+   *  phone, so inside the block it wraps mid-domain — in the one part of this
+   *  game people screenshot. */
+  const PLAY_PATH = '/play/shotcall';
+  const shareText = () => `${slip()}\n${location.origin}${PLAY_PATH}`;
+
   /* ---- controls ---------------------------------------------------- */
 
   copyBtn.addEventListener('click', () => {
-    const text = slipText.textContent ?? '';
+    const text = shareText();
     const settle = (label: string) => {
       copyBtn.textContent = label;
       window.clearTimeout(copyTimer);

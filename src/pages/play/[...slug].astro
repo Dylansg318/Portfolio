@@ -1,35 +1,153 @@
 ---
+/**
+ * THE SHAREABLE DEMO PAGE.
+ *
+ * `/projects/<slug>` is the write-up: what the problem was, what was hard, what
+ * I learned. This is the other audience entirely — someone who was sent a link
+ * in a group chat and wants to play the thing. So the game is the whole page,
+ * the credit and the way back into the portfolio sit UNDER it, and nothing is
+ * asked of a visitor before they can start.
+ *
+ * It is a real destination, not a projection of the write-up: indexable, in the
+ * sitemap, self-canonical, with its own social card. A page that unfurls as a
+ * grey box is a page nobody clicks.
+ */
+import { getImage } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
 import Demo from '../../components/mdx/Demo.astro';
+import { site } from '../../lib/site';
 import { getProjects } from '../../lib/content';
 
-// Only projects that actually have a demo get a /play route.
+// Only projects that have a demo AND want a page for it. `fullscreen: false`
+// opts out of both the link from the write-up and the route itself — that is
+// what the portfolio-site template page uses, because its demo block is a
+// worked example that happens to mount Galaxy Defense's island. Left in, it
+// would put a second indexed page serving the same game under a title that
+// does not name it.
 export async function getStaticPaths() {
   const projects = await getProjects();
   return projects
-    .filter((p) => p.data.demo.kind !== 'none')
+    .filter((p) => p.data.demo.kind !== 'none' && p.data.demo.fullscreen)
     .map((project) => ({ params: { slug: project.id }, props: { project } }));
 }
 
 const { project } = Astro.props;
 const { data } = project;
----
-<Base title={`Play — ${data.title}`} description={data.blurb} bare noindex>
-  <div class="flex min-h-dvh flex-col bg-bg">
-    <div class="flex items-center gap-4 border-b border-border px-4 py-3">
-      <a
-        href={`/projects/${project.id}`}
-        class="inline-flex items-center gap-1.5 text-sm text-ink-muted transition-colors hover:text-ink"
-      >
-        <span aria-hidden="true">←</span> Back to write-up
-      </a>
-      <span class="ml-auto text-sm font-medium text-ink">{data.title}</span>
-    </div>
 
-    <div class="flex flex-1 items-center justify-center p-4">
+// THE SHARE CARD IS A PICTURE OF THE THING.
+// The generated /og/projects/*.png card is title-and-blurb text on graphite,
+// which is right for a write-up a recruiter is about to read and wrong for a
+// link someone posted saying "try this". Every demo here already ships a real
+// capture as its cover, so that is what unfurls. Re-encoded at 1200px wide
+// rather than linking the source PNG: the covers are 2560×1440 and over a
+// megabyte, and some unfurlers give up on a slow image rather than wait.
+// The text card stays as the fallback for a demo with no cover.
+const card = data.cover
+  ? await getImage({ src: data.cover, width: 1200, format: 'jpeg', quality: 82 })
+  : undefined;
+
+// Plain English first: whoever opens a shared game link is a player, not a
+// hiring manager, and `plainBlurb` is the sentence written for them.
+const description = data.plainBlurb ?? data.blurb;
+---
+
+<Base title={data.title} description={description} ogImage={card?.src ?? `/og/projects/${project.id}.png`} bare>
+  <div class="flex min-h-dvh flex-col bg-bg">
+    <!-- No top bar, deliberately. A cold visitor's first screen should be the
+         game and nothing else; the way back into the site is below it, where
+         someone who has actually played will look. -->
+    <div class="flex flex-1 items-start justify-center px-4 sm:px-6">
       <div class="w-full max-w-5xl">
         <Demo demo={{ ...data.demo, fullscreen: false }} title={data.title} />
       </div>
     </div>
+
+    <footer class="border-t border-border">
+      <div
+        class="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-x-6 gap-y-3 px-4 py-5 sm:px-6"
+      >
+        <p class="text-sm text-ink-muted">
+          <span class="font-medium text-ink">{data.title}</span> — built by{' '}
+          <a
+            href="/"
+            class="text-accent underline decoration-accent/40 underline-offset-4 transition-colors hover:decoration-accent"
+          >
+            {site.name}
+          </a>
+        </p>
+
+        <!-- `sm:ml-auto`, not `ml-auto`: on a phone this row wraps under the
+             credit, and pushing it right there leaves one line ranged left and
+             the next ranged right for no reason. -->
+        <nav
+          class="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm sm:ml-auto"
+          aria-label="About this demo"
+        >
+          <a
+            href={`/projects/${project.id}`}
+            class="text-ink-muted transition-colors hover:text-ink"
+          >
+            How it works
+          </a>
+          <a href="/projects" class="text-ink-muted transition-colors hover:text-ink">
+            More of my work
+          </a>
+          <button
+            type="button"
+            data-share
+            class="rounded-md border border-border px-3 py-1.5 font-medium text-ink-muted transition-colors hover:border-ink-faint hover:text-ink"
+          >
+            Share
+          </button>
+        </nav>
+      </div>
+    </footer>
   </div>
 </Base>
+
+<script>
+  // Share the page, by whatever route the device actually has. The native sheet
+  // where there is one (phones), the clipboard everywhere else.
+  //
+  // Bound on DOMContentLoaded, not astro:page-load: this page is `bare` and so
+  // has no View Transitions router, and that event never fires here.
+  const bindShare = () => {
+    const btn = document.querySelector<HTMLButtonElement>('[data-share]');
+    if (!btn || btn.dataset.bound) return;
+    btn.dataset.bound = '1';
+
+    let timer = 0;
+    const flash = (label: string) => {
+      btn.textContent = label;
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => (btn.textContent = 'Share'), 1600);
+    };
+
+    btn.addEventListener('click', async () => {
+      const url = location.href;
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: document.title, url });
+          return;
+        } catch (err) {
+          // Dismissing the sheet rejects with AbortError. That is a decision,
+          // not a failure — falling through to the clipboard would flash
+          // "Link copied" at someone who just said no.
+          if (err instanceof Error && err.name === 'AbortError') return;
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(url);
+        flash('Link copied');
+      } catch {
+        flash('Copy the address bar');
+      }
+    });
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bindShare, { once: true });
+  } else {
+    bindShare();
+  }
+</script>
