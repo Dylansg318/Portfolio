@@ -31,11 +31,6 @@ export default defineConfig({
     '/projects/repricer': '/projects/mhlhub/repricing',
     '/projects/channel-sync': '/projects/mhlhub/channel-sync',
     '/projects/quickbooks': '/projects/mhlhub/quickbooks',
-    // Shotcall shipped as "Carom" for about an hour on 2026-09-11 before the
-    // name was found to be taken by another daily puzzle — and to describe the
-    // pocketless discipline, on a table with fourteen pockets.
-    '/projects/carom': '/projects/shotcall',
-    '/play/carom': '/play/shotcall',
   },
 
   // Everything prerenders by default. Only routes that explicitly opt out
