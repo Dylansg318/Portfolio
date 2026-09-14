@@ -67,7 +67,7 @@ draft: false            # true = visible in dev, excluded from the built site
 
 | Component | Use |
 |---|---|
-| `<Demo demo={frontmatter.demo} />` | Mount the project's interactive demo |
+| `<Demo demo={frontmatter.demo} slug="..." />` | An island game: a *Play* card that opens it in the side panel. An iframe demo: runs inline. `slug` names the `/play` page |
 | `<CodeFile src="slug/snippets/x.ts" lines="4-18" />` | Render a **real file** from disk, highlighted |
 | `<Video provider="youtube" id="..." title="..." />` | Externally-hosted video, loads on click |
 | `<Figure src={img} alt="..." caption="..." />` | Optimised image with caption (one capture, in the product's light theme) |
@@ -82,8 +82,14 @@ component.
 exporting `mount(el: HTMLElement): () => void`, then:
 
 ```yaml
-demo: { kind: island, entry: <name> }
+demo: { kind: island, entry: <name> }   # add `keyboard: true` if it can't be played by touch
 ```
+
+An island opens in the **game panel** (`src/components/ui/GamePanel.astro`): any
+element with `data-play="<name>"` opens it over the response column, with expand,
+its own page (↗) and close. The write-up's `<Demo>` renders a *Play* card that does
+this, and so does the project page's *Play here* button. Only `/play/<slug>`
+mounts an island inline.
 
 Copy the start-gate pattern from `src/demos/galaxy-defense/` — mount should be
 cheap and only begin expensive work (animation loop, audio, WASM) after an

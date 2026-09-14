@@ -91,7 +91,18 @@ const sections = (headings as MarkdownHeading[]).filter((h) => h.depth === 2);
 
         {(playable || data.links.live || data.links.source || data.links.writeup) && (
           <div class="actions">
-            {playable && <a href={`/play/${project.id}`} class="btn btn-primary">Play <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>}
+            {playable && data.demo.kind === 'island' && (
+              <a
+                href={`/play/${project.id}`}
+                class="btn btn-primary"
+                data-play={data.demo.entry}
+                data-play-title={data.title}
+                data-play-href={`/play/${project.id}`}
+                data-play-keyboard={data.demo.keyboard ? '' : undefined}
+                aria-expanded="false"
+              >Play here <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg></a>
+            )}
+            {playable && data.demo.kind !== 'island' && <a href={`/play/${project.id}`} class="btn btn-primary">Play <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>}
             {data.links.live && !playable && <a href={data.links.live} rel="noopener" class="btn btn-primary">View live</a>}
             {data.links.live && playable && <a href={data.links.live} rel="noopener" class="c-link">View live</a>}
             {data.links.source && <a href={data.links.source} rel="noopener" class="c-link">Source <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>}

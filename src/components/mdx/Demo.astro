@@ -11,6 +11,12 @@
  *
  * Both lanes load ONLY on demand, so a reader who never clicks pays nothing.
  *
+ * In a write-up an island is a launcher, not an inline mount: pressing it
+ * opens the game in the side panel (src/components/ui/GamePanel.astro), the
+ * one way a game is played on a page with chrome. Only the /play page, which
+ * passes `flush`, mounts the island inline — that page IS the game. The
+ * iframe lane is for tools (the receipt splitter) and still runs inline.
+ *
  * The island lane uses a real dynamic import rather than `client:visible`.
  * Astro's client directives need a statically-analysable import, which would
  * mean editing this file for every new demo; a dynamic import keeps the promise
@@ -43,6 +49,12 @@ interface Props {
 }
 
 const { demo, title, slug, flush = false } = Astro.props;
+// The raw frontmatter reaches this component from MDX, so schema defaults
+// have not been applied: a missing `fullscreen` means the default, true.
+const playHref = slug && demo.kind !== 'none' && demo.fullscreen !== false ? `/play/${slug}` : undefined;
+// A link to the /play page where there is one (it still works without
+// JavaScript); a plain button where there is not.
+const Launcher = playHref ? 'a' : 'button';
 ---
 
 {
@@ -51,7 +63,26 @@ const { demo, title, slug, flush = false } = Astro.props;
       class:list={['not-prose', flush ? 'my-0 sm:my-10' : 'my-10']}
       aria-label={title ?? 'Interactive demo'}
     >
-      {demo.kind === 'island' && (
+      {demo.kind === 'island' && !flush && (
+        <Launcher
+          class="play-card"
+          href={playHref}
+          type={playHref ? undefined : 'button'}
+          data-play={demo.entry}
+          data-play-title={title}
+          data-play-href={playHref}
+          data-play-keyboard={demo.keyboard ? '' : undefined}
+          aria-expanded="false"
+        >
+          <span class="go"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z" /></svg></span>
+          <span>
+            <b>{demo.label}</b>
+            <small>Opens in a panel beside the write-up{demo.keyboard ? ' · needs a keyboard' : ''}</small>
+          </span>
+        </Launcher>
+      )}
+
+      {demo.kind === 'island' && flush && (
         <div
           class:list={[
             'relative min-h-64 overflow-hidden border border-border bg-surface',
@@ -91,7 +122,7 @@ const { demo, title, slug, flush = false } = Astro.props;
         </div>
       )}
 
-      {demo.fullscreen && slug && (
+      {demo.kind === 'iframe' && demo.fullscreen && slug && (
         <p class="mt-2 text-sm text-ink-faint">
           Runs small here.{' '}
           <a class="text-accent underline underline-offset-4" href={`/play/${slug}`}>

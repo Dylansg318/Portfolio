@@ -91,6 +91,9 @@ const open = current === 'project' ? 'work' : undefined;
       anchors.forEach((a) => a.setAttribute('aria-current', a.getAttribute('href') === `#${id}` ? 'true' : 'false'));
     const io = new IntersectionObserver(
       (entries) => {
+        // On the home page's still frame every row is a layer in the same
+        // place, so they all intersect; the frame sets the entry itself.
+        if (document.documentElement.classList.contains('still')) return;
         const hit = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
         if (hit) light((hit.target as HTMLElement).id);
       },

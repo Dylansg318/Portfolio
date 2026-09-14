@@ -4,6 +4,7 @@ import { ClientRouter } from 'astro:transitions';
 import { site } from '../lib/site';
 import Header from '../components/ui/Header.astro';
 import Footer from '../components/ui/Footer.astro';
+import GamePanel from '../components/ui/GamePanel.astro';
 import '../styles/global.css';
 
 interface Props {
@@ -192,6 +193,7 @@ const personLd = {
     </main>
 
     {!bare && <Footer />}
+    {!bare && <GamePanel />}
 
     <!-- Fallback reveal, for browsers without CSS scroll timelines. Where
          `.reveal-css` is set this whole block is skipped and the browser
