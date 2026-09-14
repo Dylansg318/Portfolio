@@ -55,7 +55,7 @@ const personLd = {
 ---
 
 <!doctype html>
-<html lang={site.locale} data-theme="dark">
+<html lang={site.locale}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -63,8 +63,10 @@ const personLd = {
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
     <meta name="author" content={site.name} />
-    <meta name="theme-color" content="#f4f5f7" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#16181c" media="(prefers-color-scheme: dark)" />
+    <!-- One theme, on purpose: the page is a white prose column beside a dark
+         response column, and the split is between the columns, not between
+         two modes of the page. See the token block in global.css. -->
+    <meta name="theme-color" content="#ffffff" />
     {noindex && <meta name="robots" content="noindex, nofollow" />}
 
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -81,8 +83,7 @@ const personLd = {
     <link rel="alternate" type="application/rss+xml" title={site.name} href="/rss.xml" />
 
     <Font cssVariable="--font-sans" preload />
-    <Font cssVariable="--font-display" preload />
-    <Font cssVariable="--font-mono" />
+    <Font cssVariable="--font-mono" preload />
 
     {/* Cross-page View Transitions. Skipped on `bare` pages: /desk runs its own
         hash-driven panel router and has no business being swapped in and out.
@@ -92,34 +93,30 @@ const personLd = {
 
     <script is:inline type="application/ld+json" set:html={JSON.stringify(personLd)} />
 
-    <!-- Set the theme before first paint. Inline and blocking on purpose:
-         deferring this is what causes the white flash on a dark-mode reload.
-         Dark is the default; a visitor's explicit toggle wins over it.
+    <!-- Set the reading mode before first paint. Inline and blocking on
+         purpose: deferring this is what makes the Engineer copy flash in
+         after the Plain English copy on a reload.
 
-         This ALSO re-runs on astro:after-swap. That is not belt-and-braces:
-         the server renders data-theme="dark" on <html> every time, and a View
-         Transitions swap copies the incoming document's <html> attributes onto
-         the live one. Without re-applying here, a visitor reading in light
-         mode would be flipped to dark by their next click. after-swap fires
-         before the new page paints, so the correction is never seen. -->
+         This ALSO re-runs on astro:after-swap: a View Transitions swap copies
+         the incoming document's <html> attributes onto the live one, and the
+         server never renders data-mode, so without re-applying here a visitor
+         reading in Engineer would be flipped back by their next click.
+         after-swap fires before the new page paints, so it is never seen. -->
     <script is:inline>
       (() => {
         const root = document.documentElement;
 
         const applyRootState = () => {
-          // `js` gates the scroll-reveal hidden state: no JS, nothing hides.
+          // `js` gates the scroll-reveal hidden state the help desk and the
+          // demos still use: no JS, nothing hides.
           root.classList.add('js');
-          // Which reveal implementation this browser gets. Decided before
-          // first paint, so the CSS is already correct when the page renders.
           if (window.CSS && CSS.supports && CSS.supports('animation-timeline: view()')) {
             root.classList.add('reveal-css');
           }
           try {
-            const stored = localStorage.getItem('theme');
-            root.dataset.theme = stored === 'light' ? 'light' : 'dark';
             root.dataset.mode = localStorage.getItem('mode') === 'eng' ? 'eng' : 'plain';
           } catch {
-            /* private mode / blocked storage — dark Meadow, plain English */
+            /* private mode / blocked storage — plain English */
           }
         };
 
@@ -127,8 +124,8 @@ const personLd = {
         document.addEventListener('astro:after-swap', applyRootState);
 
         try {
-          // A ?skin= or ?mode= param wins and persists — that is what makes
-          // shareable A/B links work. Otherwise the stored choice applies.
+          // A ?mode= param wins and persists — that is what makes shareable
+          // links to one register work. Otherwise the stored choice applies.
           const params = new URLSearchParams(location.search);
 
           // The old "packing slip" skin grew up into Help Desk mode at /desk.
@@ -144,7 +141,7 @@ const personLd = {
             root.dataset.mode = modeParam;
           }
         } catch {
-          /* private mode / blocked storage — dark Meadow, plain English */
+          /* private mode / blocked storage — plain English */
         }
       })();
     </script>
@@ -175,6 +172,8 @@ const personLd = {
     <!-- Fallback reveal, for browsers without CSS scroll timelines. Where
          `.reveal-css` is set this whole block is skipped and the browser
          drives the animation off the compositor instead — see global.css.
+         Only the help desk and the demos mark elements with .reveal now; the
+         reference pages render at rest.
 
          One observer for every .reveal on the page, PLUS a scroll-position
          sweep as a safety net: if the observer ever misses (fast programmatic

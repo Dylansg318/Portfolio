@@ -23,33 +23,30 @@ export const { getStaticPaths, GET } = await OGImageRoute({
     title: page.title,
     description: page.description,
     padding: 70,
-    // Graphite ground with a lime edge — the dark theme's own palette, where
-    // the only colour on the card is the accent stripe.
+    // The prose column's own palette: white ground, navy title, and the one
+    // accent as a stripe on the inline-start edge — the card is the page.
     bgGradient: [
-      [22, 24, 28],
-      [36, 40, 46],
+      [255, 255, 255],
+      [246, 248, 250],
     ],
-    border: { color: [181, 228, 140], width: 12, side: 'inline-start' },
+    border: { color: [94, 86, 251], width: 12, side: 'inline-start' },
     // Vendored rather than fetched. Left to itself this library pulls Noto Sans
     // from api.fontsource.org at BUILD time — a face used nowhere else on the
     // site, over a network call that has already failed a deploy with ECONNRESET.
     // These two files are in the repo, so the build touches no third party and
-    // the cards are set in the same two faces as the pages they advertise.
-    fonts: [
-      './src/fonts/bricolage-grotesque-700.ttf',
-      './src/fonts/ibm-plex-sans-400.ttf',
-    ],
+    // the cards are set in the same face as the pages they advertise.
+    fonts: ['./src/fonts/source-sans-3-700.ttf', './src/fonts/source-sans-3-400.ttf'],
     font: {
       title: {
         size: 64,
         weight: 'Bold',
-        families: ['Bricolage Grotesque', 'IBM Plex Sans'],
-        color: [255, 255, 255],
+        families: ['Source Sans 3'],
+        color: [10, 37, 64],
       },
       description: {
         size: 30,
-        families: ['IBM Plex Sans'],
-        color: [180, 188, 198],
+        families: ['Source Sans 3'],
+        color: [66, 84, 102],
         lineHeight: 1.4,
       },
     },

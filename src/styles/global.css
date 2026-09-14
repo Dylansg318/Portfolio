@@ -1,133 +1,92 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
 
-/* Dark mode is driven by an explicit data-theme attribute so the toggle can
-   override the OS preference in BOTH directions. */
-@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
-
 /* ---------------------------------------------------------------------------
    DESIGN TOKENS — the entire design system lives in this block.
 
-   Structure: a NEUTRAL GRAPHITE ground carries the page, and the "Meadow
-   Green" ramp is spent only on highlights — links, the active tab, the
-   headline gradient, focus rings, the eyebrow rule. Nothing large is tinted.
-   That is deliberate: colour reads as emphasis only when most of the page
-   isn't coloured, and a grey ground is what makes a portfolio look like a
-   product rather than a theme demo.
+   The world is an API reference. A WHITE PROSE COLUMN carries what a thing is
+   in plain words; a continuous DARK RESPONSE COLUMN beside it carries the
+   exact shape — a request, its response, an excerpt. Both are on screen at
+   once, which is the whole point: a reader never has to flip a switch to see
+   the other register. One accent (blue-violet) for links, the active
+   endpoint and the filled button; method badges carry their own semantic
+   colour; nothing else on the light side is tinted.
 
-   The nav bar is near-black in BOTH themes. Header.astro layers white/10-style
-   borders and hovers on it, which only resolve against a dark bar — so --nav
-   must never become a light colour without rewriting those. Header.astro paints
-   it at 90-95% over a blur, so the light theme composites it slightly UP from
-   this hex — meaning the gate's opaque score is the more forgiving one. Keep
-   that opacity high, or --nav-muted's real contrast drifts below what the gate
-   reports.
+   ONE THEME, ON PURPOSE. The light/dark split is between the two columns,
+   not between two modes of the page, so there is no theme toggle and no
+   `prefers-color-scheme` branch. Games and the help desk paint their own
+   worlds on top of these tokens.
 
-   Contrast rule for the ramp: it FLIPS at step 8. Steps 1-7 are light enough
-   to carry black text; steps 8-10 need white. Never put white text on
-   meadow-1..7 or black text on meadow-8..10.
-
-   scripts/check-contrast.mjs parses the two blocks below and fails `npm run
-   check` if any text/background pair drops under WCAG AA. Keep the hex values
-   in these two blocks.
+   scripts/check-contrast.mjs parses this block and fails `npm run check` if
+   any text/background pair drops under WCAG AA. Keep the hex values here.
 --------------------------------------------------------------------------- */
 :root {
-  /* the raw ramp — available as bg-meadow-lime, text-meadow-yale, etc.
-     Highlights only; nothing here paints a page or a card. */
-  --meadow-lime: #d9ed92;
-  --meadow-light: #b5e48c;
-  --meadow-willow: #99d98c;
-  --meadow-emerald: #76c893;
-  --meadow-mist: #52b69a;
-  --meadow-teal: #34a0a4;
-  --meadow-bondi: #168aad;
-  --meadow-cerulean: #1a759f;
-  --meadow-baltic: #1e6091;
-  --meadow-yale: #184e77;
-
   color-scheme: light;
 
-  /* page surfaces — neutral grey, cards lift to white */
-  --bg: #f4f5f7;
+  /* the prose column */
+  --bg: #ffffff;
   --surface: #ffffff;
-  --surface-raised: #eceef1;
-  --border: #dcdfe4;
-  --border-strong: #7d8590;
+  --surface-raised: #f6f8fa;   /* quiet fills: chips, light code, hover rows */
+  --border: #e3e8ee;           /* every hairline */
+  --border-mid: #cfd7df;       /* underlines, scrollbars — decorative, not a boundary */
+  --border-strong: #7f8b9b;    /* bullets, real boundaries; clears 3:1 on white */
 
-  /* text — black only */
-  --ink: #16191d;
-  --ink-muted: #4a5058;
-  --ink-faint: #5c636c;
+  --ink: #0a2540;
+  --ink-muted: #425466;
+  --ink-faint: #5b6b82;        /* meta: dates, captions, the mono labels; still 4.5:1 */
 
-  /* the nav bar: near-black chrome, so the lime mark and active tab are the
-     only colour in it */
-  --nav: #1b1f24;
-  --nav-ink: #ffffff;
-  --nav-muted: #b8bfc8;
-  --tab-active: #b5e48c;
-  --tab-active-ink: #0b1512;
+  /* the header is white like the page; the active link is ink on a wash */
+  --nav: #ffffff;
+  --nav-ink: #0a2540;
+  --nav-muted: #425466;
+  --tab-active: #eeedff;
+  --tab-active-ink: #0a2540;
 
-  /* accent — the ramp's one job on a grey page */
-  --accent: #1a759f;
-  --accent-hover: #1e6091;
+  /* the one accent */
+  --accent: #5e56fb;             /* a hair darker than the mock so a link on the quiet fill clears 4.5:1 */
+  --accent-hover: #5249e6;
   --accent-ink: #ffffff;
-  --accent-wash: #dcecf5;
+  --accent-wash: #eeedff;
 
-  /* status, kept inside the palette where the hue allows */
-  --ok: #2f7a55;
-  --warn: #7a6410;
-  --danger: #a32f2f;
+  /* status */
+  --ok: #0a6b3f;
+  --warn: #8a5a00;
+  --danger: #b42318;
+
+  /* method badges — semantic, not the accent */
+  --get: #0a6b3f;
+  --get-bg: #e2f5ec;
+  --post: #4b43d6;
+  --post-bg: #eeedff;
+
+  /* the response column */
+  --code-bg: #0b0f19;          /* the column itself */
+  --code-surface: #131a2a;     /* a panel or console on it */
+  --code-line: #263042;        /* hairlines and input borders on the dark side */
+  --code-ink: #d6deeb;
+  --code-dim: #7d8aa5;         /* captions, punctuation, the status line */
+  --syn-key: #9ecbff;          /* JSON keys, keywords, the language tab, links on dark */
+  --syn-str: #a5d6a7;          /* strings, 2xx */
+  --syn-num: #f7c46c;          /* numbers, booleans, 4xx */
 
   /* motion — one place, so reduced-motion can zero all of it */
   --dur-fast: 120ms;
-  --dur: 200ms;
+  --dur: 240ms;
   --dur-slow: 600ms;
-  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
-  --shadow-cast: rgba(16, 19, 23, 0.28);
-}
-
-[data-theme='dark'] {
-  color-scheme: dark;
-
-  /* graphite ground — dark grey, not black, so cards can sit above it */
-  --bg: #16181c;
-  --surface: #1d2025;
-  --surface-raised: #24282e;
-  --border: #2e333a;
-  --border-strong: #5f6873;
-
-  /* text — white only */
-  --ink: #ffffff;
-  --ink-muted: #b4bcc6;
-  --ink-faint: #98a1ac;
-
-  --nav: #101215;
-  --nav-ink: #ffffff;
-  --nav-muted: #aeb6c0;
-  --tab-active: #b5e48c;
-  --tab-active-ink: #0b1512;
-
-  --accent: #b5e48c;
-  --accent-hover: #d9ed92;
-  --accent-ink: #141619;
-  --accent-wash: #2a3320;
-
-  --ok: #76c893;
-  --warn: #d9ed92;
-  --danger: #ff9d9d;
-
-  --shadow-cast: rgba(0, 0, 0, 0.6);
+  --shadow-btn: 0 1px 2px rgba(10, 37, 64, 0.12), 0 4px 12px -6px rgba(99, 91, 255, 0.5);
 }
 
 /* `inline` makes the utilities resolve to var(--x) at runtime rather than
-   baking the value at build time — which is what lets the theme toggle work. */
+   baking the value at build time. */
 @theme inline {
   --color-bg: var(--bg);
   --color-surface: var(--surface);
   --color-surface-raised: var(--surface-raised);
   --color-border: var(--border);
+  --color-border-mid: var(--border-mid);
   --color-border-strong: var(--border-strong);
 
   --color-ink: var(--ink);
@@ -145,58 +104,68 @@
   --color-tab-active: var(--tab-active);
   --color-tab-active-ink: var(--tab-active-ink);
 
-  --color-meadow-lime: var(--meadow-lime);
-  --color-meadow-light: var(--meadow-light);
-  --color-meadow-willow: var(--meadow-willow);
-  --color-meadow-emerald: var(--meadow-emerald);
-  --color-meadow-mist: var(--meadow-mist);
-  --color-meadow-teal: var(--meadow-teal);
-  --color-meadow-bondi: var(--meadow-bondi);
-  --color-meadow-cerulean: var(--meadow-cerulean);
-  --color-meadow-baltic: var(--meadow-baltic);
-  --color-meadow-yale: var(--meadow-yale);
-
   --color-ok: var(--ok);
   --color-warn: var(--warn);
   --color-danger: var(--danger);
 
+  --color-get: var(--get);
+  --color-get-bg: var(--get-bg);
+  --color-post: var(--post);
+  --color-post-bg: var(--post-bg);
+
+  --color-code-bg: var(--code-bg);
+  --color-code-surface: var(--code-surface);
+  --color-code-line: var(--code-line);
+  --color-code-ink: var(--code-ink);
+  --color-code-dim: var(--code-dim);
+  --color-syn-key: var(--syn-key);
+  --color-syn-str: var(--syn-str);
+  --color-syn-num: var(--syn-num);
+
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
-  --font-display: var(--font-display);
+  /* One family. Headings are the body face, heavier; there is no display face
+     to pair, which is what keeps the page reading as a reference and not a
+     brochure. The variable stays so `font-display` in older markup resolves. */
+  --font-display: var(--font-sans);
 
-  /* one content measure, used by every page shell */
-  --container-reading: 46rem;
-  --container-wide: 72rem;
+  /* the prose column's measure, and the widest a page shell gets */
+  --container-reading: 44rem;
+  --container-wide: 80rem;
 }
 
 @layer base {
   html {
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
+    /* 17px body at desktop widths: reference prose is read for minutes at a
+       time, and 16px Source Sans sets a touch small beside 13px mono. */
+    font-size: 16px;
+  }
+  @media (min-width: 640px) {
+    html { font-size: 17px; }
   }
 
   body {
     background-color: var(--bg);
     color: var(--ink);
     font-family: var(--font-sans);
+    line-height: 1.6;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
+    scrollbar-color: var(--border-mid) transparent;
   }
 
-  /* Display type for headlines only. Body copy stays in the sans so long
-     write-ups read comfortably. */
-  h1,
-  h2,
-  .font-display {
-    font-family: var(--font-display);
-    letter-spacing: -0.02em;
+  h1, h2, h3 {
+    text-wrap: balance;
+    letter-spacing: -0.015em;
   }
 
   /* Visible, consistent focus. Never remove this without a replacement —
      it is the whole keyboard-navigation story. */
   :focus-visible {
     outline: 2px solid var(--accent);
-    outline-offset: 2px;
+    outline-offset: 3px;
     border-radius: 2px;
   }
 
@@ -214,9 +183,6 @@
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
     }
-    /* A scroll-timeline animation is driven by scroll position, not a clock,
-       so zeroing animation-duration above does nothing to it. It has to be
-       switched off outright. */
     .reveal, .reveal-load {
       animation: none !important;
       opacity: 1 !important;
@@ -226,216 +192,7 @@
 }
 
 @layer components {
-  /* ---- gradient headline ink ------------------------------------------- */
-  .text-gradient {
-    background: linear-gradient(100deg, var(--meadow-light), var(--meadow-mist) 55%, var(--meadow-bondi));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-  :root:not([data-theme='dark']) .text-gradient {
-    background: linear-gradient(100deg, var(--meadow-cerulean), var(--meadow-teal) 55%, var(--meadow-yale));
-    -webkit-background-clip: text;
-    background-clip: text;
-  }
-
-  /* ---- reveal on scroll: opacity + a 12px rise ---------------------------
-     One effect, two implementations, picked once at boot.
-
-     `.reveal-css` (set by the head script when `animation-timeline: view()`
-     is supported) hands the whole thing to the browser: the animation is
-     driven by scroll POSITION off the compositor, so no JavaScript ever runs
-     on the scroll path. That is the entire point — a debounced scroll handler
-     is still a scroll handler, and on a mid-range phone it is the thing that
-     drops frames.
-
-     Without it (Firefox, at the time of writing) the IntersectionObserver in
-     Base.astro adds `.is-in` and CSS transitions do the work, exactly as
-     before. Both paths are gated on `.js`, so with JavaScript off nothing
-     hides in the first place.
-
-     `.reveal-load` is the above-the-fold case. An element already on screen
-     is past the `entry` range before the page is even interactive, so a
-     scroll timeline would just show it with no entrance. Those elements are
-     marked in the markup (never by script — adding the class after first
-     paint would flash) and animate on a clock instead, which is what keeps
-     the staggered hero choreography. ---- */
-  @keyframes reveal-in {
-    from { opacity: 0; transform: translateY(12px); }
-    to   { opacity: 1; transform: none; }
-  }
-
-  /* --- path A: observer + transitions (fallback) --- */
-  .js:not(.reveal-css) .reveal {
-    transition:
-      opacity var(--dur-slow) var(--ease-out),
-      transform var(--dur-slow) var(--ease-out);
-    transition-delay: var(--reveal-delay, 0ms);
-  }
-  .js:not(.reveal-css) .reveal:not(.is-in) {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-
-  /* --- path B: CSS scroll timelines --- */
-  .reveal-css .reveal {
-    animation: reveal-in linear both;
-    animation-timeline: view();
-    animation-range: entry 0% entry 55%;
-  }
-  /* Above the fold: a timed entrance, so the stagger survives. `auto` puts it
-     back on the document clock — without it the rule above still applies. */
-  .reveal-css .reveal-load {
-    animation: reveal-in var(--dur-slow) var(--ease-out) both;
-    animation-delay: var(--reveal-delay, 0ms);
-    animation-timeline: auto;
-    animation-range: normal;
-  }
-
-  /* ---- bento tile: the shared card surface with a lift on hover --------- */
-  .tile {
-    position: relative;
-    overflow: hidden;
-    border-radius: 1.25rem;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    transition:
-      border-color var(--dur) var(--ease),
-      transform var(--dur) var(--ease),
-      box-shadow var(--dur) var(--ease);
-  }
-  .tile::before {
-    /* a top-edge highlight that only shows on hover */
-    content: '';
-    position: absolute;
-    inset: 0 0 auto 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--accent), transparent);
-    opacity: 0;
-    transition: opacity var(--dur) var(--ease);
-  }
-  .tile:hover {
-    border-color: var(--border-strong);
-    transform: translateY(-2px);
-    box-shadow: 0 18px 40px -24px var(--shadow-cast);
-  }
-  .tile:hover::before {
-    opacity: 1;
-  }
-
-  /* ---- buttons ---------------------------------------------------------- */
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    border-radius: 0.75rem;
-    padding: 0.7rem 1.15rem;
-    font-weight: 600;
-    font-size: 0.95rem;
-    line-height: 1;
-    transition:
-      background-color var(--dur) var(--ease),
-      border-color var(--dur) var(--ease),
-      color var(--dur) var(--ease),
-      transform var(--dur-fast) var(--ease);
-  }
-  .btn:active {
-    transform: translateY(1px);
-  }
-  .btn-primary {
-    background: var(--accent);
-    color: var(--accent-ink);
-  }
-  .btn-primary:hover {
-    background: var(--accent-hover);
-  }
-  .btn-ghost {
-    border: 1px solid var(--border);
-    color: var(--ink);
-    background: transparent;
-  }
-  .btn-ghost:hover {
-    border-color: var(--border-strong);
-    background: var(--surface);
-  }
-
-  /* ---- eyebrow label ---------------------------------------------------- */
-  .eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--ink-faint);
-  }
-  .eyebrow::before {
-    content: '';
-    width: 1.5rem;
-    height: 1px;
-    background: var(--accent);
-  }
-
-  /* Long-form MDX styling. Without this, project write-ups render as an
-     undifferentiated wall of text: Tailwind's preflight strips heading and list
-     styling, and MDX-generated HTML has no classes to hook. */
-  .prose-portfolio {
-    @apply prose prose-lg max-w-none;
-    --tw-prose-body: var(--ink);
-    --tw-prose-headings: var(--ink);
-    --tw-prose-lead: var(--ink-muted);
-    --tw-prose-links: var(--accent);
-    --tw-prose-bold: var(--ink);
-    --tw-prose-counters: var(--ink-faint);
-    --tw-prose-bullets: var(--border-strong);
-    --tw-prose-hr: var(--border);
-    --tw-prose-quotes: var(--ink-muted);
-    --tw-prose-quote-borders: var(--accent);
-    --tw-prose-captions: var(--ink-faint);
-    --tw-prose-code: var(--ink);
-    --tw-prose-th-borders: var(--border-strong);
-    --tw-prose-td-borders: var(--border);
-  }
-
-  .prose-portfolio :where(h2) {
-    font-family: var(--font-display);
-    letter-spacing: -0.02em;
-  }
-
-  /* Expressive Code ships its own complete code-block styling. Hand it back
-     control so the two don't fight over <pre>.
-     (`not-prose` is a selector the prose rules exclude, not an applyable
-     utility — so this neutralises typography's code styling explicitly.) */
-  .prose-portfolio {
-    --tw-prose-pre-bg: transparent;
-    --tw-prose-pre-code: inherit;
-  }
-
-  .prose-portfolio :where(.expressive-code) {
-    margin-block: 1.5rem;
-  }
-
-  .prose-portfolio :where(.expressive-code pre) {
-    margin: 0;
-    padding: 0;
-    background: transparent;
-    font-size: inherit;
-    line-height: inherit;
-  }
-
-  /* Typography adds decorative backticks around inline <code>; Expressive Code
-     already renders its own delimiters. */
-  .prose-portfolio :where(code)::before,
-  .prose-portfolio :where(code)::after {
-    content: '';
-  }
-
-  .prose-portfolio :where(a):hover {
-    color: var(--accent-hover);
-  }
-
-  /* ---- content modes: Plain English (default) vs Engineer ----------------
+  /* ---- the two registers ------------------------------------------------
      Copy variants live side by side in the HTML; data-mode on <html> picks
      one. No attribute (no JS, crawlers, RSS readers) = plain English. ---- */
   [data-mode='eng'] .only-plain {
@@ -445,35 +202,548 @@
     display: none !important;
   }
 
-  /* ---- print: the résumé page is meant to be printed --------------------- */
+  /* ---- mono, wherever a path, a key or a number sits ------------------- */
+  .mono {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---- method badge ------------------------------------------------------ */
+  .m {
+    display: inline-block;
+    min-width: 2.6rem;
+    text-align: center;
+    padding: 0.1rem 0.3rem;
+    border-radius: 3px;
+    font: 600 0.625rem/1.5 var(--font-mono);
+    letter-spacing: 0.06em;
+  }
+  .m.get { background: var(--get-bg); color: var(--get); }
+  .m.post { background: var(--post-bg); color: var(--post); }
+
+  /* ---- the reference grid: rail · rows ----------------------------------
+     Below 1024px the rail is a horizontal strip under the header and each
+     row stacks prose over response; from 1024px the rail is a 14rem sticky
+     column and every row is prose beside its response, so the dark column
+     runs the height of the page. ---- */
+  .ref {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  @media (min-width: 1024px) {
+    .ref { grid-template-columns: 14rem minmax(0, 1fr); }
+  }
+
+  .rail {
+    position: sticky;
+    top: 3.25rem;
+    z-index: 5;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+  .rail .cap { display: none; }
+  .rail ol {
+    display: flex;
+    gap: 0.25rem;
+    padding: 0.5rem 2.5rem 0.5rem 1rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent);
+  }
+  .rail ol::-webkit-scrollbar { display: none; }
+  .rail a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.6rem;
+    border-radius: 5px;
+    font-size: 0.8125rem;
+    color: var(--ink-muted);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+  }
+  .rail a:hover { color: var(--ink); background: var(--surface-raised); }
+  .rail a[aria-current='true'],
+  .rail a[aria-current='page'] {
+    color: var(--ink);
+    background: var(--accent-wash);
+    font-weight: 600;
+    box-shadow: inset 2px 0 0 var(--accent);
+  }
+  @media (min-width: 1024px) {
+    .rail {
+      align-self: start;
+      top: 3.25rem;
+      height: calc(100vh - 3.25rem);
+      border-bottom: 0;
+      border-right: 1px solid var(--border);
+      padding: 2rem 0 2rem 1.5rem;
+      overflow-y: auto;
+    }
+    .rail .cap {
+      display: block;
+      font-size: 0.6875rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      margin-bottom: 0.75rem;
+    }
+    .rail ol {
+      flex-direction: column;
+      gap: 0.125rem;
+      padding: 0;
+      overflow: visible;
+      -webkit-mask-image: none;
+      mask-image: none;
+    }
+    .rail a { margin-right: 1rem; width: calc(100% - 1rem); }
+  }
+
+  /* ---- one endpoint row: prose left, response right ---------------------
+     Rows abut so the dark column is continuous down the page. ---- */
+  .ep {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    scroll-margin-top: 3.5rem;
+  }
+  @media (min-width: 1024px) {
+    .ep { grid-template-columns: minmax(0, 1fr) minmax(0, 30rem); }
+  }
+  @media (min-width: 1280px) {
+    .ep { grid-template-columns: minmax(0, 1fr) minmax(0, 34rem); }
+  }
+  .ep-prose {
+    padding: 2.5rem 1rem;
+    border-top: 1px solid var(--border);
+    max-width: var(--container-reading);
+    min-width: 0;
+  }
+  @media (min-width: 640px) { .ep-prose { padding: 3rem 1.5rem; } }
+  @media (min-width: 1024px) { .ep-prose { padding: 3.5rem 3rem 3.5rem 2.5rem; } }
+  .ep:first-child .ep-prose { border-top: 0; }
+  .ep-code {
+    background: var(--code-bg);
+    color: var(--code-ink);
+    padding: 1.25rem 1rem 2rem;
+    min-width: 0;
+  }
+  @media (min-width: 640px) { .ep-code { padding: 1.5rem 1.5rem 2.25rem; } }
+  @media (min-width: 1024px) {
+    .ep-code { padding: 3.5rem 2rem; border-top: 1px solid var(--code-line); }
+    .ep:first-child .ep-code { border-top: 0; }
+    .ep-code .stick { position: sticky; top: 4.75rem; }
+  }
+  /* The last row's dark side runs into the footer; a page that ends on a
+     short row still shows the column reaching the bottom. */
+  .ref-main { display: grid; align-content: start; }
+
+  /* ---- prose-column type ------------------------------------------------ */
+  .crumb { font-size: 0.8125rem; color: var(--ink-faint); }
+  .crumb b { font-weight: 500; color: var(--ink); }
+  .ep-prose h1 {
+    margin-top: 0.75rem;
+    font-weight: 700;
+    font-size: clamp(2.5rem, 5.5vw, 3.75rem);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+  }
+  .ep-prose h1.page {
+    font-size: clamp(1.875rem, 3.6vw, 2.5rem);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+  .ep-prose h2 { margin-top: 0.75rem; font-weight: 700; font-size: 1.75rem; line-height: 1.2; }
+  .ep-prose h2.mt { margin-top: 2.25rem; }
+  .ep-prose h3 { font-weight: 700; }
+  .lead { margin-top: 1.25rem; font-size: 1.1875rem; line-height: 1.55; color: var(--ink); }
+  .t { margin-top: 0.9rem; color: var(--ink-muted); }
+  .status { margin-top: 0.35rem; font-size: 0.8125rem; color: var(--ink-faint); }
+  .quiet { color: var(--ink-muted); }
+  .ep-prose a { color: var(--accent); text-decoration: none; }
+  .ep-prose a:hover { text-decoration: underline; text-underline-offset: 0.25em; }
+  .ep-prose .lead a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--border-mid); text-underline-offset: 0.25em; }
+  .ep-prose .lead a:hover { text-decoration-color: var(--ink); }
+  /* Tailwind's preflight makes every svg a block; an arrow after a word is not one. */
+  svg.i, .cx-open svg { display: inline-block; }
+  .ep-prose svg.i, .site-foot svg.i { width: 0.8em; height: 0.8em; vertical-align: -0.05em; margin-left: 0.2em; }
+  .back { font-size: 0.875rem; margin-bottom: 1rem; }
+  .back a { color: var(--ink-muted); }
+
+  /* the small facts list under a heading */
+  dl.facts {
+    margin-top: 1.5rem;
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 0.45rem 1.5rem;
+    font-size: 0.9375rem;
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+  }
+  dl.facts dt { color: var(--ink-faint); font-size: 0.8125rem; padding-top: 0.1rem; }
+  dl.facts dd { margin: 0; color: var(--ink); }
+
+  /* the measured numbers on a project */
+  dl.metrics {
+    margin-top: 1.5rem;
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 0 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  dl.metrics dt { font-size: 0.8125rem; color: var(--ink-faint); padding: 0.55rem 0; border-bottom: 1px solid var(--border); }
+  dl.metrics dd { margin: 0; padding: 0.5rem 0; border-bottom: 1px solid var(--border); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  /* ---- actions and buttons ---------------------------------------------- */
+  .actions { margin-top: 1.75rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.25rem; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    border-radius: 6px;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.2;
+    text-decoration: none;
+    transition: transform var(--dur-fast) var(--ease), background-color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--accent); color: var(--accent-ink); box-shadow: var(--shadow-btn); }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .ep-prose a.btn-primary { color: var(--accent-ink); }
+  .ep-prose a.btn-primary:hover { text-decoration: none; }
+  .btn-ghost { border: 1px solid var(--border-mid); color: var(--ink); background: transparent; }
+  .btn-ghost:hover { border-color: var(--border-strong); background: var(--surface-raised); }
+  .ep-prose a.btn-ghost { color: var(--ink); }
+  .ep-prose a.btn-ghost:hover { text-decoration: none; }
+  .btn svg { width: 0.9em; height: 0.9em; }
+  .c-link { font-weight: 600; font-size: 0.9375rem; }
+
+  /* ---- lists inside a row ----------------------------------------------- */
+  .items { margin-top: 1.75rem; display: grid; gap: 2rem; }
+  .item { display: grid; gap: 1rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+  @media (min-width: 640px) {
+    .item.has-pic { grid-template-columns: minmax(0, 1fr) 13rem; align-items: start; column-gap: 1.5rem; }
+  }
+  .item > div { min-width: 0; }
+  .item h3 { font-size: 1.1875rem; font-weight: 700; line-height: 1.3; }
+  .item h3 a { color: var(--ink); }
+  .item h3 a:hover { color: var(--accent); text-decoration: none; }
+  .item .focus { margin-top: 0.5rem; font-weight: 600; font-size: 0.9375rem; }
+  .item p.t { font-size: 0.9375rem; }
+  .item .more { margin-top: 0.6rem; font-size: 0.9375rem; }
+  .item .pic { min-width: 0; max-width: 100%; }
+  .item .pic img { width: 100%; height: auto; border: 1px solid var(--border); border-radius: 6px; }
+  .item .pic.sq img { max-width: 9rem; }
+
+  .job { display: grid; gap: 0.2rem 0.5rem; padding-block: 0.9rem; border-top: 1px solid var(--border); scroll-margin-top: 3.5rem; }
+  .job:first-of-type { margin-top: 1.25rem; }
+  @media (min-width: 640px) {
+    .job { grid-template-columns: 10.5rem minmax(0, 1fr); }
+    .job .when { grid-row: 1 / 3; }
+    .job ul.bullets { grid-column: 2; }
+  }
+  .job .when { font-size: 0.8125rem; color: var(--ink-faint); }
+  .job h3 { font-size: 1.0625rem; font-weight: 700; }
+  .job h3 span { font-weight: 400; color: var(--ink-muted); }
+  .job p { font-size: 0.9375rem; color: var(--ink-muted); max-width: 60ch; }
+
+  .stops { margin-top: 1.75rem; border-top: 1px solid var(--border); }
+  .stops li { display: grid; gap: 0.25rem 1.25rem; padding-block: 1.1rem; border-bottom: 1px solid var(--border); scroll-margin-top: 4rem; }
+  @media (min-width: 640px) { .stops li { grid-template-columns: 6.5rem minmax(0, 1fr); } }
+  .stops .when { font-size: 0.8125rem; color: var(--ink-faint); padding-top: 0.2rem; }
+  .stops h3 { font-size: 1.0625rem; font-weight: 700; }
+  .stops p { margin-top: 0.35rem; font-size: 0.9375rem; color: var(--ink-muted); max-width: 60ch; }
+
+  .ep-prose .chips { margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .ep-prose .chips li { padding: 0.2rem 0.55rem; border: 1px solid var(--border); border-radius: 4px; font-size: 0.8125rem; color: var(--ink-muted); background: var(--surface-raised); }
+
+  .subs { margin-top: 1.25rem; border-top: 1px solid var(--border); }
+  .subs li { padding-block: 0.9rem; border-bottom: 1px solid var(--border); }
+  .subs li > a { font-weight: 600; color: var(--ink); }
+  .subs li > a:hover { color: var(--accent); text-decoration: none; }
+  .subs li p { margin-top: 0.3rem; font-size: 0.9375rem; color: var(--ink-muted); max-width: 60ch; }
+
+  .learned { margin-top: 1rem; padding-left: 1.25rem; list-style: decimal; color: var(--ink-muted); }
+  .learned li { padding-block: 0.4rem; padding-left: 0.25rem; }
+  .learned li::marker { font-family: var(--font-mono); font-size: 0.8125rem; color: var(--ink-faint); }
+
+  .bullets { margin-top: 0.6rem; padding-left: 1.1rem; list-style: disc; color: var(--ink-muted); font-size: 0.9375rem; }
+  .bullets li { padding-block: 0.2rem; }
+  .bullets li::marker { color: var(--border-strong); }
+
+  .principle { margin-top: 1.25rem; }
+  .principle h3 { font-size: 1.125rem; }
+  .principle p { margin-top: 0.35rem; }
+
+  .skills { margin-top: 1rem; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0.5rem 1.25rem; font-size: 0.9375rem; border-top: 1px solid var(--border); padding-top: 0.9rem; }
+  .skills dt { font-size: 0.8125rem; color: var(--ink-faint); padding-top: 0.15rem; }
+  .skills dd { margin: 0; color: var(--ink); }
+
+  .cats { margin-top: 1.5rem; }
+  .cats ul { display: flex; flex-wrap: wrap; gap: 0.25rem; border-bottom: 1px solid var(--border); }
+  .cats a, .cats button {
+    display: inline-block;
+    padding: 0.5rem 0.8rem;
+    margin-bottom: -1px;
+    border-bottom: 2px solid transparent;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--ink-muted);
+    text-decoration: none;
+  }
+  .cats a:hover, .cats button:hover { color: var(--ink); text-decoration: none; }
+  .cats [aria-current='true'], .cats [aria-pressed='true'] { color: var(--ink); border-bottom-color: var(--accent); }
+
+  .prevnext { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem 1.5rem; font-size: 0.875rem; }
+  .prevnext a { color: var(--ink-muted); }
+
+  figure.cover { margin: 1.75rem 0 0; }
+  figure.cover img { width: 100%; height: auto; border: 1px solid var(--border); border-radius: 6px; }
+  figure.cover figcaption { margin-top: 0.5rem; font-size: 0.8125rem; color: var(--ink-faint); }
+  figure.cover figcaption a { color: var(--ink); }
+
+  /* a light code excerpt in the prose column */
+  pre.excerpt {
+    margin: 0;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface-raised);
+    font: 400 0.75rem/1.55 var(--font-mono);
+    color: var(--ink-muted);
+    white-space: pre;
+    overflow-x: auto;
+    max-width: 100%;
+  }
+  pre.excerpt .kw { color: var(--ink); font-weight: 600; }
+  pre.excerpt .st { color: var(--get); }
+  pre.excerpt .cm { color: var(--ink-faint); }
+
+  /* ---- the dark side: panels and the console ----------------------------
+     Scoped to the response column: the help desk has a `.panel` of its own. */
+  .ep-code .panel { border: 1px solid var(--code-line); border-radius: 8px; overflow: hidden; background: var(--code-surface); }
+  .ep-code .panel + .panel, .ep-code .cx + .panel { margin-top: 1rem; }
+  .ep-code .panel .bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.55rem 0.9rem; border-bottom: 1px solid var(--code-line); font-size: 0.75rem; color: var(--code-dim); }
+  .ep-code .panel .bar b { font-weight: 500; color: var(--code-ink); }
+  .ep-code .panel .bar .src { font-size: 0.6875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ep-code .panel pre {
+    margin: 0;
+    padding: 1rem 0.9rem 1.1rem;
+    overflow-x: auto;
+    font: 400 0.8125rem/1.65 var(--font-mono);
+    color: var(--code-ink);
+    white-space: pre-wrap;
+    word-break: break-word;
+    tab-size: 2;
+  }
+  .ep-code .panel pre .cm { color: var(--code-dim); }
+  .ep-code .panel pre .kw { color: var(--syn-key); }
+  .ep-code .panel pre .st { color: var(--syn-str); }
+  .ep-code .note { margin-top: 0.9rem; font-size: 0.75rem; line-height: 1.5; color: var(--code-dim); }
+  .ep-code .note a { color: var(--code-ink); }
+  .ep-code ::selection { background: #2a3550; color: #fff; }
+  .ep-code :focus-visible { outline-color: var(--syn-key); }
+  .k { color: var(--syn-key); }
+  .s { color: var(--syn-str); }
+  .n { color: var(--syn-num); }
+  .p { color: var(--code-dim); }
+
+  .cx { border: 1px solid var(--code-line); border-radius: 8px; background: var(--code-surface); color: var(--code-ink); overflow: hidden; }
+  .cx-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 0.9rem; padding: 0.55rem 0.9rem; border-bottom: 1px solid var(--code-line); }
+  .cx-ep { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; color: var(--code-ink); }
+  .cx-langs { display: inline-flex; gap: 2px; padding: 2px; border-radius: 6px; background: rgba(255, 255, 255, 0.04); }
+  .cx-langs button { padding: 0.25rem 0.55rem; border-radius: 4px; font: 500 0.75rem/1.4 var(--font-mono); color: var(--code-dim); transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease); }
+  .cx-langs button:hover { color: var(--code-ink); }
+  .cx-langs button[aria-selected='true'] { background: var(--syn-key); color: var(--code-bg); }
+  .cx-sec { padding: 0.8rem 0.9rem; border-bottom: 1px solid var(--code-line); }
+  .cx-cap { display: flex; flex-wrap: wrap; justify-content: flex-start; align-items: baseline; gap: 0.25rem 1rem; font-size: 0.6875rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--code-dim); margin-bottom: 0.55rem; }
+  .cx-params { display: grid; gap: 0.55rem; }
+  .cx-param { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); align-items: center; gap: 0.6rem; font-size: 0.8125rem; }
+  .cx-param > .mono { color: var(--syn-key); }
+  .cx-param select, .cx-param input, .cx-param textarea {
+    width: 100%;
+    min-width: 0;
+    padding: 0.4rem 0.55rem;
+    border: 1px solid var(--code-line);
+    border-radius: 5px;
+    background: var(--code-bg);
+    color: var(--code-ink);
+    font: 400 0.8125rem/1.4 var(--font-mono);
+    color-scheme: dark;
+  }
+  .cx-param textarea { resize: vertical; align-self: start; }
+  .cx-param select:focus-visible, .cx-param input:focus-visible, .cx-param textarea:focus-visible { outline: 2px solid var(--syn-key); outline-offset: 1px; }
+  .cx-param input::placeholder, .cx-param textarea::placeholder { color: var(--code-dim); }
+  .cx-check { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--code-dim); }
+  .cx-check input { width: 1rem; height: 1rem; accent-color: var(--syn-key); }
+  .cx-req { margin: 0; font: 400 0.8125rem/1.6 var(--font-mono); color: var(--code-ink); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .cx-req .k { color: var(--syn-key); }
+  .cx-req .s { color: var(--syn-str); }
+  .cx-act { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; padding: 0.7rem 0.9rem; border-bottom: 1px solid var(--code-line); }
+  .cx-send {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: 6px;
+    background: var(--accent);
+    color: #fff;
+    font: 600 0.875rem/1.2 var(--font-sans);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    transition: transform var(--dur-fast) var(--ease), background-color var(--dur) var(--ease);
+  }
+  .cx-send:hover { background: #7a73ff; }
+  .cx-send:active { transform: translateY(1px); }
+  .cx-send svg { width: 0.85em; height: 0.85em; }
+  .cx:focus-within .cx-send { box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 0 0 3px rgba(99, 91, 255, 0.25); }
+  .cx-src { font-size: 0.6875rem; color: var(--code-dim); }
+  .cx-resp { border-bottom: 0; }
+  .cx-status { letter-spacing: 0; text-transform: none; font-size: 0.75rem; color: var(--code-dim); margin-left: auto; }
+  .cx-status .ok { color: var(--syn-str); }
+  .cx-status .bad { color: var(--syn-num); }
+  .cx-status .neutral { color: var(--code-dim); }
+  .cx-more { white-space: nowrap; }
+  .cx-open { color: var(--syn-key); text-decoration: none; }
+  .cx-open:hover { text-decoration: underline; }
+  .cx-open svg { width: 0.8em; height: 0.8em; vertical-align: -0.1em; }
+  .cx-copy { font: 500 0.6875rem/1.4 var(--font-mono); letter-spacing: 0.04em; text-transform: none; color: var(--code-dim); padding: 0.1rem 0.45rem; border: 1px solid var(--code-line); border-radius: 4px; margin-left: auto; transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease); }
+  .cx-cap .cx-status + .cx-copy { margin-left: 0.75rem; }
+  .cx-copy:hover { color: var(--code-ink); border-color: var(--code-dim); }
+  .cx-outwrap { position: relative; }
+  .cx-outwrap.is-clipped::after { content: ''; position: absolute; left: 0; right: 8px; bottom: 0; height: 2.75rem; background: linear-gradient(to bottom, rgba(19, 26, 42, 0), var(--code-surface)); pointer-events: none; }
+  .cx-out {
+    margin: 0;
+    min-height: 3.5rem;
+    max-height: 26rem;
+    overflow: auto;
+    font: 400 0.8125rem/1.6 var(--font-mono);
+    white-space: pre-wrap;
+    word-break: break-word;
+    scrollbar-color: var(--code-line) transparent;
+    scrollbar-width: thin;
+  }
+  .cx-out::-webkit-scrollbar { width: 8px; }
+  .cx-out::-webkit-scrollbar-thumb { background: var(--code-line); border-radius: 4px; }
+  @media (max-width: 1023px) { .cx-out { max-height: 20rem; } }
+  .cx-frame { margin: 0.75rem 0 0; font-size: 0.75rem; line-height: 1.5; color: var(--code-dim); }
+  .cx-frame a { color: var(--code-ink); }
+  .is-sending .cx-out { opacity: 0.9; }
+
+  /* ---- surfaces the older components and the help desk still use ------- */
+  .tile {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+  }
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  /* ---- reveal on scroll: opacity + a 12px rise --------------------------
+     Kept for the help desk and the demos, which still mark elements with
+     .reveal. The reference pages render at rest; nothing on them waits for
+     a scroll to become readable. ---- */
+  @keyframes reveal-in {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: none; }
+  }
+  .js:not(.reveal-css) .reveal {
+    transition: opacity var(--dur-slow) var(--ease-out), transform var(--dur-slow) var(--ease-out);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+  .js:not(.reveal-css) .reveal:not(.is-in) { opacity: 0; transform: translateY(12px); }
+  .reveal-css .reveal {
+    animation: reveal-in linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 55%;
+  }
+  .reveal-css .reveal-load {
+    animation: reveal-in var(--dur-slow) var(--ease-out) both;
+    animation-delay: var(--reveal-delay, 0ms);
+    animation-timeline: auto;
+    animation-range: normal;
+  }
+
+  /* ---- long-form MDX: the write-up body in the prose column ------------- */
+  .prose-portfolio {
+    @apply prose max-w-none;
+    font-size: 1rem;
+    --tw-prose-body: var(--ink-muted);
+    --tw-prose-headings: var(--ink);
+    --tw-prose-lead: var(--ink-muted);
+    --tw-prose-links: var(--accent);
+    --tw-prose-bold: var(--ink);
+    --tw-prose-counters: var(--ink-faint);
+    --tw-prose-bullets: var(--border-strong);
+    --tw-prose-hr: var(--border);
+    --tw-prose-quotes: var(--ink);
+    --tw-prose-quote-borders: var(--accent);
+    --tw-prose-captions: var(--ink-faint);
+    --tw-prose-code: var(--ink);
+    --tw-prose-th-borders: var(--border-strong);
+    --tw-prose-td-borders: var(--border);
+    --tw-prose-pre-bg: transparent;
+    --tw-prose-pre-code: inherit;
+  }
+  .prose-portfolio :where(h2) { font-size: 1.5rem; letter-spacing: -0.015em; margin-top: 2.5em; }
+  .prose-portfolio :where(h3) { font-size: 1.125rem; }
+  .prose-portfolio :where(a) { text-decoration: none; font-weight: 500; }
+  .prose-portfolio :where(a):hover { text-decoration: underline; text-underline-offset: 0.25em; }
+  .prose-portfolio :where(code):not(:where(pre code)) {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    font-weight: 500;
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.05em 0.35em;
+  }
+  /* Expressive Code ships its own complete code-block styling. Hand it back
+     control so the two don't fight over <pre>. */
+  .prose-portfolio :where(.expressive-code) { margin-block: 1.5rem; }
+  .prose-portfolio :where(.expressive-code pre) { margin: 0; padding: 0; background: transparent; font-size: inherit; line-height: inherit; }
+  .prose-portfolio :where(code)::before,
+  .prose-portfolio :where(code)::after { content: ''; }
+
   /* ---- print: the résumé as a one-page letter ----------------------------
      Chrome's print-to-PDF is what generates public/resume.pdf, so these rules
      ARE the PDF. Everything is sized for US Letter with half-inch margins and
      tuned until `pdfinfo` reports one page — check that after any edit. */
   @media print {
     @page { size: letter; margin: 0.35in 0.5in; }
-    body > header, body > footer, .no-print, astro-dev-toolbar { display: none !important; }
+    body > header, body > footer, .no-print, .rail, .ep-code, astro-dev-toolbar { display: none !important; }
     html { font-size: 9.3pt; color-scheme: light !important; }
     html, body { background: #fff !important; color: #000 !important; min-height: 0 !important; }
     a { color: inherit; text-decoration: none; }
+    .ref, .ep { display: block !important; }
+    .ep-prose { padding: 0 !important; max-width: none !important; border: 0 !important; }
     .resume { padding: 0 !important; max-width: none !important; }
-    .resume h1 { font-size: 16pt; }
-    .resume h2 { font-size: 8pt; margin-top: 0 !important; }
+    .resume h1 { font-size: 16pt; margin-top: 0 !important; }
+    .resume h2 { font-size: 8pt; margin-top: 0.35rem !important; }
+    .resume .crumb, .resume .back, .resume .actions { display: none !important; }
     .resume section { margin-top: 0.35rem !important; }
     .resume header { padding-bottom: 0.3rem !important; }
-    .resume header .text-lg { font-size: 11pt; margin-top: 0 !important; }
+    .resume header .sub { font-size: 11pt; margin-top: 0 !important; }
     .resume .contact { margin-top: 0.25rem !important; font-size: 8pt; column-gap: 0.7rem; }
     .resume p, .resume li { line-height: 1.3 !important; }
     .resume ol > li + li { margin-top: 0.4rem !important; }
     .resume ul > li + li { margin-top: 0.15rem !important; }
-    .resume .space-y-2\.5 > li + li { margin-top: 0.3rem !important; }
-    .resume .job, .resume li { break-inside: avoid; }
+    .resume .rjob, .resume li { break-inside: avoid; }
     .resume .print-url { display: inline !important; }
     /* Print colour tokens: near-black ink, dark grey for the muted layer, and
        the accent kept for links so a printed link is still visibly a link. */
     .resume .text-ink, .resume .text-ink-muted { color: #111 !important; }
     .resume .text-ink-faint { color: #444 !important; }
-    .resume .text-accent { color: #1d4d2b !important; }
-    .resume .reveal, .resume .reveal-load { opacity: 1 !important; transform: none !important; }
+    .resume .text-accent { color: #3b34c9 !important; }
   }
 }

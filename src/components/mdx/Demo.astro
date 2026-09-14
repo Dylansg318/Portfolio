@@ -67,7 +67,7 @@ const { demo, title, slug, flush = false } = Astro.props;
 
       {demo.kind === 'iframe' && (
         <div
-          class="group relative overflow-hidden rounded-xl border border-border bg-surface-raised"
+          class="group relative overflow-hidden rounded-md border border-border bg-surface-raised"
           style={`aspect-ratio: ${demo.aspect};`}
           data-demo-frame
           data-src={demo.src}
