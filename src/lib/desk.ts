@@ -96,7 +96,7 @@ export const tickets: Ticket[] = [
       },
     ],
     resolution: {
-      headline: 'Built the ERP, the ERP the company now runs on.',
+      headline: 'Built the ERP the company now runs on.',
       points: [
         '≈520 orders a day through one system, up from ≈270',
         '32,000 products · 49,000 channel listings · one PostgreSQL database',

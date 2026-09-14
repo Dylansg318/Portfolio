@@ -12,7 +12,7 @@ compensation for missing evidence: nine write-ups, ~9,600 words, zero screenshot
 **Approach:**
 1. **Hero → nameplate.** Name, discipline, location, then one factual sentence of employment.
    No first-person claim ("I build the software that runs…"), no availability sales line. The
-   four stat tiles move onto the the ERP card, where they are facts about a system rather than a
+   four stat tiles move onto the ERP card, where they are facts about a system rather than a
    boast about a person.
 2. **Homepage → three sections** (nameplate / the work / contact). 17 boxes → ~7. One contact
    exit instead of four. Removed content moves to `/about` and `/resume`, which already carry it.
@@ -43,7 +43,7 @@ compensation for missing evidence: nine write-ups, ~9,600 words, zero screenshot
 - The narrative contract in `src/content.config.ts` (`problem` / `unique` / `learned` required)
   keeps failing the build rather than publishing a half-finished write-up.
 - No dead URLs: every moved project keeps a working path from its old one.
-- Every claim on the site must survive someone opening `RMH3Dental/the ERP` and reading the log.
+- Every claim on the site must survive someone opening the ERP's private repo and reading the log.
 - No screenshot ships with a real customer name, price, or vendor identifier.
 
 ## Verification contract
@@ -60,7 +60,7 @@ compensation for missing evidence: nine write-ups, ~9,600 words, zero screenshot
 ## Scope ledger
 
 - [x] 1. `site.ts` — nameplate identity, employer facts, enablement framing, Harness   DONE (uncommitted)
-- [x] 2. Homepage → nameplate / the work / contact; stats onto the the ERP card          DONE (uncommitted)
+- [x] 2. Homepage → nameplate / the work / contact; stats onto the ERP card          DONE (uncommitted)
 - [x] 3. ERP collapse: nested content, `parent` field, subsystem cards, redirects       DONE (uncommitted)
 - [x] 4. `/about` → credential narrative + principles moved off the homepage            DONE (uncommitted)
 - [x] 5. Redacted screenshots for the ERP and the repricer                              DONE (uncommitted)
@@ -95,7 +95,7 @@ Two fixes found by looking at the rendered page rather than the diff:
 ## Slice 5 — screenshots (added after the fact)
 
 Captured from the live app, authenticated through the internal agent-testing path documented
-in the the ERP repo (details private).
+in the ERP's repo (details private).
 
 Shipped, after redaction:
 - `internal-erp/warehouse-map.png` — the floor-plan editor, 119 numbered locations across two
