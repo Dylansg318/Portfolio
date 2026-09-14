@@ -50,7 +50,8 @@ switch; plain is the default and is what crawlers and no-JS readers get.
 - Every page ships both registers in the HTML; visibility is CSS on `data-mode`.
   Nothing is fetched on the switch.
 - Write-ups ship with no JavaScript; demos and games load behind a click.
-- Dark theme is the default and the server renders it; the visitor's toggle wins.
+- One theme: a white prose column beside a dark response column. No toggle; the
+  light/dark split is between the columns, not between modes of the page.
 - `npm run check` runs a contrast gate that fails the build on any token pair below
   4.5:1 (3:1 for strong borders).
 - Terminology: "Software Engineer" is the title everywhere. Education is
@@ -70,10 +71,13 @@ switch; plain is the default and is what crawlers and no-JS readers get.
 - Structure, binding (decided 2026-09-10, reconfirmed 2026-09-14): the home page is
   person-first — name and role → short background → selected work → experience →
   personal → contact. The first nameplate sentence is identical in both registers.
-- Incumbent visual world, documented in `DESIGN_SYSTEM.md` §3: graphite ground,
-  Meadow Green accent ramp spent on emphasis only, Bricolage Grotesque display, IBM
-  Plex Sans body, IBM Plex Mono. On 2026-09-14 Dylan asked to see the home page both
-  inside this world and in a replacement world, side by side, before deciding.
+- Visual world, documented in `DESIGN_SYSTEM.md` §3: an API reference. White prose
+  column beside a continuous dark response column, Source Sans 3 and JetBrains Mono,
+  one blue-violet accent, method badges. Adopted 2026-09-14 from mockup C of three
+  (the interview, release notes, API reference) after Dylan's steer that the world had
+  to be the one he is moving into — software engineering — not the retail and shipping
+  one the first roll dealt. Every page is an endpoint rail plus rows, and every row's
+  console answers from a real read-only API at `/api/`.
 
 ## Evidence on Hand
 
@@ -81,7 +85,7 @@ switch; plain is the default and is what crawlers and no-JS readers get.
   orders a day (up from ~270), 32K products / 49K channel listings, 6 sales channels,
   180 scheduled jobs.
 - Redacted screenshots of the internal ERP and the receipt splitter under
-  `src/content/projects/*/` and `public/`, paired light and dark.
+  `src/content/projects/*/` and `public/`, one light capture each.
 - Career record (`site.experience`): Software Engineer at RMH3 Dental Supply
   (Jun 2025–present); Head Server, The Qui (Aug 2022–Jun 2025); Store Manager,
   Wireless Vision / T-Mobile (Jan 2021–Aug 2022).
