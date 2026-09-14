@@ -44,17 +44,17 @@ by explicit path.
 | 11 | Ship | `npm run check && npm run build`, push, `curl https://portfolio.dylansg0318.workers.dev/api/dylan` | gates 0 errors; live 200 JSON |
 
 ## Scope ledger
-- [ ] 1. Rename the ERP (old product name → "the internal ERP"): content dir, frontmatter, copy, `site.ts`, redirects, desk, docs   TODO
-- [ ] 2. C tokens + fonts + single theme + header/footer + contrast gate + OG cards + drop dark images   TODO
-- [ ] 3. Real API: `src/lib/api.ts` + Worker routes under `/api/` with query params, `fields`, CORS   TODO
-- [ ] 4. Console island + row primitives (`Console`, `EndpointRow`, `Rail`, `Method`, `console.ts`)   TODO
-- [ ] 5. Home page in C                                                                             TODO
-- [ ] 6. Work index + project page (+ MDX components restyled)                                      TODO
-- [ ] 7. About, Contact, 404 in C                                                                   TODO
-- [ ] 8. Résumé page, print CSS, regenerated PDF                                                    TODO
-- [ ] 9. Remove stranded components; desk and play sanity check                                     TODO
-- [ ] 10. Docs: DESIGN_SYSTEM §3/§4/§5/§7/§8/§9/§10/§12, README, PRODUCT.md, surface brief          TODO
-- [ ] 11. Gates, captures, commit by path, push, live check                                         TODO
+- [x] 1. Rename the ERP (old product name → "the internal ERP"): content dir, frontmatter, copy, `site.ts`, redirects, desk, docs   DONE adb942d
+- [x] 2. C tokens + fonts + single theme + header/footer + contrast gate + OG cards + drop dark images   DONE (this change)
+- [x] 3. Real API: `src/lib/api.ts` + Worker routes under `/api/` with query params, `fields`, CORS   DONE (this change)
+- [x] 4. Console island + row primitives (`Console`, `EndpointRow`, `Rail`, `Method`, `console.ts`)   DONE (this change)
+- [x] 5. Home page in C   DONE (this change)
+- [x] 6. Work index + project page (+ MDX components restyled)   DONE (this change)
+- [x] 7. About, Contact, 404 in C   DONE (this change)
+- [x] 8. Résumé page, print CSS, regenerated PDF   DONE (this change)
+- [x] 9. Remove stranded components; desk and play sanity check   DONE (this change)
+- [x] 10. Docs: DESIGN_SYSTEM §3/§4/§5/§7/§8/§9/§10/§12, README, PRODUCT.md, surface brief   DONE (this change)
+- [x] 11. Gates, captures, commit by path, push, live check   DONE (this change)
 
 ## Slice detail — Slice 1: Rename
 **Files:** `src/content/projects/<old>/**` → `src/content/projects/internal-erp/**` (git mv);
@@ -67,3 +67,17 @@ supply company"); ids/URLs use `internal-erp`; old paths redirect (the old slug,
 its `[sub]` children, and the three older aliases retarget). Employer name stays (already
 public). Script comments that named the sibling repo now say "the ERP repo".
 **Proves it:** the grep above is empty and the build lists the redirects.
+
+## What execution added
+- The write-up's own map (h2 anchors) sits in the dark column beside the MDX body, pruned to the
+  register in view — the body was the one row with no natural endpoint.
+- `fields` is an optional parameter on every GET console: rendered only where the row is about a
+  subset, real everywhere.
+- Same-site `page` links are followed relative to the current origin, so `wrangler dev` and any
+  preview stay on their own host.
+- Two class-name collisions with the help desk (`.panel`, `.chips`) — the reference styles are now
+  scoped to their columns; a new global class name is on the §8.3 checklist.
+- Contrast gate rewritten for one token block and caught the mock's accent at 4.41:1 on the quiet
+  fill; the accent is `#5e56fb`.
+- Not done, by design: mail delivery for `POST /api/contact` (needs the Cloudflare secrets), the
+  finish-reviewer round (UI work ships without a second-model pass per the working rules).

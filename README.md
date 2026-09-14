@@ -70,7 +70,7 @@ draft: false            # true = visible in dev, excluded from the built site
 | `<Demo demo={frontmatter.demo} />` | Mount the project's interactive demo |
 | `<CodeFile src="slug/snippets/x.ts" lines="4-18" />` | Render a **real file** from disk, highlighted |
 | `<Video provider="youtube" id="..." title="..." />` | Externally-hosted video, loads on click |
-| `<Figure src={img} alt="..." caption="..." />` | Optimised image with caption |
+| `<Figure src={img} alt="..." caption="..." />` | Optimised image with caption (one capture, in the product's light theme) |
 | `<Takeaway>…</Takeaway>` | Pull-quote for a lesson worth interrupting for |
 
 ## Adding a demo or game
@@ -158,15 +158,42 @@ number or street address — both are public.
 
 ## Design
 
-All colour, spacing and motion tokens live in `src/styles/global.css`. Every
-component references semantic names (`bg-surface`, `text-ink`, `border-border`),
-never a literal colour — so a redesign is one file, and dark mode already works.
+All colour, spacing and motion tokens live in the one `:root` block of
+`src/styles/global.css`. Every component references semantic names (`bg-surface`,
+`text-ink`, `text-code-dim`), never a literal colour — so a redesign is one file.
+The site has one theme: a white prose column beside a dark response column.
+
+Every page is built from the pieces in `src/components/ref/` — `Rail` (the
+endpoint list), `Row` (prose left, response right), `Crumb` (the method badge
+and path above a heading) and `Console` (the try-it box, rendered with the
+endpoint's real response at build time and made live by `src/scripts/console.ts`).
 
 The reasoning — the palette and why it's spent the way it is, the two writing
 registers, the fixed shape of every page, the decision log, and the checklists
 for adding a project or a feature without drifting — is in
 [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md). This README is the mechanics; that file
 is the why.
+
+## The API
+
+`/api` is a read-only JSON API over the same facts the pages render, served by
+the Worker at request time. `GET /api` is the index. The endpoints:
+
+| Endpoint | Parameters | What it returns |
+|---|---|---|
+| `GET /api/dylan` | `view=plain\|engineer` | Who this is: role, employer, the one-sentence summary in either register, location, links. |
+| `GET /api/work` | `category=work\|tool\|game` | Every top-level project, as `{ category, count, items, page }`. |
+| `GET /api/work/{id}` | — | One project in full: the contract, the numbers, the parts. Subsystem ids look like `internal-erp/repricing`. |
+| `GET /api/experience` | `since=YYYY` | The path here, the jobs, education, certifications. |
+| `GET /api/resume` | `format=json\|html\|pdf` | The one-page résumé as data; `page` points at the format asked for. |
+| `GET /api/away-from-work` | `playable=true` | Off the clock, and the first program, still playable. |
+| `POST /api/contact` | `{ from, message }` | Validates; `503` with a `mailto:` until delivery is configured, `202` once it is. |
+
+Every GET takes `?fields=a,b` and every record carries `page`, the address of
+the page it describes. The list of endpoints lives in `src/lib/endpoints.ts`; the
+records are built in `src/lib/api.ts`, which the pages also call to render each
+console's response at build time — so the response on the page is the response
+the endpoint gives. Test the routes locally with `npm run build && npx wrangler dev`.
 
 ## Deploying
 
@@ -256,19 +283,22 @@ Repository secrets, used by every CI deploy:
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
 
-Worker secrets for the contact form (`wrangler secret put <NAME>`):
+Worker secrets for `POST /api/contact` (`wrangler secret put <NAME>`):
 
 - `RESEND_API_KEY` — email delivery
 - `TURNSTILE_SECRET` — spam check
 - `CONTACT_TO` — destination address
 
-Without them the contact endpoint accepts and logs rather than failing at a
-visitor. Copy `.dev.vars.example` to `.dev.vars` for local testing.
+Without them the route validates the message and answers `503` with a `mailto:`
+link carrying it — the consoles on the site open that link — rather than
+claiming a delivery it did not make. Copy `.dev.vars.example` to `.dev.vars`
+for local testing.
 
 ## Architecture notes
 
-- **`output: 'static'`** — every page prerenders. Only `/api/contact` sets
-  `prerender = false`, so static delivery stays free and unlimited.
+- **`output: 'static'`** — every page prerenders. Only the routes under
+  `/api/` set `prerender = false`, so page delivery stays free and unlimited and
+  a query string on the API still means something.
 - **`prerenderEnvironment: 'node'`** — prerendering in workerd forbids runtime
   WASM, which breaks Shiki's highlighter and OG image generation. Prerendered
   pages never execute in the Worker, so there is nothing to gain from building
@@ -276,5 +306,5 @@ visitor. Copy `.dev.vars.example` to `.dev.vars` for local testing.
 - **`ProjectData` is exported from `src/content.config.ts`** rather than relying
   on Astro's `InferEntrySchema`, whose `typeof import(...)` chain resolves to
   `any` here and silently removes type safety from every consumer.
-- **Expressive Code options live in `ec.config.mjs`**, not `astro.config.mjs` —
-  the `<Code>` component requires them JSON-serializable.
+- **Expressive Code options live in `ec.config.mjs`**, not `astro.config.mjs`,
+  so the `<Code>` component and the MDX integration read the same configuration.

@@ -49,10 +49,12 @@ the feature changes, not the principle.
 2. **Two audiences, one page.** The site has a Plain English register and an Engineer
    register, switched in the header. Both ship in the HTML. Plain is the default and is
    what crawlers, RSS readers, and no-JS visitors get. Same facts, two vocabularies.
-3. **Colour is emphasis.** A neutral graphite ground carries every page. The Meadow
-   Green ramp is spent only on highlights: links, the active tab, the headline gradient,
-   focus rings, the eyebrow rule. Nothing large is tinted. Colour reads as emphasis only
-   when most of the page is not coloured.
+3. **Two columns, one accent.** Every page is a white prose column beside a dark
+   response column: what a thing is in plain words on the left, its exact shape — a
+   request, its real answer, an excerpt — on the right, both on screen at once. One
+   blue-violet is spent on links, the active endpoint and the filled button; method
+   badges carry their own semantic colour; nothing else on the light side is tinted.
+   Colour reads as emphasis only when most of the page is not coloured.
 4. **Nothing loads until asked.** A write-up ships with 0 KB of JavaScript. Demos,
    games, and video appear behind a click and never enter the page for a reader who
    came to read. The cheapest performance win is not loading the heavy thing.
@@ -124,7 +126,7 @@ Rules that keep the switch honest:
 | `plainBlurb` | ≤200 characters, business words only. Falls back to `blurb` when absent. | *The company sold on six websites using six different tools that never agreed. I built the one system that runs it all, about 500 orders a day.* |
 | `role` | Lower case, middle-dot separated facts. | `sole engineer · 13 daily users` · `solo · side project` · `contributor · team of 10` |
 | Metric `label` | Lower case, spaced with slashes for rates. Value is a string so it can carry `~`, `K`, `+`, `$`. | `{ label: orders / day, value: "~520" }` |
-| Eyebrow | One or two words, set in the `.eyebrow` style. | *The work* · *Contact* · *Loops* · *Inside it* |
+| Crumb | The endpoint a row is, above its heading: a method badge and a mono path. Never a decorative eyebrow — the line encodes something true about the row. | `GET /api/dylan` · `GET /api/work/{id}` · `POST /api/contact` |
 | Section heading on a project page | Fixed wording, never varies per project. | *The problem* · *What was unique* · *Where AI fit in* · *Inside it* · *What I learned* |
 
 ### 2.4 The contract, field by field
@@ -169,197 +171,206 @@ written in the same voice.
 
 ## 3. Visual language
 
-Every token lives in `src/styles/global.css`. Components reference semantic names only
-(`bg-surface`, `text-ink`, `border-border`), never a hex. A redesign is one file.
+Every token lives in the one `:root` block of `src/styles/global.css`. Components
+reference semantic names only (`bg-surface`, `text-ink`, `border-border`, `text-code-dim`),
+never a hex. A redesign is one file — this section was rewritten on 2026-09-14 when the
+site moved from a graphite-and-green product look into an **API reference**.
 
-### 3.1 Ground and ink
+### 3.1 The two columns
 
-| Token | Light | Dark | Role |
-|---|---|---|---|
-| `--bg` | `#f4f5f7` | `#16181c` | Page ground. Grey, never white or black, so cards can lift above it. |
-| `--surface` | `#ffffff` | `#1d2025` | Cards, tiles, code, the mode hint. |
-| `--surface-raised` | `#eceef1` | `#24282e` | Stack chips, cover placeholders, hover fills. |
-| `--border` | `#dcdfe4` | `#2e333a` | Every hairline. |
-| `--border-strong` | `#7d8590` | `#5f6873` | Hover borders, link underlines, bullets. Must clear 3:1 on `--bg`. |
-| `--ink` | `#16191d` | `#ffffff` | Body text. Black only in light, white only in dark; no tinted text. |
-| `--ink-muted` | `#4a5058` | `#b4bcc6` | Secondary copy, blurbs, captions. |
-| `--ink-faint` | `#5c636c` | `#98a1ac` | Meta: dates, eyebrows, labels. Still passes 4.5:1. |
+The page is a **white prose column** beside a **continuous dark response column**. The
+prose says what a thing is in plain words; the response beside it is the exact shape —
+a live request and its real answer, an excerpt of real code, the write-up's own map.
+Rows abut, so the dark column runs unbroken from the header to the footer. Below 1024px
+the response stacks under its prose; from 1024px the endpoint rail (14rem) sits on the
+left, the prose takes the middle, and the response column is 30–34rem on the right.
 
-### 3.2 Accent and the ramp
+| Token | Value | Role |
+|---|---|---|
+| `--bg`, `--surface` | `#ffffff` | The prose column. White, on purpose: a reference is read for minutes at a time. |
+| `--surface-raised` | `#f6f8fa` | Quiet fills: chips, light code excerpts, hover rows, the reading-mode hint. |
+| `--border` | `#e3e8ee` | Every hairline on the light side. |
+| `--border-mid` | `#cfd7df` | Underlines and scrollbars — decorative, not a boundary, so it is not gated. |
+| `--border-strong` | `#7f8b9b` | Bullets and real boundaries. Clears 3:1 on white. |
+| `--ink` | `#0a2540` | Body text and headings. Navy, not black: it is the same hue family as the dark column. |
+| `--ink-muted` | `#425466` | Secondary copy, the `.t` paragraph, job summaries. |
+| `--ink-faint` | `#5b6b82` | Meta: crumbs, dates, captions, the mono labels. Still 4.5:1 on white and on the quiet fill. |
+| `--code-bg` | `#0b0f19` | The response column itself. |
+| `--code-surface` | `#131a2a` | A console or panel on it. |
+| `--code-line` | `#263042` | Hairlines and input borders on the dark side. |
+| `--code-ink` | `#d6deeb` | Code and JSON on the dark side. |
+| `--code-dim` | `#7d8aa5` | Captions, punctuation, the status line, the frame note. |
+| `--syn-key` / `--syn-str` / `--syn-num` | `#9ecbff` / `#a5d6a7` / `#f7c46c` | JSON keys, strings, numbers and literals; also the selected language tab, a 2xx status and a 4xx status. |
 
-The ramp is ten steps from lime to Yale blue, exposed as `bg-meadow-lime` …
-`text-meadow-yale`. It paints highlights only.
+### 3.2 Accent and badges
 
-| Token | Light | Dark | Role |
-|---|---|---|---|
-| `--accent` | `#1a759f` (cerulean) | `#b5e48c` (light green) | Links, the eyebrow rule, focus ring, primary button. |
-| `--accent-hover` | `#1e6091` | `#d9ed92` | Hover state of the above. |
-| `--accent-ink` | `#ffffff` | `#141619` | Text on an accent fill. |
-| `--accent-wash` | `#dcecf5` | `#2a3320` | Selection, the Takeaway box, the What I learned box, the Playable pill. |
-| `--tab-active` | `#b5e48c` | `#b5e48c` | The active nav tab. Same in both themes because the bar is. |
-| `--ok` / `--warn` / `--danger` | `#2f7a55` / `#7a6410` / `#a32f2f` | `#76c893` / `#d9ed92` / `#ff9d9d` | Status pills at 15% fill, error text. Kept inside the palette where the hue allows. |
+| Token | Value | Role |
+|---|---|---|
+| `--accent` | `#5e56fb` | Links, the active rail entry's stripe, the filled button, Send, focus rings. A hair darker than the mock's `#635bff` so a link on the quiet fill clears 4.5:1. |
+| `--accent-hover` | `#5249e6` | Hover state of the filled button. |
+| `--accent-ink` | `#ffffff` | Text on an accent fill. |
+| `--accent-wash` | `#eeedff` | Selection, the active rail entry, the active nav tab. |
+| `--get` / `--get-bg` | `#0a6b3f` / `#e2f5ec` | The GET badge. Semantic, not the accent. |
+| `--post` / `--post-bg` | `#4b43d6` / `#eeedff` | The POST badge. |
+| `--ok` / `--warn` / `--danger` | `#0a6b3f` / `#8a5a00` / `#b42318` | Status text on the light side. |
 
-**The ramp flips at step 8.** Steps 1 to 7 (lime through cerulean) carry black text;
-steps 8 to 10 (cerulean through Yale) need white. Never white on meadow 1 to 7, never
-black on meadow 8 to 10.
+**Method badges are the site's one decorative device**, and they decorate nothing: a
+badge says which verb a row or a rail entry is. The old eyebrow style still exists for the
+help desk's chrome and is not used on a reference page.
 
-**The nav bar is near-black in both themes** (`--nav: #1b1f24` light, `#101215` dark).
-The header layers `white/10` borders and hovers on it that only resolve against a dark
-bar. It is painted at 90 to 95% over a blur; keep that opacity high or the muted label's
-real contrast drifts below what the gate reports.
-
-**The gradient headline** (`.text-gradient`) runs light-green → mist → bondi in dark and
-cerulean → teal → Yale in light. It is used once per page at most, on the About headline
-today. It is not a body style.
-
-**Generated cover art** for a project with no screenshot is a hash-seeded oklch gradient
-clamped into the palette's hue range (140 to 260) at low chroma, so a grid of them reads
-as muted art, never as neon tiles. Cards only. A project page with no cover gets no band
-at all; a full-width gradient was wallpaper.
+**Generated cover art is gone.** A project with no screenshot has no picture, on a card
+or on its page. A hash-seeded gradient standing in for a screenshot is what made a
+portfolio look padded.
 
 ### 3.3 Type
 
 | Role | Face | Weights | Where |
 |---|---|---|---|
-| Display | **Bricolage Grotesque** | 600, 700, 800 | `h1`, `h2`, `.font-display`: the name, page titles, card titles, metric values. Letter-spacing `-0.02em`. |
-| Body | **IBM Plex Sans** | 400, 500, 600, 700 | Everything else. |
-| Mono | **IBM Plex Mono** | 400, 700 | Code, and the loops list on the home page. |
+| Text | **Source Sans 3** | 400, 600, 700 (+ italic) | Everything on the light side, headings included. Headings are the text face, heavier; there is no display face to pair. |
+| Mono | **JetBrains Mono** | 400, 500, 600 | Paths, keys, the crumbs, dates and labels, the console, every code block. |
 
-Why Plex: the site is barcodes, thermal printers, carrier invoices, and a warehouse floor
-plan, so the body face should read as the manual for a machine, not a pitch deck. Inter
-was replaced on 2026-09-01 because it is the default face of the era and makes a page
-read as a template before a word is read. Bricolage stayed because it is uncommon and is
-the one place the site shows personality. Mono moved to Plex at the same time so prose
-and code come from one superfamily.
+Why one text face: a reference does not pair a display face with its body. Source Sans
+was drawn for interfaces and documentation and reads that way — open counters, a plain
+italic, no personality to spend. JetBrains Mono is what most engineers already read code
+in, which is the point of the response column. Bricolage Grotesque and IBM Plex left with
+the old world on 2026-09-14.
 
-Fonts load through Astro's font API from Fontsource, subset to latin, with real
-fallback stacks. The two OG-card faces are vendored in `src/fonts/` so the build never
-fetches a font over the network.
+Fonts load through Astro's font API from Fontsource, subset to latin, with real fallback
+stacks. The two OG-card weights of Source Sans are vendored in `src/fonts/` so the build
+never fetches a font over the network.
 
-Sizes are Tailwind's scale used directly. The recurring ones: hero name `text-5xl` →
-`text-8xl` at `lg` with `leading-[0.95]`; page `h1` `text-4xl` → `text-6xl`; card title
-`text-lg` to `text-2xl`; body `text-[0.975rem]` in tiles and `prose-lg` in write-ups;
-meta `text-xs` uppercase with `tracking-[0.12em]` to `[0.18em]`.
+The body is 17px from 640px up (16px below), line-height 1.6. The scale: the home page's
+`h1` `clamp(2.5rem, 5.5vw, 3.75rem)`; every other page's `h1.page` `clamp(1.875rem,
+3.6vw, 2.5rem)`; row `h2` 1.75rem; item `h3` 1.1875rem; `.lead` 1.1875rem; body 1rem;
+`.t` and list copy 0.9375rem; meta and crumbs 0.8125rem; console text 0.8125rem mono;
+captions 0.6875rem uppercase with `0.1em` tracking.
 
 ### 3.4 Measure, shape, and depth
 
 | Token or class | Value | Use |
 |---|---|---|
-| `--container-reading` | `46rem` | Every paragraph, the write-up body, the contract tiles. |
-| `--container-wide` | `72rem` | Page shells, headers, grids, the flagship card. |
-| `.tile` | radius `1.25rem`, 1px border, `--surface`, lift 2px + cast shadow + a top-edge accent line on hover | The one card surface. Flagship, project cards, metric tiles, contract tiles, subsystem cards. |
-| `.btn` | radius `0.75rem`, padding `0.7rem 1.15rem`, weight 600 | `.btn-primary` is accent fill; `.btn-ghost` is a bordered transparent. Presses down 1px. |
-| `rounded-xl` | Figures, demo frames, the AI aside, metric tiles inside the flagship | Everything rectangular that is not a tile. |
-| `rounded-full` | Status pills, the Featured badge, the Playable pill | Anything that is a label. |
-| `rounded-md` / `rounded-lg` | Stack chips, nav items, the mode switch | Small controls. |
-| Shadow | None at rest. `0 18px 40px -24px var(--shadow-cast)` on tile hover; `shadow-xl` on the project-page cover only. | Depth is a hover reward, not a resting state. |
+| `--container-reading` | `44rem` | The prose column's maximum width. |
+| `--container-wide` | `80rem` | The reading-mode hint's shell; nothing else is boxed — the grid is full-bleed. |
+| `.ref` / `.rail` / `.ep` / `.ep-prose` / `.ep-code` | The grid, the endpoint rail, one row, its prose, its response | The page grammar in CSS. Every reference page is `.ref` → `.rail` + rows. |
+| `.cx` | radius 8px, 1px `--code-line`, `--code-surface` | The try-it console. Bar (method, path, languages) → parameters → request → Send → response. |
+| `.ep-code .panel` | same surface as `.cx` | Anything else on the dark side: an excerpt, the write-up's map, a static response. Scoped to the column — the help desk has a `.panel` of its own. |
+| `.btn` | radius 6px, padding `0.6rem 1rem`, weight 600 | `.btn-primary` is the accent fill with a soft cast; `.btn-ghost` is a mid border. Presses down 1px. |
+| `.item` / `.job` / `.stops li` / `.subs li` | hairline-separated rows | Lists inside a row. A thumbnail sits in a 13rem right column from 640px. |
+| `.tile` | 1px `--border`, radius 6px, no lift | Kept for the help desk and the MDX asides. Not a reference-page device. |
+| Shadow | None at rest anywhere on the light side; the filled button carries a soft accent cast. | Depth belongs to the dark column, which is a different surface, not a lifted one. |
 
 ### 3.5 Motion
 
 | Token | Value | Use |
 |---|---|---|
 | `--dur-fast` | 120ms | Button press. |
-| `--dur` | 200ms | Colour, border, and transform transitions. |
-| `--dur-slow` | 600ms | Reveals, the nameplate word morph. |
-| `--ease` | `cubic-bezier(0.4, 0, 0.2, 1)` | Everything that is not an entrance. |
-| `--ease-out` | `cubic-bezier(0.16, 1, 0.3, 1)` | Entrances. |
+| `--dur` | 240ms | Colour, border and background transitions. |
+| `--dur-slow` | 600ms | The nameplate word morph; the help desk's reveals. |
+| `--ease` / `--ease-out` | `cubic-bezier(0.16, 1, 0.3, 1)` | Everything. |
 
 Rules:
 
-- **`.reveal`** is the only scroll effect: opacity plus a 12px rise. Two implementations,
-  chosen once at boot. Where the browser supports `animation-timeline: view()` the
-  animation is driven by scroll position off the compositor and no JavaScript runs on
-  the scroll path. Otherwise an IntersectionObserver adds `.is-in` and transitions do the
-  work, with a scroll-position sweep as a safety net. Content staying invisible is the
-  one failure this effect is never allowed to have.
-- **`.reveal-load`** is the above-the-fold case: a timed entrance with `--reveal-delay`
-  set in the markup (60ms, 120ms, 180ms across the hero), never by script.
-- **Choreography runs once, on load, under two seconds, in pure CSS on server-rendered
-  markup**, and the static styles are the finished state. The loops list files itself in
-  ~1.7s (`200ms + i × 90ms` to file, `1000ms + i × 140ms` to tick). With animations off,
-  no JS, reduced motion, or print, the finished list simply renders.
+- **The reference pages render at rest.** Nothing on them waits for a scroll to become
+  readable: every console shows its real response on load, every list is visible. The
+  `.reveal` scroll effect survives only for the help desk and the demos.
+- **The console streams.** A Send types the response in a line at a time (6–40ms per
+  line, scaled to length), then the status line lands and, if the answer names a page,
+  the page opens after 500ms. With reduced motion the whole answer appears at once and
+  the page opens immediately.
+- **The nameplate morphs.** On the reading-mode switch the one-sentence summary rewrites
+  word by word (LCS diff; shared words stay put). It is the only text animation on the
+  site and it shows the two registers being the same fact.
 - **Reduced motion zeroes everything**: durations, iteration counts, scroll-timeline
-  animations switched off outright, and the loops' delays set to 0 so nothing pops in
-  one by one. This matters most for the demos and games.
-- **No typewriter effects.** A typewriter is a template tell and delays the reader. The
-  only cursor on the site is on the line that is genuinely unwritten.
+  animations switched off outright. This matters most for the demos and games.
+- **No typewriter effects on prose.** The console's stream is a response arriving, not
+  copy being typed.
 - **Cross-page View Transitions** are on for every page except `bare` ones. Every script
   that binds to the DOM listens for `astro:page-load`, because a bundled module runs
   once and top-level setup goes dead after the first soft navigation. Every script that
-  starts a loop cleans up on `astro:before-swap`.
+  starts an observer or a loop cleans up on `astro:before-swap`.
 
-### 3.6 Theme
+### 3.6 One theme
 
-Dark is the default and the server renders `data-theme="dark"`. A visitor's toggle wins
-over the OS in both directions and is stored in `localStorage`. The theme is applied by an
-inline, blocking script before first paint, and re-applied on `astro:after-swap` because
-a View Transitions swap copies the incoming document's `<html>` attributes onto the live
-one. Deferring this script is what causes the white flash on a dark reload.
+The site has one theme, on purpose. The light/dark split is between the two columns,
+not between two modes of the page, so there is no theme toggle, no `data-theme`, no
+`prefers-color-scheme` branch, and no dark twin of any screenshot. `<meta
+name="theme-color">` is white. The games and the help desk paint their own worlds on
+top of the tokens.
 
-Because the theme is an explicit toggle, `prefers-color-scheme` is the wrong question
-everywhere except `<meta name="theme-color">`. Screenshots swap on `[data-theme]` via the
-`dark:` variant, not on a `<picture>` media query.
+What survives from the old two-theme machinery: the **reading mode** (`data-mode` on
+`<html>`, `plain` or `eng`) is still set by an inline blocking script before first
+paint and re-applied on `astro:after-swap`, because a View Transitions swap copies the
+incoming document's `<html>` attributes onto the live one.
 
 ### 3.7 The contrast gate
 
-`scripts/check-contrast.mjs` parses the two token blocks in `global.css` and fails
-`npm run check` if any pair drops below its threshold. Keep hex values in those two
-blocks; the parser reads nothing else.
+`scripts/check-contrast.mjs` parses the `:root` block in `global.css` and fails
+`npm run check` if any pair drops below its threshold. Keep hex values in that block;
+the parser reads nothing else.
 
 | Pair | Minimum |
 |---|---|
-| `ink`, `ink-muted`, `ink-faint` on `bg` and `surface` (and `ink` on `surface-raised`) | 4.5:1 |
-| `accent` on `bg` and `surface`; `accent-ink` on `accent` | 4.5:1 |
+| `ink`, `ink-muted`, `ink-faint` on `bg` and `surface-raised` | 4.5:1 |
+| `accent` on `bg` and `surface-raised`; `accent-ink` on `accent` | 4.5:1 |
 | `nav-ink` and `nav-muted` on `nav`; `tab-active-ink` on `tab-active` | 4.5:1 |
-| `ok` and `danger` on `surface` | 4.5:1 |
+| `ok`, `warn`, `danger` on `bg` | 4.5:1 |
+| `get` on `get-bg`; `post` on `post-bg` | 4.5:1 |
+| `code-ink` and `code-dim` on `code-bg` and `code-surface`; `syn-*` on `code-surface`; `code-bg` on `syn-key` (the selected tab) | 4.5:1 |
 | `border-strong` on `bg` | 3:1 |
-
-The gate scores opaque tokens. Anything painted at partial opacity over another colour
-(the nav bar, status pills at 15%) resolves to something the gate did not check, which
-is why those opacities are pinned in comments where they are used.
+| `code-line` on `code-surface` | 1.2:1 (visible, not text) |
 
 ### 3.8 Social cards
 
-Generated per page by `src/pages/og/[...route].ts`: graphite gradient ground, a 12px
-lime stripe on the inline-start edge, title in Bricolage, description in Plex. The dark
-theme's own palette, where the only colour is the accent stripe. Every published page,
-subsystems included, gets one; a link with no card is a grey box in Slack.
+Generated per page by `src/pages/og/[...route].ts`: a white-to-quiet gradient ground, a
+12px accent stripe on the inline-start edge, title in Source Sans Bold, description in
+Source Sans Regular — the prose column's own palette, so the card is the page. Every
+published page, subsystems included, gets one; a link with no card is a grey box in
+Slack. A demo's `/play` page uses its composed `shareCard` instead (§6).
 
 ---
 
 ## 4. Page grammar
 
-Each page has a fixed shape. New pages pick one of these shapes or add a row to this table.
+Every reference page is the same object: the **endpoint rail** on the left (the site map
+in the API's own terms — six endpoints plus `GET /api`), then **rows**. A row is one
+endpoint: prose on the left, a try-it console on the right rendered with that endpoint's
+real response, and the prose never says a fact the console does not carry. New pages pick
+one of these shapes or add a row to this table.
 
-| Page | Shape | Chrome |
+| Page | Rows | Chrome |
 |---|---|---|
-| `/` | Three sections: **nameplate** (name, discipline · location · timezone, the two-register sentence, three buttons, the loops on the right at `lg`), **the work** (one flagship tile with a real screenshot, then text rows, then one link to all projects), **contact** (one paragraph, one primary button, email and two profile links). One contact exit, not four. | Full |
-| `/projects` | Top-level projects only, as cards, under one row of tabs by **category** (All · Work · Tools · Games) — what each thing is, never what it was built with. A category with nothing filed under it has no tab. Subsystems are reached through their parent. | Full |
-| `/projects/<slug>` | Fixed order, every time: breadcrumb or back link → status · date · role → `h1` → `blurb` → stack chips → Live / Source / External write-up buttons → metric tiles → cover (or nothing) → **The problem** and **What was unique** tiles → **Where AI fit in** aside → **Inside it** (subsystem cards, before the long read) → body → **What I learned** → previous / next within the same set. | Full |
-| `/about` | Eyebrow, gradient headline, then a two-column grid: the path (dated stops with `id`s the loops deep-link to) and the principles beside it. | Full |
-| `/resume` | Rendered from `site.ts`. The print stylesheet is the PDF; one page, US Letter, checked by `pdfinfo`. No phone, no street address, on the page or in the PDF. | Full, hidden in print |
-| `/contact` | The form (Turnstile, Resend), with the email as the fallback. No reply-time promise. | Full |
-| `/desk` | Help Desk mode: the whole portfolio re-served as a ticket queue. Own name, own mark, no vendor branding. One static page, panels switched by hash; without JS the panels stack and it reads as a document. Chrome is played straight, content is not. | Bare, own router |
-| `/play/<slug>` | **The demo on its own, as a page you can send someone.** The game is the first and only thing on the first screen; the credit, the write-up link (*How it works*), the rest of the work and a Share button sit in a footer under it, where someone who has actually played will look. Indexable, in the sitemap, and its social card is the project's real cover art, not the generated text card. | Bare |
-| `/404` | Short. | Full |
+| `/` | `GET /api/dylan` (the name, the two-register nameplate sentence, the facts list, See the work / Resume / About me) → `GET /api/work` (one at work, one for myself, one on the side, with an excerpt of a real hook beside the console) → `GET /api/experience` (the three jobs) → `GET /api/away-from-work` (the first program, still playable; the help desk) → `POST /api/contact` (what I'm looking for; the console sends). Person first, then the work, then the path, then the rest of life, then how to reach me. | Full |
+| `/projects` | `GET /api/work` (h1, category tabs bound to `?category=` and to the console's parameter, every top-level project as an item row with its thumbnail where one exists) → `GET /api/work/internal-erp?fields=subsystems` (Inside the ERP). | Full |
+| `/projects/<slug>` | Fixed order, every time: back link or breadcrumb → `GET /api/work/{id}` (status · date · role, `h1`, the two-register blurb, stack chips, Play / Source / External write-up, the metrics list, the cover) → `?fields=problem,unique,ai` (**The problem**, **What was unique**, **Where AI fit in**) → `?fields=subsystems` (**Inside it**, when there are parts) → the write-up body, with its own section map in the dark column → `?fields=learned` (**What I learned**, previous / next within the same set). | Full |
+| `/about` | `GET /api/experience` (the short version, the stops, the jobs bound to `?since=`, education) → `GET /api/work/internal-erp?fields=problem,unique` (What it ran on before, Who I work with) → `GET /api/dylan?fields=principles,open_to,looking_for` (How I work, Right now, Off the clock) → `GET /api/resume?fields=skills,certifications` (the toolkit, the facts, Get in touch). | Full |
+| `/resume` | One row: `GET /api/resume`. Rendered from `site.ts`; the print stylesheet hides the rail and the column and is the PDF — one page, US Letter, checked by `pdfinfo`. No phone, no street address, on the page or in the PDF. | Full, hidden in print |
+| `/contact` | `POST /api/contact` (Say hello, the email, what to include; the console validates for real and hands the message to the mail app) → `GET /api/work/internal-erp?fields=problem,metrics` (the problem I solve, for the owner or office manager who is not hiring an engineer). | Full |
+| `/desk` | Help Desk mode: the whole portfolio re-served as a ticket queue. Own name, own mark, own light palette, no vendor branding. One static page, panels switched by hash; without JS the panels stack and it reads as a document. Chrome is played straight, content is not. | Bare, own router |
+| `/play/<slug>` | **The demo on its own, as a page you can send someone.** The game is the first and only thing on the first screen; the credit, the write-up link (*How it works*), the rest of the work and a Share button sit in a footer under it. Indexable, in the sitemap, and its social card is the project's real cover art. | Bare |
+| `/404` | One row: the requested path as a crumb, a short sentence, and the API's own `404 Not Found` body in the dark column. | Full |
+| `/api`, `/api/*` | Not pages: JSON, from the Worker. See §5.5. | — |
 
 Recurring grammar inside pages:
 
-- **Cards for things with a picture, rows for things without.** A grid of cards demands a
-  thumbnail for every entry, and a generated gradient standing in for a screenshot is
-  what makes a portfolio look padded. The home page shows one card and the rest as rows;
-  `/projects` shows cards because every card there has a slot to fill.
-- **The same fact once per page.** The nav bar has no wordmark because the home page
-  opens with the name at full size. The flagship card's generated cover carries the
-  headline metric, so the row below it skips that metric.
-- **Facts about the system sit on the system, not on the person.** The four stats moved
-  from the hero onto the ERP card, where they are facts about software rather than a
-  boast about an author.
+- **The console is the Engineer register.** The prose column speaks whichever register
+  the switch says; the response beside it is always the exact shape. A reader never has
+  to flip a switch to see the other register — the site's oldest rule, now structural.
+- **A parameter is one control in three places.** The tabs on `/projects`, the
+  `?category=` in the address and the console's `category` select are one state; the
+  same for `?since=` on `/about`. Any of them changing moves the other two.
+- **`fields` shows up when a row is about a subset.** The full record's console has no
+  `fields` box; the contract row's console has `fields=problem,unique,ai` filled in. The
+  parameter is real everywhere and visible only where it is doing something.
+- **Rows for everything; a thumbnail only where there is a real one.** An item is a
+  hairline-separated row; a project with a screenshot gets it in a 13rem column. There
+  are no cards and no generated art.
+- **The same fact once per page.** The header has no wordmark because the home page
+  opens with the name. The rail lists the endpoints once; the crumb above each row names
+  the one the row is.
 - **Four short nav links, no hamburger.** A hamburger for four items is a tap the visitor
-  should not have to make. Labels shorten on mobile (`Plain` / `Tech`) rather than hide.
-- **Every heading level is real.** `h1` once, `h2` for the contract sections and the
-  write-up's sections, `h3` for card titles. Eyebrows are `p` or a styled `h2` with the
-  eyebrow class, never a fake heading.
+  should not have to make. Labels shorten on a phone (`Plain` / `Tech`) rather than hide.
+- **Every heading level is real.** `h1` once, `h2` per row and per contract section,
+  `h3` for items. The crumb is a `p`; nothing is a fake heading.
 
 ---
 
@@ -369,13 +380,14 @@ Recurring grammar inside pages:
 
 `src/lib/site.ts` holds anything that appears on more than one page: name, title, role,
 employer, location, contact, links, nav, the four stats and their as-of date, résumé
-data, skills, principles. Components never hard-code these. When a fact changes (a job,
-a number, a link going live), it changes in one place, and the comments on each field say
-what depends on it.
+data, skills, principles, the path here (the stops on `/about`), the away-from-work line
+and the looking-for line. Components never hard-code these, and neither does the API:
+`src/lib/api.ts` builds every `/api/*` record from `site.ts` and the content collection,
+and the pages render each console's response by calling the same functions. When a fact
+changes it changes in one place and the page, the console and the endpoint all follow.
 
-`src/lib/loops.ts` holds the hero's five loops and the two-register nameplate sentence.
-Every line there is a fact that already appears on `/about` or a write-up. Nothing on the
-home page is true only on the home page.
+`src/lib/loops.ts` holds the two-register nameplate sentence and the tokenizer the word
+morph runs on. Nothing on the home page is true only on the home page.
 
 ### 5.2 Projects
 
@@ -385,7 +397,8 @@ comment there saying what it is for. The parts that shape the site:
 - **`featured`** orders listings (higher first, then date). Current bands: the ERP 100,
   its subsystems 90 / 80 / 75 / 65 / 60 / 0, agent fleet 70, second brain 50, receipt splitter
   40, ERP test automation 30, Galaxy Defense 25, this site 10. A new project picks a slot
-  in that order; the flagship on the home page is whatever is highest. Subsystem ranks
+  in that order; the home page's three are curated by hand for breadth (one at work, one
+  for myself, one on the side), not taken from the top of this order. Subsystem ranks
   share the number line with top-level ones but never the same listing, so a tie between
   the two is harmless — a collision is only confusing to read here.
 - **`parent`** makes a project a subsystem: full write-up, own URL, own social card, but
@@ -393,21 +406,29 @@ comment there saying what it is for. The parts that shape the site:
   The file lives at `<parent>/<slug>/index.mdx` so the id, the URL, and the listing all
   say the same thing. Five sibling cards describing one codebase read as "this person has
   had one job"; one system with named parts reads as a system.
-- **`status`** is `live`, `wip`, or `archived`, and the pill colour follows it. Archived is
-  not a lesser state; Galaxy Defense and the SDET work are archived and shown.
+- **`status`** is `live`, `wip`, or `archived`, shown as a word in the status line.
+  Archived is not a lesser state; Galaxy Defense and the SDET work are archived and shown.
 - **`draft`** is visible in `astro dev` and excluded from listings *and routes* in the
   build, through the one query every surface uses. A draft hidden from the index but live
   at its URL would still be indexed.
 - **`metrics`** are outcome and scale only. See §1.
 - **`links.source`** is omitted for private work; the UI renders no button. An empty
   `links:` key parses as null and fails the schema, so omit the key entirely.
+- **`cover`** is one capture, in the product's own light theme. The site has one theme
+  (§3.6), so the `coverDark` twin and the `srcDark` figure prop were removed on
+  2026-09-14 along with their files.
 
 ### 5.3 Moved URLs never die
 
-The three ERP subsystems were top-level projects once. `astro.config.mjs` carries a 301
-from each old path. Anything already linking to an old URL, a sent résumé, a search
-result, a message, must still land on the write-up. Moving a project means adding a
-redirect in the same commit.
+The three ERP subsystems were top-level projects once, and the ERP itself was renamed on
+2026-09-14 — its product name meant nothing to a reader and was one more identifying
+detail in a public repository, so it is now "the internal ERP" at
+`/projects/internal-erp`. `astro.config.mjs` carries a 301 from every old path: the old
+slug, each of its six subsystems (listed by hand — Astro only accepts a dynamic redirect
+whose destination is itself a route pattern), and the three older aliases. Anything
+already linking to an old URL, a sent résumé, a search result, a message, must still land
+on the write-up. Moving or renaming a project means adding a redirect in the same commit.
+The old name stays in git history; that is not a leak the current tree can fix.
 
 ### 5.4 The `code/` tree
 
@@ -417,6 +438,35 @@ which sharp edges it encodes. Identifiers, fixtures, endpoints, and customer dat
 replaced, and the tree was copied out clean rather than pruned from a private repo,
 because git history keeps everything ever committed. It is the third-party evidence the
 GitHub link points at, now that the profile is more than two repos.
+
+---
+
+### 5.5 The API is the same facts
+
+`/api` is a read-only JSON API over the site's own facts, served by the Worker at
+request time so a query string means something: `GET /api/dylan?view=engineer`,
+`GET /api/work?category=game`, `GET /api/work/{id}?fields=problem,learned`,
+`GET /api/experience?since=2022`, `GET /api/resume?format=pdf`,
+`GET /api/away-from-work?playable=true`, and one write, `POST /api/contact`. `GET /api`
+is the index and describes itself from `src/lib/endpoints.ts` — the same list every
+console on the site is rendered from.
+
+Rules the endpoints keep:
+
+- **Every record carries `page`**, the absolute address of the page it describes. A
+  console's Send opens it when it is not the page the reader is on; a same-site `page` is
+  followed relative, so a preview or a local build stays on its own host.
+- **`?fields=a,b` is a sparse fieldset** on every GET. An unknown field is a 400 that
+  lists the real ones; `page` always comes back.
+- **Errors are bodies, not silence.** A bad `category` is 400 with the allowed values; an
+  unknown id is 404 with a hint; the wrong method is 405 with `Allow`.
+- **A 200 is cacheable for five minutes; nothing else is.** `access-control-allow-origin: *`
+  on everything — it is public and read-only.
+- **`POST /api/contact` never claims success it did not have.** Until `RESEND_API_KEY` and
+  `CONTACT_TO` are set it validates the message and answers 503 with a `mailto:` carrying
+  it, which the console opens. Set the secrets and the same console delivers.
+- **Only facts already on the site.** The API reads `site.ts` and the content collection
+  and nothing else. Adding a fact to the site adds it to the API; there is no second list.
 
 ---
 
@@ -442,14 +492,13 @@ second game is as cheap as the first.
 
 ### 6.2 Screenshots
 
-A screenshot is the one thing on the page that cannot follow the theme, so:
+A screenshot sits on the white prose column, so:
 
-- **Ship a light and a dark capture** (`cover` and `coverDark`, `src` and `srcDark`)
-  when the product has a dark theme. CSS picks one on `[data-theme]`; only the visible one
-  is fetched because both are lazy. A product with no dark theme, or theme-less art like
-  a game canvas, ships one file and renders it in both.
-- **Frame the two identically.** They swap in place; a different crop reads as the page
-  jumping.
+- **Ship one capture, in the product's light theme** (`cover`, or `src` on a `<Figure>`).
+  The site has one theme (§3.6); the paired dark twins were removed on 2026-09-14. Art
+  that has no theme — a game canvas — ships as it is.
+- **Frame it for a 44rem column.** It renders at the prose measure on the project page
+  and in a 13rem column on a list; a capture that only reads at full width reads nowhere.
 - **Redact in the browser before capture**, with a CSS blur on the leaf elements whose
   text matches the other legal entities, then screenshot. Blurring in the page survives
   re-capture and cannot miss an occurrence that scrolled; boxes drawn on a PNG can.
@@ -478,15 +527,22 @@ The reasoning for each lives as a comment next to the code. This table is the in
 
 | Decision | Why | Where the reasoning lives |
 |---|---|---|
-| Astro 7, static output, Tailwind 4, MDX, Cloudflare Workers | A content site that can also run games. Every page prerenders; only `/api/contact` runs in the Worker, so delivery is free and unlimited. | `astro.config.mjs`, README |
-| No React runtime | A two-state toggle is fifteen lines of vanilla JS; shipping React for it defeats the stack. Demos are framework-free by contract. | `ThemeToggle.astro`, `Demo.astro` |
+| Astro 7, static output, Tailwind 4, MDX, Cloudflare Workers | A content site that can also run games. Every page prerenders; only `/api/*` runs in the Worker, so page delivery is free and unlimited and a query string still means something. | `astro.config.mjs`, README |
+| No React runtime | The console is a few hundred lines of vanilla TypeScript; the reading-mode switch is fifteen. Shipping React for either defeats the stack. Demos are framework-free by contract. | `scripts/console.ts`, `Header.astro`, `Demo.astro` |
+| The API and the pages share one set of functions | `src/lib/api.ts` builds a record; the Worker route returns it and the page inlines it as the console's at-rest response. The body on the page IS the body the endpoint returns, so "200 OK" on the page is true before anyone clicks. | `lib/api.ts`, `components/ref/Console.astro`, `pages/api/*` |
+| The console renders complete on the server | Request in cURL, real response, coloured — all in the HTML. The script only makes it move (parameters, languages, Send). A reader with JavaScript off still sees the endpoint, the request and the answer. | `components/ref/Console.astro`, `lib/console-render.ts` |
+| One endpoint list feeds three things | `endpoints.ts` is what `GET /api` returns, what every console is rendered from, and what the routes implement. Adding an endpoint is one entry plus one route; a console for it is one component call. | `lib/endpoints.ts` |
+| Same-site `page` links are followed relative | Records carry absolute URLs on the canonical host so a pasted record still points home; the console rewrites a same-site one to the current origin, so a preview or a local `wrangler dev` never jumps to production. | `scripts/console.ts`, `Console.astro` |
+| Content collections at request time | The Worker routes call `getCollection` through the same `content.ts` queries the pages use; Astro bundles the data store into the server build, so no snapshot file and no second source of truth. Verified on `wrangler dev` before the first deploy. | `lib/api.ts`, `pages/api/work/[...id].ts` |
+| One theme | The light/dark split is between the columns, not between modes of the page. Two themes would double every new surface and weaken the signature. The toggle, `data-theme`, the `dark:` variant and the dark screenshot twins went together. | `global.css`, `Base.astro`, `Cover.astro`, `Figure.astro` |
 | `format: 'file'` and `trailingSlash: 'never'` | Astro's default emitted `/projects/index.html`, which cost every internal link a 307. Canonical URLs are computed from the served path, not the output filename. | `astro.config.mjs`, `Base.astro` |
 | `prerenderEnvironment: 'node'` | workerd forbids runtime WASM, which breaks the Shiki highlighter and OG image generation. Prerendered pages never execute in the Worker anyway. | `astro.config.mjs` |
 | `ProjectData` exported from the schema | Astro's inferred type resolved to `any` and silently removed type safety from every consumer. | `content.config.ts`, `content.ts` |
 | One query for listings, one for routes | Draft exclusion has to gate route generation too, or a draft is live at its URL. Subsystems are hidden from listings, not from the site. | `content.ts` |
-| Contrast gate in `npm run check` | Colour is the easiest thing to get quietly wrong; a nudged token drifts and nobody notices until someone cannot read the site. | `scripts/check-contrast.mjs` |
-| Theme set before first paint, re-set after swap | Deferred, it flashes white on a dark reload. Without the after-swap re-apply a light-mode reader is flipped to dark by their next click. | `Base.astro` |
-| Scroll reveal on a CSS scroll timeline, observer fallback | A debounced scroll handler is still a scroll handler and is what drops frames on a mid-range phone. | `global.css`, `Base.astro` |
+| Contrast gate in `npm run check` | Colour is the easiest thing to get quietly wrong; a nudged token drifts and nobody notices until someone cannot read the site. It caught the first accent (4.41:1 on the quiet fill) the day the world changed. | `scripts/check-contrast.mjs` |
+| The dark panel and chip styles are scoped to their column | `.panel` and `.chips` are class names the help desk also uses for its own light chrome; unscoped, the reference styles painted the desk's tickets dark. | `global.css`, `desk.astro` |
+| Reading mode set before first paint, re-set after swap | Deferred, the Engineer copy flashes in after the Plain copy on a reload. Without the after-swap re-apply a reader in Engineer is flipped back by their next click. | `Base.astro` |
+| Scroll reveal on a CSS scroll timeline, observer fallback | A debounced scroll handler is still a scroll handler and is what drops frames on a mid-range phone. Only the help desk and the demos still use it; the reference pages render at rest. | `global.css`, `Base.astro` |
 | Every DOM script binds on `astro:page-load` | View Transitions keep the JS context; a module runs once, so top-level setup dies after the first navigation. Demos also clean up on `astro:before-swap` or a game loop runs forever behind the reader. | `Header.astro`, `Demo.astro`, `Nameplate.astro` |
 | `/desk` and `/play` are `bare` | The desk runs its own hash router; the player wants the whole viewport. Astro falls back to a full navigation for pages that opted out. | `Base.astro`, `desk.astro` |
 | `/play/<slug>` is a destination, not a projection | A demo is the one thing here that gets forwarded for its own sake. It was `noindex` and out of the sitemap, with a *Back to write-up* bar on top and the site's default card — so a shared link unfurled as somebody's portfolio and opened onto portfolio chrome. It now indexes, unfurls as a picture of the game, and puts the way back into the site beneath the game rather than above it. | `pages/play/[...slug].astro`, `astro.config.mjs` |
@@ -523,14 +579,15 @@ The reasoning for each lives as a comment next to the code. This table is the in
    headings, no `#`. `<Takeaway>` for at most one or two lessons worth interrupting for.
    A quick read: about 1,200 words in Engineer mode at most, Plain in a couple of
    minutes. The rest of the reasoning goes in code comments, the plan, or §9.
-6. Cover: a real screenshot, redacted in-browser, light and dark if the product has both,
-   identical framing, `coverAlt` written as evidence. Or no cover; never a placeholder
-   image.
+6. Cover: a real screenshot in the product's light theme, redacted in-browser,
+   `coverAlt` written as evidence. Or no cover; never a placeholder image.
 7. Links: `source` only if public; omit the key otherwise. `live` if it runs somewhere.
 8. If the project has a demo, §8.2. If it moves or renames an existing URL, a redirect
    in the same commit.
 9. Check: `npm run check` clean, `npm run build` clean, the page read once in each
-   register and each theme, at 375px and 1280px. The social card at `/og/projects/<slug>.png`.
+   register at 390px and 1440px, every console on it showing a real response, and
+   `GET /api/work/<slug>` answering on `wrangler dev`. The social card at
+   `/og/projects/<slug>.png`.
 10. If any fact on it also appears in `site.ts` or the résumé, change those too,
     regenerate the PDF, commit the PDF with the change.
 
@@ -555,14 +612,18 @@ The reasoning for each lives as a comment next to the code. This table is the in
 ### 8.3 Changing the design
 
 1. Change the token, not the component. If a component needs a colour that has no
-   token, the design system is missing a token, so add one to both theme blocks with a
-   comment saying what it is for.
+   token, the design system is missing a token, so add one to the `:root` block with a
+   comment saying what it is for — and, if text sits on it, a pair in the gate.
 2. Run `npm run check:contrast`. If it fails, the colour changes, not the threshold.
-3. Look at both themes and both registers. Look at the nav bar in light mode
-   specifically; its contrast is the most fragile number on the site.
+3. Look at both columns and both registers, on a phone width and at 1440. A console's
+   status line, the language tabs and a long JSON body are the fragile spots on the dark
+   side; a link on the quiet fill is the fragile number on the light side.
 4. Look with reduced motion on. Look with JavaScript off (`curl` the built HTML): the
-   plain register and every finished animation state must be present as text.
-5. If it changes a rule in this file, update the rule and add a line to §9.
+   plain register, every console's request and response, and every list must be present
+   as text.
+5. If it touches the help desk's chrome, open `/desk` — it shares the tokens but not the
+   classes, and a new global class name can collide with one of its own.
+6. If it changes a rule in this file, update the rule and add a line to §9.
 
 ### 8.4 Adding a feature
 
@@ -578,10 +639,12 @@ The reasoning for each lives as a comment next to the code. This table is the in
 
 ### 8.5 Changing a fact
 
-`site.ts` first. If it is one of the four stats, update `statsAsOf`. If it is on the
-résumé, `npm run build && npm run resume:pdf` and commit the PDF. If it is the employer,
-the nameplate sentence in `loops.ts` and the structured data in `Base.astro` read from
-`site.ts`, so check they still say something true.
+`site.ts` first; the pages, the consoles and `/api` all follow from it. If it is one of
+the four stats, update `statsAsOf`. If it is on the résumé, `npm run build && npm run
+resume:pdf` and commit the PDF. If it is the employer, the nameplate sentence in
+`loops.ts` and the structured data in `Base.astro` read from `site.ts`, so check they
+still say something true. If it is a fact the API should expose under a new key, add it
+in `api.ts` and it appears in the console that shows that record.
 
 ---
 
@@ -690,6 +753,10 @@ loop instead of correcting it. Short, unedited writing is the reference. Whateve
 reference, §11 still governs which facts may appear.
 
 ---
+| 2026-09-14 | The ERP loses its product name: "the internal ERP" at `/projects/internal-erp`, every old URL redirected, the name retired from the current tree (history untouched). |
+| 2026-09-14 | The site moves into the API-reference world (mockup C): white prose column beside a continuous dark response column, Source Sans 3 and JetBrains Mono, one blue-violet accent, method badges; every page is a rail plus endpoint rows. One theme — the toggle, `data-theme` and the dark screenshot twins go. §1.3, §3 and §4 rewritten; the eyebrow leaves the reference pages. |
+| 2026-09-14 | A real read-only API under `/api/`, served by the Worker from `site.ts` and the content collection, with `fields`, honest errors and `page` on every record; every console on the site renders its endpoint's real response at build time and Sends for real. `POST /api/contact` answers 503 with a `mailto:` until delivery is configured rather than claiming success. |
+| 2026-09-14 | The résumé PDF regenerated from the page in the new type: one page, no product name. |
 
 ## 10. Parked and open
 
@@ -708,26 +775,21 @@ it ships or is dropped for good.
   seven rules twice. Fix the product first.
 - **A real domain.** `SITE_URL` stays unset until one is attached, and attaching one
   changes every canonical URL at once, so it is a deliberate single change, not a drift.
-- **Which home page ships, if any.** Three mockups of `/`, built 2026-09-14 with
-  impeccable and published as one private artifact with a switcher: **A, The interview**
-  (the current tokens; the eyebrows become the five questions a screener asks), **B,
-  Release notes** (a light changelog world: Public Sans, JetBrains Mono, a sticky year
-  rail, type tags), **C, API reference** (three columns; Plain English prose in the
-  middle, the Engineer register as a dark response column, both on screen at once —
-  and, after a second pass, a try-it console on every endpoint: real parameters, the
-  request in four languages, a Send that opens the page it describes; the whole site
-  exists in that world behind a hash router). All three keep the person-first order and
-  every fact on the site today. Dylan prefers C and is still exploring. Adopting B or
-  C rewrites §3 and the `/` row of §4; adopting A changes the `/` row and softens the
-  eyebrow rule. Nothing in `src/` changed. The first roll (shelf tags, shipping label)
-  was re-rolled on the owner's steer: the world has to be the one he is moving into.
+- **Mail delivery for `POST /api/contact`.** The route is live and honest: 503 with a
+  `mailto:` until `RESEND_API_KEY` and `CONTACT_TO` exist. Setting them turns the console
+  into a real send; if `TURNSTILE_SECRET` is set too, the console needs the Turnstile
+  widget before it can pass the check. Dylan's call, in the Cloudflare dashboard.
+- **Mockups A and B.** The interview and Release notes stay in the private artifact the
+  three were decided from; C shipped. They are not candidates any more, only records.
+- **A console for a subsystem's siblings.** A subsystem page's `GET /api/work/{id}`
+  console lists every id; a `parent`-scoped list would be a nicer default. Small.
 - **The channel P&L page** is not parked; it is off the site for good. Listed here so
   nobody re-asks.
 
 Open questions, no decision yet:
 
-- Whether `/desk` should keep its own visual dialect or converge on the tokens above. It
-  is a parody with its own chrome on purpose; the question is how far that licence goes.
+- None about the visual world. `/desk` keeps its own dialect — decided 2026-09-14 when the
+  reference world shipped around it and the parody read better for the contrast.
 
 ---
 
@@ -767,3 +829,4 @@ Design section. It is indexed by GitHub search and reachable by URL, which is th
 |---|---|
 | 2026-09-03 | First version. Written from the code, the comments, the two plans, and the commit log as of `bc12832`. |
 | 2026-09-14 | §9 gains the impeccable row; §10 parks the three home-page mockups. |
+| 2026-09-14 | The API-reference world: §1.3, §3, §4 rewritten; §5.1–5.3 updated and §5.5 (the API) added; §7, §8.3, §8.5 updated; four §9 rows; §10 re-parked. |
