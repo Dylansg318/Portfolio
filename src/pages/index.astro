@@ -17,6 +17,10 @@ import bashGuard from '../../code/session-lock/bash-guard.cjs?raw';
  * prose on the left says what it is in plain words, the console on the right
  * shows the exact shape and answers for real. Person first, then the work,
  * then the path here, then the rest of life, then how to get in touch.
+ *
+ * With JavaScript it is also a still frame: the page holds still and the rows
+ * fade out and in as you scroll (src/scripts/still-frame.ts). The markup is
+ * the ordinary reference either way; `data-still` opts this page in.
  */
 
 // Curate for breadth: production ownership, developer tooling, and an
@@ -61,7 +65,7 @@ const excerptHtml = escape(excerpt)
   .replace(/(&#39;[^&]*?(?:&(?!#39;)[^&]*?)*&#39;)/g, '<span class="st">$1</span>');
 ---
 <Base>
-  <div class="ref">
+  <div class="ref" data-still>
     <Rail current="dylan" hrefs={{ dylan: '#dylan', work: '#work', experience: '#experience', contact: '#contact' }} />
     <div class="ref-main">
       <Row id="dylan">
@@ -159,7 +163,17 @@ const excerptHtml = escape(excerpt)
                 <h3><a href={`/projects/${game.id}`}>{game.data.title}</a></h3>
                 <p class="status">2020 · Where it started</p>
                 <p class="t">A high-school game with a shop, upgrades, and a boss fight. Still playable.</p>
-                <p class="more"><a href={`/play/${game.id}`} class="c-link">Play <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a></p>
+                <p class="more">
+                  <a
+                    href={`/play/${game.id}`}
+                    class="c-link"
+                    data-play={game.data.demo.kind === 'island' ? game.data.demo.entry : undefined}
+                    data-play-title={game.data.title}
+                    data-play-href={`/play/${game.id}`}
+                    data-play-keyboard={game.data.demo.kind === 'island' && game.data.demo.keyboard ? '' : undefined}
+                    aria-expanded="false"
+                  >Play here <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+                </p>
               </div>
               {game.data.cover && (
                 <div class="pic sq">
@@ -194,6 +208,22 @@ const excerptHtml = escape(excerpt)
           frame="Live: the route validates for real. Until mail delivery is configured it answers 503 with a mailto link, and Send opens it with your message in it."
         />
       </Row>
+
+      <!-- Still-frame chrome: hidden unless the frame is on. Where you are, and
+           below 1024px the handle of the response drawer. -->
+      <p class="still-where" aria-hidden="true">
+        <span class="still-dots">{[0, 1, 2, 3, 4].map(() => <i />)}</span>
+        <span class="still-next"></span>
+      </p>
+      <button type="button" class="still-drawer" aria-expanded="false">
+        <span class="still-drawer-ep"></span>
+        <span class="lbl">Response</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6" /></svg>
+      </button>
     </div>
   </div>
 </Base>
+
+<script>
+  import '../scripts/still-frame';
+</script>

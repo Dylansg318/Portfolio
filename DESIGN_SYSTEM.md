@@ -282,6 +282,22 @@ Rules:
 - **The reference pages render at rest.** Nothing on them waits for a scroll to become
   readable: every console shows its real response on load, every list is visible. The
   `.reveal` scroll effect survives only for the help desk and the demos.
+- **The home page is a still frame.** With JavaScript, and a window at least 480px tall,
+  the home page holds still and scrolling moves the reader through its five rows
+  (`src/scripts/still-frame.ts`). The row on screen fades out rising 16px, the frame is
+  empty for a beat, the next row fades in rising into place, and the response column
+  trails its prose by a beat on both sides. A row taller than the frame scrolls inside
+  it first, so nothing is cut off; letting go mid-fade settles on a row in the direction
+  of travel (a fifth of a fade is enough); a jump of two or more rows cuts instead of
+  flashing through the rows between; the address follows the row with `replaceState`,
+  so a link opens on its row and Back still leaves the page. Below 1024px the response
+  is a drawer along the foot of the frame. With reduced motion the rows swap at the
+  midpoint with no rise. Each row arrives at rest, which is how the rule above still
+  holds. Without JavaScript the home page is the ordinary scrolling reference. Home page
+  only: a write-up is a long read and would spend its life scrolling inside the frame.
+- **A game opens in the side panel.** Over the response column, fading in; expand slides
+  it over the whole frame; close fades it out and stops the game. The still frame holds
+  its scroll while a game is open, so the arrow keys belong to the game.
 - **The console streams.** A Send types the response in a line at a time (6–40ms per
   line, scaled to length), then the status line lands and, if the answer names a page,
   the page opens after 500ms. With reduced motion the whole answer appears at once and
@@ -373,7 +389,7 @@ one of these shapes or add a row to this table.
 
 | Page | Rows | Chrome |
 |---|---|---|
-| `/` | `GET /api/dylan` (the name, the two-register nameplate sentence, the facts list, See the work / Resume / About me) → `GET /api/work` (one at work, one for myself, one on the side, with an excerpt of a real hook beside the console) → `GET /api/experience` (the three jobs) → `GET /api/away-from-work` (the first program, still playable; the help desk) → `POST /api/contact` (what I'm looking for; the console sends). Person first, then the work, then the path, then the rest of life, then how to reach me. | Full |
+| `/` | `GET /api/dylan` (the name, the two-register nameplate sentence, the facts list, See the work / Resume / About me) → `GET /api/work` (one at work, one for myself, one on the side, with an excerpt of a real hook beside the console) → `GET /api/experience` (the three jobs) → `GET /api/away-from-work` (the first program, *Play here* in the side panel; the help desk) → `POST /api/contact` (what I'm looking for; the console sends). Person first, then the work, then the path, then the rest of life, then how to reach me. With JavaScript the five rows are one still frame (§3.5), with where-you-are (dots, *2 of 5 · About next*) at the foot of the prose column and, below 1024px, the response drawer. | Full |
 | `/projects` | `GET /api/work` (h1, category tabs bound to `?category=` and to the console's parameter, every top-level project as an item row with its thumbnail where one exists) → `GET /api/work/internal-erp?fields=subsystems` (Inside the ERP). | Full |
 | `/projects/<slug>` | Fixed order, every time: back link or breadcrumb → `GET /api/work/{id}` (status · date · role, `h1`, the two-register blurb, stack chips, Play / Source / External write-up, the metrics list, the cover) → `?fields=problem,unique,ai` (**The problem**, **What was unique**, **Where AI fit in**) → `?fields=subsystems` (**Inside it**, when there are parts) → the write-up body, with its own section map in the dark column → `?fields=learned` (**What I learned**, previous / next within the same set). | Full |
 | `/about` | `GET /api/experience` (the short version, the stops, the jobs bound to `?since=`, education) → `GET /api/work/internal-erp?fields=problem,unique` (What it ran on before, Who I work with) → `GET /api/dylan?fields=principles,open_to,looking_for` (How I work, Right now, Off the clock) → `GET /api/resume?fields=skills,certifications` (the toolkit, the facts, Get in touch). | Full |
@@ -534,6 +550,18 @@ Two lanes, chosen in frontmatter, neither costing a reader anything until they c
 Adding a game is a frontmatter change, not an architecture change. The seam exists so the
 second game is as cheap as the first.
 
+**Where an island is played.** On any page with chrome, in the **game panel**
+(`src/components/ui/GamePanel.astro`), the way a side panel opens in a desktop app: over
+the response column at its width, expandable over the whole frame, full screen under the
+header below 1024px. Its bar carries the `/play` path, ↗ (the game's own page, the link
+to send), expand and ✕. A trigger is any element with `data-play="<entry>"` — the
+write-up's `<Demo>` renders a *Play* card, the project page's primary button is *Play
+here*, the home page's Away row has one — and a trigger is a link to the `/play` page
+wherever there is one, so it still works without JavaScript or with a modifier key. A
+game with `keyboard: true` says in the panel, on a touch-only device, that it can't be
+played there. Only `/play/<slug>` mounts an island inline; that page is the game. The
+iframe lane is for tools and still runs inline in its write-up.
+
 ### 6.2 Screenshots
 
 A screenshot sits on the white prose column, so:
@@ -645,7 +673,11 @@ The reasoning for each lives as a comment next to the code. This table is the in
   `src/demos/shotcall/`). Everything else in that list still applies.
 - Iframe: export under `public/demos/<slug>/`, under 25 MiB per asset, `camera: true`
   only if the demo genuinely needs it.
-- Frontmatter `demo:` block; `label` in the imperative (*Play Galaxy Defense*).
+- Frontmatter `demo:` block; `label` in the imperative (*Play Galaxy Defense*);
+  `keyboard: true` if it can't be played by touch. In the write-up, pass `slug` to
+  `<Demo>` so its *Play* card links to the `/play` page (the body gets raw frontmatter).
+- Open it in the game panel at 1100 and 1440, expanded and not, and at a phone width:
+  the panel is 24–36rem wide, which is narrower than the `/play` page.
 - Confirm the fullscreen route at `/play/<slug>` mounts (it has no View Transitions
   router, so the bind path is different).
 - Give the project a real `cover` capture, and for anything people will forward, a
@@ -808,6 +840,7 @@ reference, §11 still governs which facts may appear.
 | 2026-09-14 | **Light and dark come back**, hours after "one theme" shipped, because the reader wanted the choice. The dark theme is one block of overrides in the same token file, drawn so the two-column split survives (navy prose, a darker response column, the console a step lighter than the page); the accent splits into `--accent` (text, lightens in dark) and `--accent-fill` (the button, does not); the gate checks both themes; Expressive Code follows the same attribute; screenshots stay one light capture. §3.6 rewritten, §3.1–3.2 tables gain a Dark column, §7 row replaced. |
 | 2026-09-14 | **The rail is the navigation; the header stops repeating it.** Two maps of the same five pages — page names in the top bar, endpoints in the rail — was the thing a first look could not parse. The header keeps the name and the controls; each rail entry is a page's plain name over its endpoint, *One project* indented under Work with `{id}` resolved on a project page, *Index* under a hairline; below 1280px the rail is a strip of the five names. `site.nav` removed. |
 | 2026-09-14 | **Room to breathe.** The header is 3.5rem (`--head-h`, one token the rail, the sticky console and every scroll margin measure from); the prose column's maximum is 48rem with 3.5rem of padding at desktop, so its text measure stays about where it was; the console's sections, bar and caps gained a quarter-rem each way; and the three-column layout waits for 1280px — at 1024px the rail and a 30rem response had left the prose about 180px of text, so 1024–1279 is two columns with a 24rem response and the rail as a strip. |
+| 2026-09-14 | **The home page becomes a still frame, and games open in a side panel.** Dylan's idea, mocked first (a claude.ai artifact) and decided in four answers: home page only; out, then in, with a rise; a response drawer on a phone; Back leaves the page. The frame is a sticky `.ref-main` inside a `.ref` given the scroll length, every row a layer in one place, the column grounds painted by the frame so a fading row never fades its background. A game opens over the response column the way a desktop app's side panel does — expand, ↗ its own page, ✕ — on every page where one is playable; the write-ups' inline islands became *Play* cards and the project page's *Play* button opens the panel instead of leaving. Island demos gained `keyboard`. Two traps found testing: a router listens for link clicks before a bubbling handler, so the panel catches Play in the capture phase; and below 1280px the scroll length stretched the rail strip's grid row and pushed the frame 2,300px down the page. |
 
 ## 10. Parked and open
 
@@ -882,3 +915,4 @@ Design section. It is indexed by GitHub search and reachable by URL, which is th
 | 2026-09-14 | §9 gains the impeccable row; §10 parks the three home-page mockups. |
 | 2026-09-14 | The API-reference world: §1.3, §3, §4 rewritten; §5.1–5.3 updated and §5.5 (the API) added; §7, §8.3, §8.5 updated; four §9 rows; §10 re-parked. |
 | 2026-09-14 | Two themes and one navigation: §3.1–3.2 tables gain a Dark column and `--head-h`; §3.6 rewritten as *Two themes*; §3.7, §4 (the rail is the navigation), §5.2, §6.2, §7, §8.3 updated; three §9 rows. |
+| 2026-09-14 | The still frame and the game panel: §3.5 gains two rules, §4's `/` row, §6.1 *Where an island is played*, §8.2 two lines, one §9 row. |

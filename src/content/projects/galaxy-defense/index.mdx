@@ -52,13 +52,15 @@ demo:
   kind: island
   entry: galaxy-defense
   label: Play Galaxy Defense
+  # Arrows and space, no touch controls: a 2020 keyboard game, ported faithfully.
+  keyboard: true
 ---
 
 I made this in my senior year of high school, in Code.org's Game Lab. You build by
 dragging blocks and the blocks generate JavaScript. It's made so someone who's never
 written code can finish something in an afternoon. It isn't made for what I did with it.
 
-<Demo demo={frontmatter.demo} title={frontmatter.title} />
+<Demo demo={frontmatter.demo} title={frontmatter.title} slug="galaxy-defense" />
 
 ## What the constraints cost
 

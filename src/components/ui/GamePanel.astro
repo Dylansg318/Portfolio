@@ -1,0 +1,181 @@
+---
+/**
+ * THE GAME PANEL — where a playable game opens, on every page that has one.
+ *
+ * Any element with `data-play="<entry>"` opens `src/demos/<entry>/index.ts` in
+ * a panel over the response column, the way a side panel opens in a desktop
+ * app: the page stays readable beside it. Expand widens it over the whole
+ * frame; ↗ opens the game's own /play page (the link to send someone); ✕ stops
+ * the game and closes the panel. Below 1024px there is no response column, so
+ * the panel fills the screen under the header.
+ *
+ * Triggers are links to the /play page wherever one exists, so without
+ * JavaScript — or with a modifier key — they still go somewhere real.
+ *
+ *   data-play           the demo entry (a folder under src/demos/)
+ *   data-play-title     the game's name, for the panel's accessible label
+ *   data-play-href      the /play page, if the game has one (drives ↗)
+ *   data-play-keyboard  present when the game cannot be played by touch
+ *
+ * It tells the rest of the page with `data-game="open"` on <html> and the
+ * `game-panel:open` / `game-panel:close` events; the home page's still frame
+ * holds its scroll while a game is open, so the arrow keys belong to the game.
+ */
+---
+<section id="gp" class="gp no-print" tabindex="-1" aria-label="Game" hidden>
+  <div class="gp-bar">
+    <p class="gp-path mono"><span class="m get">GET</span><span id="gp-path"></span></p>
+    <div class="gp-tools">
+      <a id="gp-own" href="/" target="_blank" rel="noopener" title="Open on its own page" aria-label="Open on its own page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" /></svg>
+      </a>
+      <button type="button" id="gp-expand" class="gp-expand" aria-pressed="false" title="Fill the frame" aria-label="Fill the frame">
+        <svg class="expand-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
+        <svg class="collapse-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7" /></svg>
+      </button>
+      <button type="button" id="gp-close" title="Close" aria-label="Close the game">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+      </button>
+    </div>
+  </div>
+  <div class="gp-body">
+    <p class="gp-touch" id="gp-touch" hidden>
+      This one needs a keyboard. It opens here, but it can't be played by touch — send yourself
+      the link with ↗ and play it on a computer.
+    </p>
+    <div class="gp-host" id="gp-host"></div>
+  </div>
+</section>
+
+<script>
+  type DemoModule = { mount: (el: HTMLElement) => (() => void) | void };
+  // Lazy: each game is its own chunk, fetched the first time someone presses Play.
+  const demos = import.meta.glob<DemoModule>('../../demos/*/index.ts');
+
+  const root = document.documentElement;
+  const touchOnly = window.matchMedia('(hover: none) and (pointer: coarse)');
+  const narrow = window.matchMedia('(max-width: 1023px)');
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  let cleanup: (() => void) | null = null;
+  let openEntry = '';
+  let trigger: HTMLElement | null = null;
+  let hideTimer = 0;
+
+  const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T | null;
+
+  const setExpanded = (on: boolean) => {
+    const gp = $('gp');
+    const btn = $('gp-expand');
+    if (!gp || !btn) return;
+    gp.classList.toggle('expanded', on);
+    btn.setAttribute('aria-pressed', String(on));
+    const label = on ? 'Shrink back to the column' : 'Fill the frame';
+    btn.setAttribute('aria-label', label);
+    btn.title = label;
+  };
+
+  async function open(el: HTMLElement) {
+    const gp = $('gp');
+    const host = $('gp-host');
+    const entry = el.dataset.play ?? '';
+    if (!gp || !host || !entry) return;
+    if (openEntry === entry) {
+      gp.focus({ preventScroll: true });
+      return;
+    }
+    close(false);
+    window.clearTimeout(hideTimer);
+
+    trigger = el;
+    openEntry = entry;
+    const href = el.dataset.playHref;
+    const own = $<HTMLAnchorElement>('gp-own');
+    if (own) {
+      own.hidden = !href;
+      if (href) own.href = href;
+    }
+    $('gp-path')!.textContent = href ?? `/projects/${entry}`;
+    gp.setAttribute('aria-label', el.dataset.playTitle ?? 'Game');
+    $('gp-touch')!.hidden = !(el.hasAttribute('data-play-keyboard') && touchOnly.matches);
+    setExpanded(false);
+    host.innerHTML = '<p class="gp-loading">Loading…</p>';
+
+    gp.hidden = false;
+    requestAnimationFrame(() => gp.classList.add('on'));
+    root.dataset.game = 'open';
+    document.querySelectorAll(`[data-play="${entry}"]`).forEach((t) => t.setAttribute('aria-expanded', 'true'));
+    document.dispatchEvent(new CustomEvent('game-panel:open', { detail: { entry, title: el.dataset.playTitle } }));
+    gp.focus({ preventScroll: true });
+
+    const loader = demos[`../../demos/${entry}/index.ts`];
+    try {
+      if (!loader) throw new Error(`no demo at src/demos/${entry}/index.ts`);
+      const mod = await loader();
+      if (openEntry !== entry) return; // closed, or another game opened, while loading
+      host.innerHTML = '';
+      const done = mod.mount(host);
+      cleanup = typeof done === 'function' ? done : () => { host.innerHTML = ''; };
+    } catch (err) {
+      console.error('[game-panel] failed to mount', entry, err);
+      host.innerHTML = '<p class="gp-loading">This game failed to load.</p>';
+      cleanup = () => { host.innerHTML = ''; };
+    }
+  }
+
+  function close(returnFocus = true) {
+    const gp = $('gp');
+    if (!gp || !openEntry) return;
+    try {
+      cleanup?.();
+    } catch (err) {
+      console.error('[game-panel] cleanup failed', err);
+    }
+    cleanup = null;
+    document.querySelectorAll(`[data-play="${openEntry}"]`).forEach((t) => t.setAttribute('aria-expanded', 'false'));
+    openEntry = '';
+    gp.classList.remove('on');
+    hideTimer = window.setTimeout(() => {
+      gp.hidden = true;
+      setExpanded(false);
+    }, reduced.matches ? 0 : 280);
+    delete root.dataset.game;
+    document.dispatchEvent(new CustomEvent('game-panel:close'));
+    if (returnFocus) trigger?.focus({ preventScroll: true });
+    trigger = null;
+  }
+
+  // Bound once for the life of the tab: the panel element is re-rendered on
+  // every page, so everything looks it up by id at the moment it is used.
+  // Capture phase, so the router never sees a Play click as a navigation to
+  // the /play page the trigger links to.
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    const play = target.closest<HTMLElement>('[data-play]');
+    if (play) {
+      const me = e as MouseEvent;
+      // A modified click on a link means "somewhere else" — let it go there.
+      if (me.metaKey || me.ctrlKey || me.shiftKey || me.altKey || me.button !== 0) return;
+      e.preventDefault();
+      if (play.getAttribute('aria-expanded') === 'true') close();
+      else void open(play);
+      return;
+    }
+    if (target.closest('#gp-close')) close();
+    else if (target.closest('#gp-expand')) setExpanded(!$('gp')?.classList.contains('expanded'));
+  }, true);
+  document.addEventListener('dblclick', (e) => {
+    const bar = (e.target as HTMLElement).closest('.gp-bar');
+    if (bar && !(e.target as HTMLElement).closest('a, button') && !narrow.matches) {
+      setExpanded(!$('gp')?.classList.contains('expanded'));
+    }
+  });
+  // Esc belongs to the game first (Galaxy Defense stops on it). The panel only
+  // uses it to shrink back from expanded; ✕ is how it closes.
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && openEntry && $('gp')?.classList.contains('expanded')) setExpanded(false);
+  });
+  // A running game owns a requestAnimationFrame loop, and a View Transitions
+  // swap keeps the JS context alive: stop it before the page goes.
+  document.addEventListener('astro:before-swap', () => close(false));
+</script>

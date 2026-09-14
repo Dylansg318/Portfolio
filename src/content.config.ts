@@ -128,6 +128,9 @@ const projectSchema = ({ image }: SchemaContext) =>
           entry: z.string(),
           label: z.string().default('Launch demo'),
           fullscreen: z.boolean().default(true),
+          /** The game cannot be played by touch. The game panel says so on a
+           *  phone instead of opening something that ignores every tap. */
+          keyboard: z.boolean().default(false),
         }),
         z.object({
           kind: z.literal('iframe'),

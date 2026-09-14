@@ -821,6 +821,222 @@
   .prose-portfolio :where(code)::before,
   .prose-portfolio :where(code)::after { content: ''; }
 
+  /* ---- the still frame: the home page holds still, rows change -----------
+     Only with `.still` on <html>, which src/scripts/still-frame.ts sets on
+     the home page when JavaScript runs and the window is tall enough. Without
+     it the home page is an ordinary scrolling reference. `.ref` is given the
+     scroll length; `.ref-main` is sticky inside it and every row is a layer
+     in the same place. The two column grounds are painted by the frame, not
+     by the rows, so a fading row never fades its background. ---- */
+  .still-where, .still-drawer { display: none; }
+  .still .ref { height: var(--still-h, auto); align-items: start; }
+  /* Below 1280px the rail strip is the grid's first row. Without this the
+     scroll length stretches that row, and the frame starts two thousand
+     pixels down the page. */
+  @media (max-width: 1279px) { .still .ref { grid-template-rows: auto minmax(0, 1fr); } }
+  .still .ref-main {
+    --resp-w: 0rem;
+    position: sticky;
+    top: var(--still-top, var(--head-h));
+    display: block;
+    height: calc(100svh - var(--still-top, var(--head-h)));
+    overflow: hidden;
+    background: linear-gradient(to right, var(--bg) calc(100% - var(--resp-w)), var(--code-bg) calc(100% - var(--resp-w)));
+  }
+  @media (min-width: 1024px) { .still .ref-main { --resp-w: 24rem; } }
+  @media (min-width: 1280px) { .still .ref-main { --resp-w: 30rem; } }
+  @media (min-width: 1536px) { .still .ref-main { --resp-w: 36rem; } }
+  .still .ref-main > .ep { position: absolute; inset: 0; align-items: start; }
+  .still .ref-main > .ep[inert] { visibility: hidden; }
+  .still .ref-main > .ep .ep-prose { border-top: 0; padding-bottom: 6rem; will-change: opacity, transform; }
+  .still .ref-main > .ep .ep-code { background: transparent; border-top: 0; }
+  .still .ref-main > .ep .stick { position: static; will-change: opacity, transform; }
+  .still .ref-main.still-cut > .ep { animation: still-cut 320ms var(--ease-out) both; }
+  @keyframes still-cut { from { opacity: 0; } to { opacity: 1; } }
+
+  /* where you are, pinned to the foot of the prose column */
+  .still .still-where {
+    position: absolute;
+    left: 0;
+    right: var(--resp-w);
+    bottom: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    max-width: var(--container-reading);
+    padding: 0.9rem 1.25rem;
+    font-size: 0.8125rem;
+    color: var(--ink-faint);
+    background: linear-gradient(to bottom, transparent, var(--bg) 45%);
+    pointer-events: none;
+  }
+  @media (min-width: 640px) { .still .still-where { padding-inline: 2rem; } }
+  @media (min-width: 1024px) { .still .still-where { padding-inline: 2.5rem 3rem; } }
+  @media (min-width: 1280px) { .still .still-where { padding-inline: 3.5rem; } }
+  .still-where b { font-weight: 600; color: var(--ink); }
+  .still-dots { display: inline-flex; gap: 0.4rem; }
+  .still-dots i { width: 0.45rem; height: 0.45rem; border-radius: 50%; background: var(--border-mid); transition: background-color var(--dur) var(--ease), transform var(--dur) var(--ease); }
+  .still-dots i.on { background: var(--accent); transform: scale(1.25); }
+  .still-next { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .still-next svg { width: 0.9em; height: 0.9em; animation: still-nudge 1.8s var(--ease) infinite; }
+  @keyframes still-nudge { 0%, 60%, 100% { transform: none; } 30% { transform: translateY(3px); } }
+
+  /* the rail entry's stripe fills as its row is read */
+  @media (min-width: 1280px) {
+    .still .rail a[href^='#'][aria-current='true'] {
+      box-shadow: inset 2px 0 0 color-mix(in srgb, var(--accent) 22%, transparent);
+      background-image: linear-gradient(var(--accent), var(--accent));
+      background-size: 2px calc(var(--read, 0) * 100%);
+      background-repeat: no-repeat;
+    }
+  }
+
+  /* below 1024px the response is a drawer along the bottom of the frame */
+  @media (max-width: 1023px) {
+    .still .still-where { bottom: 3.25rem; }
+    .still .ref-main > .ep .ep-code {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 3.25rem;
+      height: calc(80% - 3.25rem);
+      padding: 1rem 1.25rem 1.5rem;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      background: var(--code-bg);
+      border-radius: 12px 12px 0 0;
+      transform: translateY(calc(100% + 3.25rem));
+      transition: transform 360ms var(--ease);
+    }
+    .still .ref-main.drawer-open > .ep .ep-code { transform: none; box-shadow: 0 -12px 32px -12px rgba(0, 0, 0, 0.45); }
+    .still .still-drawer {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      height: 3.25rem;
+      padding-inline: 1.25rem;
+      background: var(--code-bg);
+      color: var(--code-ink);
+      border-top: 1px solid var(--code-line);
+      font: 400 0.8125rem/1 var(--font-mono);
+    }
+    .still-drawer-ep { display: inline-flex; align-items: center; gap: 0.5rem; min-width: 0; white-space: nowrap; overflow: hidden; }
+    .still-drawer-ep b { font-weight: 500; }
+    .still-drawer .lbl { margin-left: auto; font-size: 0.75rem; color: var(--code-dim); }
+    .still-drawer svg { width: 1rem; height: 1rem; color: var(--code-dim); transition: transform 360ms var(--ease); }
+    .still .ref-main.drawer-open .still-drawer svg { transform: rotate(180deg); }
+  }
+
+  /* ---- the game panel: a playable game beside the page --------------------
+     See src/components/ui/GamePanel.astro. Over the response column, the
+     width that column is at each breakpoint; expanded, over the whole frame;
+     below 1024px, the whole screen under the header. It paints the prose
+     column's ground because every game was drawn to sit on that ground. ---- */
+  .gp {
+    position: fixed;
+    top: var(--head-h);
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 30;
+    background: var(--bg);
+    color: var(--ink);
+    opacity: 0;
+    transition: opacity 260ms var(--ease), left 420ms var(--ease);
+  }
+  .gp.on { opacity: 1; }
+  .gp:focus { outline: none; }
+  @media (min-width: 1024px) {
+    .gp { left: calc(100% - 24rem); border-left: 1px solid var(--border); box-shadow: -18px 0 40px -28px rgba(10, 37, 64, 0.45); }
+  }
+  @media (min-width: 1280px) { .gp { left: calc(100% - 30rem); } }
+  @media (min-width: 1536px) { .gp { left: calc(100% - 36rem); } }
+  .gp.expanded { left: 0; }
+  .gp-bar {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0 0.6rem 0 1.1rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .gp-path { display: inline-flex; align-items: center; gap: 0.5rem; min-width: 0; font-size: 0.8125rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gp-tools { margin-left: auto; display: flex; align-items: center; gap: 0.15rem; }
+  .gp-tools a, .gp-tools button {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 6px;
+    color: var(--ink-muted);
+    transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+  }
+  .gp-tools a:hover, .gp-tools button:hover { color: var(--ink); background: var(--surface-raised); }
+  .gp-tools svg { width: 1rem; height: 1rem; display: block; }
+  .gp-expand .collapse-i, .gp.expanded .gp-expand .expand-i { display: none; }
+  .gp.expanded .gp-expand .collapse-i { display: block; }
+  @media (max-width: 1023px) { .gp-expand { display: none !important; } }
+  .gp-body {
+    position: absolute;
+    inset: 3rem 0 0 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 1.25rem 1rem 2rem;
+    display: grid;
+    align-content: start;
+    justify-items: center;
+    gap: 1rem;
+  }
+  @media (min-width: 640px) { .gp-body { padding-inline: 1.5rem; } }
+  .gp-host {
+    position: relative;
+    width: 100%;
+    max-width: 40rem;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    transition: max-width 420ms var(--ease);
+  }
+  .gp.expanded .gp-host { max-width: 64rem; }
+  /* Galaxy Defense caps its field at 400px for the inline /play page; in an
+     expanded panel the pixel art has room to be bigger, bounded by the height. */
+  .gp.expanded .gp-host [data-stage] { max-width: min(100%, calc(100svh - var(--head-h) - 11rem)); }
+  .gp-loading { padding: 3rem 1rem; text-align: center; font-size: 0.875rem; color: var(--ink-muted); }
+  .gp-touch { max-width: 40rem; padding: 0.7rem 0.9rem; border-radius: 8px; background: var(--surface-raised); font-size: 0.875rem; color: var(--ink-muted); }
+
+  /* the launcher a write-up shows where a game used to mount inline */
+  .play-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface-raised);
+    color: var(--ink);
+    text-align: left;
+    text-decoration: none;
+    transition: border-color var(--dur) var(--ease), background-color var(--dur) var(--ease);
+  }
+  .play-card:hover { border-color: var(--accent); text-decoration: none; }
+  .play-card[aria-expanded='true'] { border-color: var(--accent); background: var(--accent-wash); }
+  .play-card .go { flex: none; display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 50%; background: var(--accent-fill); color: var(--accent-ink); box-shadow: var(--shadow-btn); }
+  .play-card .go svg { width: 1.1rem; height: 1.1rem; margin-left: 2px; }
+  .play-card b { display: block; font-weight: 600; font-size: 1rem; }
+  .play-card small { display: block; margin-top: 0.1rem; font-size: 0.8125rem; color: var(--ink-faint); }
+
   /* ---- print: the résumé as a one-page letter ----------------------------
      Chrome's print-to-PDF is what generates public/resume.pdf, so these rules
      ARE the PDF. Everything is sized for US Letter with half-inch margins and
