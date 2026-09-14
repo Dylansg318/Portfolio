@@ -629,6 +629,7 @@ for each is in the commit, the plan, or the code comment named.
 | 2026-09-03 | This file. |
 | 2026-09-03 | Printing gets its own subsystem page (`featured: 65`). The layout kit, the EPL converter and the device agent were one row each in the toolbox list; the toolbox stays the complete inventory of `code/` and links across. |
 | 2026-09-04 | Inventory gets its own subsystem page (`featured: 75`), built on the ABC-classifier ranking bug and the scan-anchoring rule. Six subsystems is the ceiling for the **Inside it** grid; a seventh reads as a table of contents. |
+| 2026-09-14 | [Impeccable](https://impeccable.style) installed as a global Claude Code skill, with a project hook left untracked. `PRODUCT.md` is its product record: users, purpose, constraints and evidence, no visual rules. This file stays the design authority; a variant that ships is recorded here, not in a generated `DESIGN.md`. Its decision rounds and comps live in `.impeccable/` — `config.json` (code-first builds) and the surface briefs are tracked; mocks, review captures and question logs are ignored. First use: three home-page mockups in one claude.ai artifact, listed in §10. |
 
 ---
 
@@ -707,6 +708,16 @@ it ships or is dropped for good.
   seven rules twice. Fix the product first.
 - **A real domain.** `SITE_URL` stays unset until one is attached, and attaching one
   changes every canonical URL at once, so it is a deliberate single change, not a drift.
+- **Which home page ships, if any.** Three mockups of `/`, built 2026-09-14 with
+  impeccable and published as one private artifact with a switcher: **A, The interview**
+  (the current tokens; the eyebrows become the five questions a screener asks), **B,
+  Release notes** (a light changelog world: Public Sans, JetBrains Mono, a sticky year
+  rail, type tags), **C, API reference** (three columns; Plain English prose in the
+  middle, the Engineer register as a dark response column, both on screen at once).
+  All three keep the person-first order and every fact on the site today. Adopting B or
+  C rewrites §3 and the `/` row of §4; adopting A changes the `/` row and softens the
+  eyebrow rule. Nothing in `src/` changed. The first roll (shelf tags, shipping label)
+  was re-rolled on the owner's steer: the world has to be the one he is moving into.
 - **The channel P&L page** is not parked; it is off the site for good. Listed here so
   nobody re-asks.
 
@@ -752,3 +763,4 @@ Design section. It is indexed by GitHub search and reachable by URL, which is th
 | Date | Change |
 |---|---|
 | 2026-09-03 | First version. Written from the code, the comments, the two plans, and the commit log as of `bc12832`. |
+| 2026-09-14 | §9 gains the impeccable row; §10 parks the three home-page mockups. |

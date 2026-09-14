@@ -37,3 +37,12 @@ public/demos/**/*.data
 
 # Playwright MCP scratch output (screenshots, snapshots, console logs)
 .playwright-mcp/
+
+# Impeccable scratch: decision comps, review captures, question logs. config.json and
+# surfaces/ are tracked. The Claude Code hook file carries a home-directory path.
+.impeccable/mocks/
+.impeccable/review/
+.impeccable/questions/
+.impeccable/build/
+.impeccable/config.local.json
+.claude/settings.local.json
