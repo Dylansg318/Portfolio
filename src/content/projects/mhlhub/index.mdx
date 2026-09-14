@@ -16,31 +16,31 @@ coverAlt: >-
 stack: [TypeScript, Node.js, Express, React, PostgreSQL, Railway, GitHub Actions, Docker]
 
 problem: >-
-  RMH3 Dental sells on Net32, eBay, Amazon, Shopify and Walmart, plus direct orders
-  by phone and email. The business ran on off-the-shelf ERP software, a dozen spreadsheets, and a
-  shared inbox that someone triaged by hand. Every job needed a second tool to
-  finish, the systems disagreed about stock and money, and nobody could say which
-  one was right. Orders were growing and the people weren't.
+  RMH3 Dental sells on Net32, eBay, Amazon, Shopify and Walmart, plus direct orders by
+  phone and email. The business ran on off-the-shelf ERP software, a dozen
+  spreadsheets and a shared inbox someone sorted by hand. Every job needed a second
+  tool to finish, the systems disagreed about stock and money, and nobody could say
+  which one was right. Orders were growing and the people weren't.
 
 unique: >-
-  I stopped treating it as "a dashboard over the data" and built it as the place the
-  work actually happens: the order is picked in the page, the return is decided in
-  the page, the bill is matched in the page. Everything is organised around seven
-  daily loops the business runs on: intake, inventory, repricing, service, returns,
-  financials and intelligence. Every job, page and background producer has to
-  trace to one of them. Rules that had cost real money became rules in code.
+  I stopped treating it as a dashboard over the data and built it as the place the
+  work actually happens: the order is picked in the page, the return is decided in the
+  page, the bill is matched in the page. Everything hangs off seven daily loops the
+  business runs on — intake, inventory, repricing, service, returns, financials and
+  intelligence — and every job, page and background producer has to trace to one of
+  them. Rules that had cost real money became rules in code.
 
 learned:
-  - The most expensive bugs were never crashes. They were plausible numbers, a 30-day revenue figure overstated by 60% because a query windowed on the date we recorded the order instead of the date it happened. I now design the guardrail before the feature.
-  - A background job that reports success while doing nothing is worse than one that fails. Every scheduled job here checkpoints, logs what it touched, and trips a breaker if it keeps failing, because "it ran" isn't the same as "it worked".
-  - Writing the operating rules down (300-plus documents, 130,000 lines) was the single highest-leverage thing I did. It's what let the work scale beyond one pair of hands without the rules leaking out of people's heads.
+  - The most expensive bugs were never crashes. They were plausible numbers, like a 30-day revenue figure overstated by 60% because a query windowed on the date we recorded the order instead of the date it happened. Now the guardrail gets designed before the feature.
+  - A background job that reports success while doing nothing is worse than one that fails. Every scheduled job checkpoints, logs what it touched, and trips a breaker if it keeps failing, because "it ran" isn't "it worked".
+  - Writing the operating rules down (300-plus documents, 130,000 lines) was the highest-leverage thing I did. It's what let the work scale past one pair of hands without the rules leaking out of people's heads.
 
 aiNote: >-
-  Built with AI coding agents doing most of the typing and me doing the deciding:
-  the schema, the loop model, the invariants, what gets a second-model review and
-  what ships on sight. The interesting engineering was making that safe, hooks,
-  a coordination layer, and rule files that auto-load per area. That's its own
-  write-up on this site.
+  Built with AI coding agents doing most of the typing and me doing the deciding: the
+  schema, the loop model, the invariants, what gets a second-model review and what
+  ships on sight. The interesting engineering was making that safe — hooks, a
+  coordination layer, and rule files that auto-load per area. That's its own write-up
+  on this site.
 
 # Outcome and scale metrics only. Lines of code, endpoint, table and migration
 # counts used to sit here too; they say how big the system is, not how well it
@@ -61,23 +61,25 @@ metrics:
 ## The story
 
 RMH3 Dental sells dental supplies to dentists across the country, on Net32, eBay,
-Amazon, Shopify, Walmart, and over the phone. When I joined, each of those lived in its
-own tool, plus a dozen spreadsheets and a shared email inbox someone sorted by hand.
-The tools disagreed with each other every single day, and someone had to figure out
-which one was lying before the trucks left.
+Amazon, Shopify, Walmart and over the phone. When I joined, each of those lived in its
+own tool, plus a dozen spreadsheets and a shared inbox someone sorted by hand. The tools
+disagreed with each other every day, and someone had to work out which one was lying
+before the trucks left.
 
 I was hired to fix one spreadsheet, the one where prices got updated every morning.
-Instead, piece by piece, I built the company a single system that does all of it: every
-order from every website lands in one place. The warehouse picks and packs from one
-screen. Prices update themselves. Shipping labels get bought and printed automatically. Returns and customer emails live in the same place as the orders they're about. And the
-accounting matches the sales, with the receipts to prove it.
+Instead, piece by piece, I built the company one system that does all of it. Every order
+from every website lands in one place. The warehouse picks and packs from one screen.
+Prices update themselves. Shipping labels get bought and printed on their own. Returns
+and customer emails live next to the orders they're about, and the accounting matches
+the sales with the receipts to prove it.
 
-The result you can measure: the company went from about 270 orders a day to about 520, almost double, and **without hiring anyone new in operations**. And when a number looks
-wrong now, there's one system to ask, and it shows its work.
+The number: the company went from about 270 orders a day to about 520, almost double,
+**without hiring anyone new in operations**. And when a number looks wrong now, there's
+one system to ask, and it shows its work.
 
-The part I'm proudest of isn't a feature. It's that the expensive mistakes, the ones
-where a number is *believably* wrong and nobody notices for a month, now have guardrails
-built in, because each one only ever got to happen once.
+The thing I'd point to isn't a feature. It's that the expensive mistakes, where a number
+is believably wrong and nobody notices for a month, now have guardrails, because each
+one only got to happen once.
 
 </PlainOnly>
 
@@ -85,73 +87,66 @@ built in, because each one only ever got to happen once.
 
 ## What the business needed
 
-A dental supply distributor lives on thin margins and high volume. When I started, about
-270 orders a day came in across five marketplaces and a phone line, and each one passed
-through three or four tools on its way to a box. Inventory was in one place, prices in
-another, the books in a third, and when they disagreed, which was daily. Someone
-reconciled by hand at the end of the shift.
-
-The brief was small: fix the pricing spreadsheet. The real job turned out to be everything
-around it.
+A dental supply distributor runs on thin margins and volume. When I started, about 270
+orders a day came in across five marketplaces and a phone line, and each one went
+through three or four tools on its way to a box. Inventory in one place, prices in
+another, the books in a third, and when they disagreed, which was daily, someone
+reconciled by hand at the end of the shift. The brief was to fix the pricing
+spreadsheet. The real job was everything around it.
 
 ## How it's shaped
 
-MHLHUB is a single TypeScript codebase, an Express API, a React client, one PostgreSQL
-database, deployed as a container on Railway through GitHub Actions. That part is
-ordinary on purpose. What is less ordinary is the surface area one person operates:
-every order, price, label, return and invoice for the company passes through it, 13
-people work in it all day, and 2,721 automated tests stand between a change and
-production. The interesting decisions are in how it's organised.
+One TypeScript codebase: an Express API, a React client, one PostgreSQL database,
+deployed as a container on Railway through GitHub Actions. Nothing unusual there. What's
+less usual is the surface one person runs: every order, price, label, return and invoice
+passes through it, 13 people work in it all day, and 2,721 automated tests sit between a
+change and production.
 
-**Seven loops, not a feature list.** Every screen and every one of the 180 scheduled jobs
-belongs to one of seven daily loops: order intake → fulfilment, inventory and procurement,
-repricing, customer service, returns, financials, and intelligence. If a proposed feature
-doesn't slot into a loop, that's a signal to stop and ask what it's for. It keeps the
-system from growing sideways.
+**Seven loops, not a feature list.** Every screen and every one of the 180 scheduled
+jobs belongs to one of seven daily loops: order intake → fulfilment, inventory and
+procurement, repricing, customer service, returns, financials, and intelligence. If a
+feature doesn't fit a loop, that's the signal to stop and ask what it's for.
 
 **Seams, not pages.** Before building something new, the question is whether an existing
-seam covers it, the job scheduler, the signals feed, the document-ingestion queue, the
+seam covers it — the job scheduler, the signals feed, the document-ingestion queue, the
 audit log. "A page that lists things the user then does something about" almost always
 wants to be a signal producer, not a page.
 
 **Jobs that survive a redeploy.** Every long-running job checkpoints. When Railway swaps
-the container mid-run, the next run resumes from the last checkpoint instead of starting
-over, or worse, silently skipping the tail.
+the container mid-run, the next run picks up from the last checkpoint instead of
+starting over or quietly skipping the tail.
 
 ## The rules that stopped the bleeding
 
-The rules that matter most are the ones that cost money before they existed. A few:
+The rules that matter most are the ones that cost money before they existed:
 
-- **The product master is sacred.** Marketplace syncs write to a listings table and never
-  to the catalog. Before this rule, a bad feed could rename 20,000 products overnight.
-- **Business date, not record date.** Revenue, velocity and ship-time metrics window on when
-  the order happened, never on when it landed in our database. Backfills insert months after
-  the sale. A plain filter once overstated a month of revenue by 60%.
+- **The product master is sacred.** Marketplace syncs write to a listings table, never
+  the catalog. Before this, a bad feed could rename 20,000 products overnight.
+- **Business date, not record date.** Revenue, velocity and ship-time metrics window on
+  when the order happened, never when it landed in our database. Backfills insert months
+  after the sale, and a plain filter once overstated a month of revenue by 60%.
 - **A cart on Net32 is two orders.** Net32 splits one checkout across our two storefronts
-  and gives both the same order number. Finance, inventory and customer service treat them
-  as separate. Only the shipper may box them together. Every query on that order number
-  must also say which storefront, or refuse.
-- **Humans see the channel's order number, never ours.** An alert that says "order 1323434"
-  is unactionable, nobody can type that into eBay. Every human-facing surface names the
-  marketplace's id and the storefront.
+  and gives both the same order number. Finance, inventory and service treat them as
+  separate; only the shipper may box them together. Every query on that order number has
+  to say which storefront, or refuse.
+- **Humans see the channel's order number, never ours.** Nobody can type "order 1323434"
+  into eBay. Every human-facing surface names the marketplace's id and the storefront.
 
-<Takeaway>
-  None of these are clever. Each exists because its absence produced a specific, expensive
-  mistake, and each is enforced in code, a query helper, a hook, a schema constraint, not
-  in a wiki nobody reads.
-</Takeaway>
+None of these are clever. Each one exists because not having it produced a specific,
+expensive mistake, and each is enforced in code — a query helper, a hook, a schema
+constraint — not in a wiki nobody reads.
 
 ## What it runs today
 
 Order intake from six channels with per-channel identity rules. Inventory with lots and
-expiry, reservations, cycle counts, and a push of stock levels back to every marketplace.
-A repricing engine that runs every minute. Rate shopping and label purchase across USPS,
-UPS and FedEx, with thermal printing on the warehouse floor and proof of delivery pulled
-from carrier polls. A customer-service desk over Gmail and eBay messages, with returns and
-refund splits. Invoicing, AR and AP, and a two-way QuickBooks Desktop integration. A
-signals feed that surfaces what a human should look at today.
+expiry, reservations, cycle counts, and stock levels pushed back to every marketplace. A
+repricing engine that runs every minute. Rate shopping and labels across USPS, UPS and
+FedEx, thermal printing on the warehouse floor, proof of delivery from carrier polls. A
+customer-service desk over Gmail and eBay messages, with returns and refund splits.
+Invoicing, AR and AP, and a two-way QuickBooks Desktop integration. A signals feed that
+says what a human should look at today.
 
-About 520 orders a day go through it now, roughly double where it started, with the same
-operations team.
+About 520 orders a day now, roughly double where it started, with the same operations
+team.
 
 </EngOnly>

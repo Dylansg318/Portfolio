@@ -17,12 +17,12 @@ problem: >-
   against a real $2M, because a legacy ledger was being summed that was never a balance.
 
 unique: >-
-  Two things. Every transaction pushed to QuickBooks gets a row in a link table, so "is
-  this in QB?" is a lookup, not a guess, and a document that’s voided in the app is
+  Two things. Every transaction pushed to QuickBooks gets a row in a link table, so
+  "is this in QB?" is a lookup, not a guess, and a document voided in the app is
   voided in QB rather than deleted, so the trail survives. Second, a finance claims
-  ledger: every discrepancy anyone has ever reported, with its canonical query, and
-  whether it was refuted, confirmed or is still open, with evidence. New investigations
-  start from the ledger's filters instead of rediscovering the traps.
+  ledger: every discrepancy anyone has ever reported, with its canonical query and
+  whether it was refuted, confirmed or is still open, with evidence. New
+  investigations start from the ledger's filters instead of rediscovering the traps.
 
 learned:
   - Bad filters fail open. A status check written as <> 'void' matched every row because the stored value was 'voided'. The canonical WHERE clauses now live in one place and every report reads from it.
@@ -46,22 +46,20 @@ metrics:
 
 ## The story
 
-The company's real books live in QuickBooks, that's what the accountant and the IRS
+The company's real books live in QuickBooks; that's what the accountant and the IRS
 see. The day-to-day selling happens in the system I built. Those two have to agree to
 the penny, forever, and neither was designed to talk to the other.
 
-I built the bridge. Every invoice and bill created on our side gets sent into QuickBooks
-and *linked*, so "did this make it into the books?" has a yes-or-no answer instead of a
-shrug. Cancelled invoices get properly voided, never deleted, so the paper trail stays
-intact for the accountant.
+I built the bridge. Every invoice and bill made on our side gets sent into QuickBooks
+and linked, so "did this make it into the books?" has a yes-or-no answer instead of a
+shrug. Cancelled invoices get voided, never deleted, so the paper trail stays intact.
 
-My favorite part is unglamorous: a logbook of every scary finding anyone has ever
-raised. Early on, a check of the books said customers owed us **$18 million**, the real
-number was about $2 million. The query behind it counted the wrong pile. Alarming, cost
-a day to untangle, and the same false alarm kept coming back every few months as new
-eyes made the same mistake. So now every investigated claim is written down with its
-verdict and proof. A scary number gets checked against the logbook first, false alarms
-die once instead of monthly.
+The part I'd point to is a logbook of every scary finding anyone has raised. Early on, a
+check of the books said customers owed us **$18 million**; the real number was about $2
+million. The query behind it counted the wrong pile. It cost a day to untangle, and the
+same false alarm kept coming back every few months as new eyes made the same mistake. So
+now every investigated claim is written down with its verdict and proof. A scary number
+gets checked against the logbook first, and false alarms die once instead of monthly.
 
 </PlainOnly>
 
@@ -70,57 +68,52 @@ die once instead of monthly.
 ## Why Desktop, and why it's hard
 
 The business runs QuickBooks Desktop, not Online. Desktop's integration story is the Web
-Connector: a small Windows service that polls *your* SOAP endpoint on a schedule, asks
-"anything for me?", and carries your qbXML requests into the company file. You never call
-QuickBooks. It calls you, when it feels like it.
+Connector: a small Windows service that polls your SOAP endpoint on a schedule, asks
+"anything for me?", and carries your qbXML requests into the company file. You never
+call QuickBooks. It calls you.
 
-That inverts every assumption a normal integration makes. You can't push a bill and check
-the result. You queue it, wait for the next poll, and reconcile afterwards. So the design
-became: stage everything, link everything, and make "did it land?" a question the database
-can answer.
+That flips every assumption a normal integration makes. You can't push a bill and check
+the result. You queue it, wait for the next poll, and reconcile after. So the design is:
+stage everything, link everything, and make "did it land?" a question the database can
+answer.
 
 ## The link table
 
-Every document the app sends, an invoice, a bill, a credit memo, a payment, gets a row
-recording what we sent, what QuickBooks assigned, and when. The link table is the only
-answer to "is this in QB?". Not a flag on the order, not a status field that drifts: a row
-that exists because the round-trip completed.
-
-Voids follow the same rule. An invoice voided in the app becomes a voided invoice in
-QuickBooks, never a deleted one. The number stays reserved, the trail stays readable, and
-the auditor stays happy.
+Every document the app sends — invoice, bill, credit memo, payment — gets a row
+recording what we sent, what QuickBooks assigned, and when. That table is the only
+answer to "is this in QB?". Not a flag on the order, not a status field that drifts: a
+row that exists because the round-trip completed. Voids follow the same rule. An invoice
+voided in the app becomes a voided invoice in QuickBooks, never a deleted one, so the
+number stays reserved and the trail stays readable.
 
 ## The claims ledger
 
-Finance work has a specific pathology: the same discrepancy gets found over and over.
+Finance work has a specific problem: the same discrepancy gets found over and over.
 Someone sums the wrong ledger and reports AR at $18 million. Three months later someone
-else does the same thing. The numbers are alarming enough that each time it costs a day.
+else does the same thing, and each time it costs a day.
 
-So there's a ledger of claims. Each entry is a discrepancy someone reported, the canonical
-query that tests it, and a verdict of **refuted**, **confirmed**, or **open**, with the
-evidence. New investigations start from the ledger's standing filters. If a finding matches
-a refuted claim, the finding reproduced the mistake, not the problem.
-
-<Takeaway>
-  Refute in place. Never delete a claim. The refutations are the most valuable rows in the
-  table, because they're the traps written down.
-</Takeaway>
+So there's a ledger of claims. Each entry is a discrepancy someone reported, the
+canonical query that tests it, and a verdict of **refuted**, **confirmed** or **open**,
+with the evidence. New investigations start from the ledger's standing filters. If a
+finding matches a refuted claim, the finding reproduced the mistake, not the problem.
+Claims never get deleted; the refutations are the most useful rows, because they're the
+traps written down.
 
 ## Which system is the bank
 
-For marketplace orders the marketplace collects the money and pays out on a schedule. The
-app reconciles payouts against orders. For direct orders, a dental office calling in, the
-only place money actually moves is QuickBooks. The app records the sale, links the invoice,
-and never pretends to have collected anything. Stating that boundary explicitly ended a
-whole family of double-counting bugs where the app and the books each thought the other
-had the payment.
+For marketplace orders the marketplace collects the money and pays out on a schedule,
+and the app reconciles payouts against orders. For direct orders, a dental office
+calling in, the only place money actually moves is QuickBooks. The app records the sale,
+links the invoice, and never pretends to have collected anything. Saying that boundary
+out loud ended a whole family of double-counting bugs where the app and the books each
+thought the other had the payment.
 
 ## What it reconciles now
 
-Marketplace invoices link to their QuickBooks counterparts hourly, self-rechecking. The
-accounts-payable side is a read-only mirror of QuickBooks bills so the app can show what
-we owe without ever being a second source of truth for it. Cost of goods, journal entries
-per leg of a return, and the reports that matter, P&L, balance sheet, trial balance, read
-from one set of canonical filters that the claims ledger keeps honest.
+Marketplace invoices link to their QuickBooks counterparts hourly, self-rechecking.
+Accounts payable is a read-only mirror of QuickBooks bills, so the app can show what we
+owe without being a second source of truth for it. Cost of goods, journal entries per
+leg of a return, and the reports that matter — P&L, balance sheet, trial balance — read
+from one set of canonical filters the claims ledger keeps honest.
 
 </EngOnly>
