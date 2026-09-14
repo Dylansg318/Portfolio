@@ -1,0 +1,18 @@
+---
+/**
+ * One endpoint row: prose on the left, the response column on the right.
+ *
+ * Rows abut so the dark column runs unbroken down the page; below 1024px the
+ * response stacks under its prose. The `code` slot is sticky at desktop so a
+ * long row keeps its console in view.
+ */
+interface Props {
+  id?: string;
+  class?: string;
+}
+const { id, class: className } = Astro.props;
+---
+<section class:list={['ep', className]} id={id}>
+  <div class="ep-prose"><slot /></div>
+  <div class="ep-code"><div class="stick"><slot name="code" /></div></div>
+</section>

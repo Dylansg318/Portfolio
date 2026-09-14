@@ -1,27 +1,8 @@
 import { site } from './site';
 
-/** The hero's list, in the grammar of my notes: a dated line, a box, an
- *  action. Four are closed and link to the story behind them; the fifth is
- *  open, because the honest answer to "what's next" is that it isn't written.
- *
- *  Every line is a fact that already appears on /about or a write-up. Nothing
- *  here comes from the private vault except the shape of the line. */
-export interface Loop {
-  when: string;
-  text: string;
-  href: string;
-  done: boolean;
-  /** Hover/assistive label for the open line, whose text is deliberately terse. */
-  title?: string;
-}
-
-export const loops: Loop[] = [
-  { when: '2020', text: 'shipped a game with no arrays', href: '/projects/galaxy-defense', done: true },
-  { when: '2022', text: 'the manager left me the store', href: '/about#tmobile', done: true },
-  { when: '2025', text: 'hired off the restaurant floor', href: '/about#rmh3', done: true },
-  { when: '2025', text: 'the spreadsheet became the system', href: '/projects/internal-erp', done: true },
-  { when: '2026', text: 'unknown', href: '/contact', done: false, title: 'The next one. Get in touch.' },
-];
+/** The nameplate sentence — the one line of employment the home page opens
+ *  with and GET /api/dylan returns as `summary` — in two registers, plus the
+ *  tokenizer the word-morph in Nameplate.astro runs on. */
 
 /** One sentence of employment, in two registers. The first sentence is the
  *  same in both so it stays put when the switch flips and only the claim

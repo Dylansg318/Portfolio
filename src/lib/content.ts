@@ -77,21 +77,6 @@ export async function getProjectNeighbours(id: string) {
   };
 }
 
-/** Deterministic cover art for projects without a real image. CARDS ONLY —
- *  a thumbnail slot has to hold something. The project page deliberately shows
- *  nothing rather than a full-width slab.
- *  Hues are clamped into the Meadow palette's range (green → teal → blue,
- *  ~140-260 in oklch) so a hash can never land on a clashing red, and the
- *  chroma is kept low so a grid of these reads as muted art on the grey
- *  ground rather than a row of neon tiles. */
-export function coverGradient(id: string): string {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) % 360;
-  const a = 140 + (h % 120);
-  const b = a + 40;
-  return `linear-gradient(135deg, oklch(0.55 0.055 ${a}), oklch(0.42 0.07 ${b}))`;
-}
-
 export const statusLabel: Record<Project['data']['status'], string> = {
   live: 'Live',
   archived: 'Archived',
