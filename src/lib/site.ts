@@ -69,13 +69,6 @@ export const site = {
     code: 'https://github.com/Dylansg318/Portfolio/tree/main/code',
   },
 
-  nav: [
-    { href: '/', label: 'Home' },
-    { href: '/projects', label: 'Work' },
-    { href: '/about', label: 'About' },
-    { href: '/resume', label: 'Resume' },
-  ],
-
   /** The numbers a recruiter should see in the first ten seconds. Measured on
    *  the production database on 2026-08-30; update the date when you update
    *  the numbers. */
