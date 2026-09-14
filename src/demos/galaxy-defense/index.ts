@@ -126,7 +126,7 @@ export function mount(el: HTMLElement): () => void {
         <span class="grid gap-2 px-6">
           <span class="text-lg font-semibold text-white">Galaxy Defense</span>
           <span class="text-sm text-white/70">Arrows to move, space to shoot. Hold H for help.</span>
-          <span class="mx-auto mt-1 rounded-md bg-accent px-4 py-2 text-sm font-semibold text-accent-ink">Start</span>
+          <span class="mx-auto mt-1 rounded-md bg-accent-fill px-4 py-2 text-sm font-semibold text-accent-ink">Start</span>
           <span class="text-xs text-white/50">Keyboard is captured only while the game runs.</span>
         </span>
       </button>

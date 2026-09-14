@@ -4,8 +4,10 @@
  * Colour choices are the easiest thing in a design system to get quietly wrong:
  * a token gets nudged and nobody notices until someone can't read the site.
  * This parses the `:root` block of src/styles/global.css — the prose column,
- * the method badges and the dark response column all live there — and fails
- * the build if any text/background pair drops below its WCAG threshold.
+ * the method badges and the dark response column all live there — and the
+ * `:root[data-theme='dark']` block that overrides it, and fails the build if
+ * any text/background pair drops below its WCAG threshold in either theme.
+ * The dark block lists only what changes, so it is checked merged over light.
  *
  * Run: node scripts/check-contrast.mjs
  */
@@ -46,7 +48,7 @@ const PAIRS = [
   ['ink-faint', 'surface-raised', 4.5, 'meta text on a quiet fill'],
   ['accent', 'bg', 4.5, 'link on page'],
   ['accent', 'surface-raised', 4.5, 'link on a quiet fill'],
-  ['accent-ink', 'accent', 4.5, 'button label on accent'],
+  ['accent-ink', 'accent-fill', 4.5, 'button label on the accent fill'],
   ['nav-ink', 'nav', 4.5, 'nav label on the header'],
   ['nav-muted', 'nav', 4.5, 'inactive nav label on the header'],
   ['tab-active-ink', 'tab-active', 4.5, 'active nav label on its wash'],
@@ -66,24 +68,31 @@ const PAIRS = [
   ['syn-str', 'code-surface', 4.5, 'JSON string on a panel'],
   ['syn-num', 'code-surface', 4.5, 'JSON number on a panel'],
   ['code-bg', 'syn-key', 4.5, 'selected language tab'],
-  ['accent-ink', 'accent', 4.5, 'Send label'],
+  ['accent-ink', 'accent-fill', 4.5, 'Send label'],
   ['code-line', 'code-surface', 1.2, 'hairline on a panel (visible, not text)'],
 ];
 
 let failed = 0;
-const t = tokensFor(':root {');
-for (const [fg, bg, min, label] of PAIRS) {
-  if (!t[fg] || !t[bg]) {
-    console.log(`  SKIP  ${label} (missing --${fg} or --${bg})`);
-    continue;
+const light = tokensFor(':root {');
+const THEMES = [
+  ['light', light],
+  ['dark', { ...light, ...tokensFor(":root[data-theme='dark'] {") }],
+];
+for (const [theme, t] of THEMES) {
+  console.log(`\n${theme}`);
+  for (const [fg, bg, min, label] of PAIRS) {
+    if (!t[fg] || !t[bg]) {
+      console.log(`  SKIP  ${label} (missing --${fg} or --${bg})`);
+      continue;
+    }
+    const r = contrast(t[fg], t[bg]);
+    const ok = r >= min;
+    if (!ok) failed++;
+    console.log(
+      `  ${ok ? 'pass' : 'FAIL'}  ${r.toFixed(2).padStart(6)} (min ${min})  ${label}` +
+        `  [${fg} on ${bg}]`,
+    );
   }
-  const r = contrast(t[fg], t[bg]);
-  const ok = r >= min;
-  if (!ok) failed++;
-  console.log(
-    `  ${ok ? 'pass' : 'FAIL'}  ${r.toFixed(2).padStart(6)} (min ${min})  ${label}` +
-      `  [${fg} on ${bg}]`,
-  );
 }
 
 if (failed > 0) {

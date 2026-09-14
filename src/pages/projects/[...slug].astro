@@ -60,7 +60,7 @@ const sections = (headings as MarkdownHeading[]).filter((h) => h.depth === 2);
   ogImage={`/og/projects/${project.id}.png`}
 >
   <div class="ref">
-    <Rail current="project" hrefs={{ project: `/projects/${project.id}` }} />
+    <Rail current="project" hrefs={{ project: `/projects/${project.id}` }} paths={{ project: `/api/work/${project.id}` }} />
     <article class="ref-main">
       <Row id="project">
         <!-- A subsystem says what it is part of. Landing on the repricing
@@ -112,7 +112,7 @@ const sections = (headings as MarkdownHeading[]).filter((h) => h.depth === 2);
 
         {data.cover && (
           <figure class="cover">
-            <Cover cover={data.cover} alt={data.coverAlt ?? ''} widths={[640, 1024, 1400]} sizes="(max-width: 1024px) 100vw, 44rem" />
+            <Cover cover={data.cover} alt={data.coverAlt ?? ''} widths={[640, 1024, 1400]} sizes="(max-width: 1024px) 100vw, 41rem" />
             {data.coverAlt && <figcaption>{data.coverAlt}</figcaption>}
           </figure>
         )}

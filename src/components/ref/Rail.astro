@@ -2,45 +2,67 @@
 import Method from './Method.astro';
 
 /**
- * The endpoint rail: the site map in the API's own terms. Sticky beside the
- * rows at desktop, a scrolling strip under the header on a phone.
+ * The endpoint rail: the site's one navigation, in the API's own terms.
+ * Every entry is a page's plain name over the endpoint that page is, so a
+ * Plain English reader and an engineer both find their way without flipping
+ * the switch. Sticky beside the rows from 1280px; a strip of the names under
+ * the header below that.
  *
  * `current` names the entry for this page. A page whose rows are themselves
  * endpoints (the home page) passes anchors for those entries, and the small
- * script below moves the highlight as the reader scrolls.
+ * script below moves the highlight as the reader scrolls. A project page
+ * passes its own id so `{id}` reads resolved.
  */
 interface Props {
   current?: string;
   /** Per-key href overrides — the home page points its own rows at anchors. */
   hrefs?: Record<string, string>;
+  /** Per-key path overrides — a project page resolves `{id}` to its own id. */
+  paths?: Record<string, string>;
 }
-const { current, hrefs = {} } = Astro.props;
+const { current, hrefs = {}, paths = {} } = Astro.props;
 
-const ITEMS: { key: string; method: 'GET' | 'POST'; path: string; href: string }[] = [
-  { key: 'dylan', method: 'GET', path: '/api/dylan', href: '/' },
-  { key: 'work', method: 'GET', path: '/api/work', href: '/projects' },
-  { key: 'project', method: 'GET', path: '/api/work/{id}', href: '/projects/internal-erp' },
-  { key: 'experience', method: 'GET', path: '/api/experience', href: '/about' },
-  { key: 'resume', method: 'GET', path: '/api/resume', href: '/resume' },
-  { key: 'contact', method: 'POST', path: '/api/contact', href: '/contact' },
+type Item = {
+  key: string;
+  label: string;
+  method: 'GET' | 'POST';
+  path: string;
+  href: string;
+  /** Indented under the entry before it; not shown on the strip. */
+  sub?: boolean;
+};
+const ITEMS: Item[] = [
+  { key: 'dylan', label: 'Home', method: 'GET', path: '/api/dylan', href: '/' },
+  { key: 'work', label: 'Work', method: 'GET', path: '/api/work', href: '/projects' },
+  { key: 'project', label: 'One project', method: 'GET', path: '/api/work/{id}', href: '/projects/internal-erp', sub: true },
+  { key: 'experience', label: 'About', method: 'GET', path: '/api/experience', href: '/about' },
+  { key: 'resume', label: 'Resume', method: 'GET', path: '/api/resume', href: '/resume' },
+  { key: 'contact', label: 'Contact', method: 'POST', path: '/api/contact', href: '/contact' },
 ];
+// On a project page the current entry is Work's child, so Work is "open":
+// lit on the strip, where the child is hidden; just bold in the column.
+const open = current === 'project' ? 'work' : undefined;
 ---
 <nav class="rail" aria-label="Reference">
   <p class="cap">Reference</p>
   <ol>
-    {ITEMS.map((it) => {
-      const href = hrefs[it.key] ?? it.href;
-      return (
-        <li>
-          <a href={href} data-rail={it.key} aria-current={it.key === current ? 'page' : undefined}>
-            <Method method={it.method} /><span class="mono">{it.path}</span>
-          </a>
-        </li>
-      );
-    })}
-    <li>
-      <a href="/api" data-rail="index" class="mono" title="The index of every endpoint, as JSON">
-        <span class="m get">GET</span><span class="mono">/api</span>
+    {ITEMS.map((it) => (
+      <li class:list={{ sub: it.sub }}>
+        <a
+          href={hrefs[it.key] ?? it.href}
+          data-rail={it.key}
+          aria-current={it.key === current ? 'page' : undefined}
+          data-open={it.key === open ? 'true' : undefined}
+        >
+          <span class="lbl">{it.label}</span>
+          <span class="ep-ref"><Method method={it.method} /><span class="mono">{paths[it.key] ?? it.path}</span></span>
+        </a>
+      </li>
+    ))}
+    <li class="idx">
+      <a href="/api" data-rail="index" title="The index of every endpoint, as JSON">
+        <span class="lbl">Index</span>
+        <span class="ep-ref"><span class="m get">GET</span><span class="mono">/api</span></span>
       </a>
     </li>
   </ol>
@@ -56,7 +78,7 @@ const ITEMS: { key: string; method: 'GET' | 'POST'; path: string; href: string }
     // On a phone the rail is a strip; bring the current entry into view
     // without moving the page.
     const list = rail.querySelector<HTMLElement>('ol');
-    const current = rail.querySelector<HTMLElement>('a[aria-current="page"]');
+    const current = rail.querySelector<HTMLElement>('a[aria-current="page"], a[data-open="true"]');
     if (list && current && list.scrollWidth > list.clientWidth) {
       list.scrollLeft = Math.max(0, current.offsetLeft - (list.clientWidth - current.offsetWidth) / 2);
     }

@@ -12,16 +12,24 @@
    endpoint and the filled button; method badges carry their own semantic
    colour; nothing else on the light side is tinted.
 
-   ONE THEME, ON PURPOSE. The light/dark split is between the two columns,
-   not between two modes of the page, so there is no theme toggle and no
-   `prefers-color-scheme` branch. Games and the help desk paint their own
-   worlds on top of these tokens.
+   TWO THEMES. `:root` is the light theme; `:root[data-theme='dark']` below
+   it overrides the prose-column tokens (and darkens the response column a
+   step further so the two columns still read as two). The attribute is set
+   before first paint by the inline script in Base.astro — the stored choice,
+   else the OS preference — and the header's toggle flips it. No JS means
+   light. The dark block is wrapped in `@media screen` so print always gets
+   the light tokens. Games and the help desk paint their own worlds on top.
 
-   scripts/check-contrast.mjs parses this block and fails `npm run check` if
-   any text/background pair drops under WCAG AA. Keep the hex values here.
+   scripts/check-contrast.mjs parses BOTH blocks and fails `npm run check` if
+   any text/background pair drops under WCAG AA in either theme. Keep the hex
+   values here; the dark block only needs the tokens that change.
 --------------------------------------------------------------------------- */
 :root {
   color-scheme: light;
+
+  /* the header's height — the rail, the sticky console and every
+     scroll-margin are measured from it */
+  --head-h: 3.5rem;
 
   /* the prose column */
   --bg: #ffffff;
@@ -42,10 +50,16 @@
   --tab-active: #eeedff;
   --tab-active-ink: #0a2540;
 
-  /* the one accent */
+  /* the one accent. `--accent` is the accent AS TEXT (links, the active
+     entry's stripe, focus rings) and lightens in the dark theme so it still
+     reads on navy; `--accent-fill` is the accent AS A FILL (the primary
+     button, Send) and is the same in both themes, because white text on it
+     clears 4.5:1 and white text on the lightened one would not. */
   --accent: #5e56fb;             /* a hair darker than the mock so a link on the quiet fill clears 4.5:1 */
   --accent-hover: #5249e6;
-  --accent-ink: #ffffff;
+  --accent-fill: #5e56fb;
+  --accent-fill-hover: #5249e6;
+  --accent-ink: #ffffff;         /* text on --accent-fill */
   --accent-wash: #eeedff;
 
   /* status */
@@ -79,6 +93,52 @@
   --shadow-btn: 0 1px 2px rgba(10, 37, 64, 0.12), 0 4px 12px -6px rgba(99, 91, 255, 0.5);
 }
 
+/* The dark theme: the prose column goes navy, the response column goes a step
+   darker than it so the split between the two survives, and the accent-as-text
+   lightens. Everything not listed here keeps its light value — the syntax
+   colours and the code ink were drawn for a dark surface to begin with. */
+@media screen {
+  :root[data-theme='dark'] {
+    color-scheme: dark;
+
+    --bg: #0f1523;
+    --surface: #0f1523;
+    --surface-raised: #161d2e;
+    --border: #222c3f;
+    --border-mid: #2f3b52;
+    --border-strong: #6d7d95;
+
+    --ink: #e8edf5;
+    --ink-muted: #aeb9ca;
+    --ink-faint: #8896ab;
+
+    --nav: #0f1523;
+    --nav-ink: #e8edf5;
+    --nav-muted: #aeb9ca;
+    --tab-active: #272b58;
+    --tab-active-ink: #e8edf5;
+
+    --accent: #9d97ff;
+    --accent-hover: #b3aeff;
+    --accent-wash: #272b58;
+
+    --ok: #4fd08f;
+    --warn: #e5b04a;
+    --danger: #f8817a;
+
+    --get: #5fd39c;
+    --get-bg: #12312a;
+    --post: #b4afff;
+    --post-bg: #272b58;
+
+    --code-bg: #080b13;
+    --code-surface: #111829;
+    --code-line: #243049;
+
+    --shadow-btn: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 12px -6px rgba(99, 91, 255, 0.5);
+  }
+}
+
 /* `inline` makes the utilities resolve to var(--x) at runtime rather than
    baking the value at build time. */
 @theme inline {
@@ -95,6 +155,8 @@
 
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
+  --color-accent-fill: var(--accent-fill);
+  --color-accent-fill-hover: var(--accent-fill-hover);
   --color-accent-ink: var(--accent-ink);
   --color-accent-wash: var(--accent-wash);
 
@@ -130,7 +192,7 @@
   --font-display: var(--font-sans);
 
   /* the prose column's measure, and the widest a page shell gets */
-  --container-reading: 44rem;
+  --container-reading: 48rem;
   --container-wide: 80rem;
 }
 
@@ -222,21 +284,24 @@
   .m.post { background: var(--post-bg); color: var(--post); }
 
   /* ---- the reference grid: rail · rows ----------------------------------
-     Below 1024px the rail is a horizontal strip under the header and each
-     row stacks prose over response; from 1024px the rail is a 14rem sticky
+     The rail is the site's ONE navigation: each entry is a page's plain name
+     over the endpoint that page is, so a Plain English reader and an engineer
+     both find their way without flipping the switch. Below 1280px it is a
+     strip of the names under the header and each row stacks prose over
+     response (two columns from 1024px); from 1280px it is a 15rem sticky
      column and every row is prose beside its response, so the dark column
      runs the height of the page. ---- */
   .ref {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
   }
-  @media (min-width: 1024px) {
-    .ref { grid-template-columns: 14rem minmax(0, 1fr); }
+  @media (min-width: 1280px) {
+    .ref { grid-template-columns: 15rem minmax(0, 1fr); }
   }
 
   .rail {
     position: sticky;
-    top: 3.25rem;
+    top: var(--head-h);
     z-index: 5;
     background: var(--bg);
     border-bottom: 1px solid var(--border);
@@ -245,7 +310,7 @@
   .rail ol {
     display: flex;
     gap: 0.25rem;
-    padding: 0.5rem 2.5rem 0.5rem 1rem;
+    padding: 0.6rem 2.5rem 0.6rem 1.25rem;
     overflow-x: auto;
     scrollbar-width: none;
     -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent);
@@ -255,10 +320,10 @@
   .rail a {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.35rem 0.6rem;
+    padding: 0.4rem 0.7rem;
     border-radius: 5px;
-    font-size: 0.8125rem;
+    font-size: 0.875rem;
+    font-weight: 600;
     color: var(--ink-muted);
     text-decoration: none;
     white-space: nowrap;
@@ -269,17 +334,21 @@
   .rail a[aria-current='page'] {
     color: var(--ink);
     background: var(--accent-wash);
-    font-weight: 600;
-    box-shadow: inset 2px 0 0 var(--accent);
   }
-  @media (min-width: 1024px) {
+  /* On a project page "Work" is open (its child is the current entry). On
+     the strip, where the child is hidden, it lights like the current one. */
+  .rail a[data-open='true'] { color: var(--ink); background: var(--accent-wash); }
+  /* The strip shows names only. The endpoint under each name, the one
+     entry that is not a page (one project) and the JSON index wait for the
+     column, where there is room to say what they are. */
+  .rail .ep-ref, .rail li.sub, .rail li.idx { display: none; }
+  @media (min-width: 1280px) {
     .rail {
       align-self: start;
-      top: 3.25rem;
-      height: calc(100vh - 3.25rem);
+      height: calc(100vh - var(--head-h));
       border-bottom: 0;
       border-right: 1px solid var(--border);
-      padding: 2rem 0 2rem 1.5rem;
+      padding: 2.5rem 1rem 2.5rem 1.5rem;
       overflow-y: auto;
     }
     .rail .cap {
@@ -288,52 +357,89 @@
       letter-spacing: 0.12em;
       text-transform: uppercase;
       color: var(--ink-faint);
-      margin-bottom: 0.75rem;
+      margin-bottom: 1rem;
     }
     .rail ol {
       flex-direction: column;
-      gap: 0.125rem;
+      gap: 0.25rem;
       padding: 0;
       overflow: visible;
       -webkit-mask-image: none;
       mask-image: none;
     }
-    .rail a { margin-right: 1rem; width: calc(100% - 1rem); }
+    .rail li.sub, .rail li.idx { display: block; }
+    .rail li.sub { padding-left: 1rem; }
+    .rail li.idx { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border); }
+    .rail a {
+      display: grid;
+      gap: 0.2rem;
+      width: 100%;
+      padding: 0.55rem 0.75rem;
+      white-space: normal;
+    }
+    .rail a[aria-current='true'],
+    .rail a[aria-current='page'] { box-shadow: inset 2px 0 0 var(--accent); }
+    .rail a[data-open='true'] { background: transparent; }
+    .rail .ep-ref {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      min-width: 0;
+      font-size: 0.75rem;
+      font-weight: 400;
+      color: var(--ink-faint);
+    }
+    .rail .ep-ref .mono { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .rail a[aria-current='true'] .ep-ref,
+    .rail a[aria-current='page'] .ep-ref { color: var(--ink-muted); }
   }
 
   /* ---- one endpoint row: prose left, response right ---------------------
      Rows abut so the dark column is continuous down the page. ---- */
+  /* Anchors land under the sticky chrome: the header, plus the strip until
+     the rail becomes a column. */
   .ep {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    scroll-margin-top: 3.5rem;
+    scroll-margin-top: calc(var(--head-h) + 3.75rem);
   }
+  /* The response column takes only what the width can spare — at 1024px the
+     prose still needs ~60 characters — and widens with the viewport. */
   @media (min-width: 1024px) {
-    .ep { grid-template-columns: minmax(0, 1fr) minmax(0, 30rem); }
+    .ep { grid-template-columns: minmax(0, 1fr) minmax(0, 24rem); }
   }
   @media (min-width: 1280px) {
-    .ep { grid-template-columns: minmax(0, 1fr) minmax(0, 34rem); }
+    .ep { grid-template-columns: minmax(0, 1fr) minmax(0, 30rem); scroll-margin-top: calc(var(--head-h) + 0.5rem); }
+  }
+  @media (min-width: 1536px) {
+    .ep { grid-template-columns: minmax(0, 1fr) minmax(0, 36rem); }
   }
   .ep-prose {
-    padding: 2.5rem 1rem;
+    padding: 2.75rem 1.25rem;
     border-top: 1px solid var(--border);
     max-width: var(--container-reading);
     min-width: 0;
   }
-  @media (min-width: 640px) { .ep-prose { padding: 3rem 1.5rem; } }
-  @media (min-width: 1024px) { .ep-prose { padding: 3.5rem 3rem 3.5rem 2.5rem; } }
+  @media (min-width: 640px) { .ep-prose { padding: 3.5rem 2rem; } }
+  @media (min-width: 1024px) { .ep-prose { padding: 4rem 3rem 4rem 2.5rem; } }
+  @media (min-width: 1280px) { .ep-prose { padding: 4.5rem 3.5rem; } }
   .ep:first-child .ep-prose { border-top: 0; }
   .ep-code {
     background: var(--code-bg);
     color: var(--code-ink);
-    padding: 1.25rem 1rem 2rem;
+    padding: 1.5rem 1.25rem 2.25rem;
     min-width: 0;
   }
-  @media (min-width: 640px) { .ep-code { padding: 1.5rem 1.5rem 2.25rem; } }
+  @media (min-width: 640px) { .ep-code { padding: 2rem 2rem 2.5rem; } }
   @media (min-width: 1024px) {
-    .ep-code { padding: 3.5rem 2rem; border-top: 1px solid var(--code-line); }
+    .ep-code { padding: 4rem 2rem; border-top: 1px solid var(--code-line); }
     .ep:first-child .ep-code { border-top: 0; }
-    .ep-code .stick { position: sticky; top: 4.75rem; }
+    /* Sticky under the header and, until 1280px, the strip too. */
+    .ep-code .stick { position: sticky; top: calc(var(--head-h) + 4.5rem); }
+  }
+  @media (min-width: 1280px) {
+    .ep-code { padding: 4.5rem 2.5rem; }
+    .ep-code .stick { top: calc(var(--head-h) + 1.5rem); }
   }
   /* The last row's dark side runs into the footer; a page that ends on a
      short row still shows the column reaching the bottom. */
@@ -343,7 +449,7 @@
   .crumb { font-size: 0.8125rem; color: var(--ink-faint); }
   .crumb b { font-weight: 500; color: var(--ink); }
   .ep-prose h1 {
-    margin-top: 0.75rem;
+    margin-top: 1rem;
     font-weight: 700;
     font-size: clamp(2.5rem, 5.5vw, 3.75rem);
     line-height: 1.05;
@@ -354,11 +460,11 @@
     line-height: 1.15;
     letter-spacing: -0.02em;
   }
-  .ep-prose h2 { margin-top: 0.75rem; font-weight: 700; font-size: 1.75rem; line-height: 1.2; }
-  .ep-prose h2.mt { margin-top: 2.25rem; }
+  .ep-prose h2 { margin-top: 0.85rem; font-weight: 700; font-size: 1.75rem; line-height: 1.2; }
+  .ep-prose h2.mt { margin-top: 2.5rem; }
   .ep-prose h3 { font-weight: 700; }
-  .lead { margin-top: 1.25rem; font-size: 1.1875rem; line-height: 1.55; color: var(--ink); }
-  .t { margin-top: 0.9rem; color: var(--ink-muted); }
+  .lead { margin-top: 1.5rem; font-size: 1.1875rem; line-height: 1.55; color: var(--ink); }
+  .t { margin-top: 1rem; color: var(--ink-muted); }
   .status { margin-top: 0.35rem; font-size: 0.8125rem; color: var(--ink-faint); }
   .quiet { color: var(--ink-muted); }
   .ep-prose a { color: var(--accent); text-decoration: none; }
@@ -373,20 +479,20 @@
 
   /* the small facts list under a heading */
   dl.facts {
-    margin-top: 1.5rem;
+    margin-top: 2rem;
     display: grid;
     grid-template-columns: max-content minmax(0, 1fr);
-    gap: 0.45rem 1.5rem;
+    gap: 0.55rem 1.75rem;
     font-size: 0.9375rem;
     border-top: 1px solid var(--border);
-    padding-top: 1rem;
+    padding-top: 1.25rem;
   }
   dl.facts dt { color: var(--ink-faint); font-size: 0.8125rem; padding-top: 0.1rem; }
   dl.facts dd { margin: 0; color: var(--ink); }
 
   /* the measured numbers on a project */
   dl.metrics {
-    margin-top: 1.5rem;
+    margin-top: 2rem;
     display: grid;
     grid-template-columns: max-content minmax(0, 1fr);
     gap: 0 1.5rem;
@@ -396,7 +502,7 @@
   dl.metrics dd { margin: 0; padding: 0.5rem 0; border-bottom: 1px solid var(--border); font-weight: 600; font-variant-numeric: tabular-nums; }
 
   /* ---- actions and buttons ---------------------------------------------- */
-  .actions { margin-top: 1.75rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.25rem; }
+  .actions { margin-top: 2.25rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.25rem; }
   .btn {
     display: inline-flex;
     align-items: center;
@@ -410,8 +516,8 @@
     transition: transform var(--dur-fast) var(--ease), background-color var(--dur) var(--ease), border-color var(--dur) var(--ease);
   }
   .btn:active { transform: translateY(1px); }
-  .btn-primary { background: var(--accent); color: var(--accent-ink); box-shadow: var(--shadow-btn); }
-  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-primary { background: var(--accent-fill); color: var(--accent-ink); box-shadow: var(--shadow-btn); }
+  .btn-primary:hover { background: var(--accent-fill-hover); }
   .ep-prose a.btn-primary { color: var(--accent-ink); }
   .ep-prose a.btn-primary:hover { text-decoration: none; }
   .btn-ghost { border: 1px solid var(--border-mid); color: var(--ink); background: transparent; }
@@ -422,8 +528,8 @@
   .c-link { font-weight: 600; font-size: 0.9375rem; }
 
   /* ---- lists inside a row ----------------------------------------------- */
-  .items { margin-top: 1.75rem; display: grid; gap: 2rem; }
-  .item { display: grid; gap: 1rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+  .items { margin-top: 2rem; display: grid; gap: 2.25rem; }
+  .item { display: grid; gap: 1rem; padding-top: 1.75rem; border-top: 1px solid var(--border); }
   @media (min-width: 640px) {
     .item.has-pic { grid-template-columns: minmax(0, 1fr) 13rem; align-items: start; column-gap: 1.5rem; }
   }
@@ -438,7 +544,7 @@
   .item .pic img { width: 100%; height: auto; border: 1px solid var(--border); border-radius: 6px; }
   .item .pic.sq img { max-width: 9rem; }
 
-  .job { display: grid; gap: 0.2rem 0.5rem; padding-block: 0.9rem; border-top: 1px solid var(--border); scroll-margin-top: 3.5rem; }
+  .job { display: grid; gap: 0.2rem 0.5rem; padding-block: 1rem; border-top: 1px solid var(--border); scroll-margin-top: calc(var(--head-h) + 4rem); }
   .job:first-of-type { margin-top: 1.25rem; }
   @media (min-width: 640px) {
     .job { grid-template-columns: 10.5rem minmax(0, 1fr); }
@@ -451,7 +557,7 @@
   .job p { font-size: 0.9375rem; color: var(--ink-muted); max-width: 60ch; }
 
   .stops { margin-top: 1.75rem; border-top: 1px solid var(--border); }
-  .stops li { display: grid; gap: 0.25rem 1.25rem; padding-block: 1.1rem; border-bottom: 1px solid var(--border); scroll-margin-top: 4rem; }
+  .stops li { display: grid; gap: 0.25rem 1.25rem; padding-block: 1.2rem; border-bottom: 1px solid var(--border); scroll-margin-top: calc(var(--head-h) + 4rem); }
   @media (min-width: 640px) { .stops li { grid-template-columns: 6.5rem minmax(0, 1fr); } }
   .stops .when { font-size: 0.8125rem; color: var(--ink-faint); padding-top: 0.2rem; }
   .stops h3 { font-size: 1.0625rem; font-weight: 700; }
@@ -525,13 +631,13 @@
   /* ---- the dark side: panels and the console ----------------------------
      Scoped to the response column: the help desk has a `.panel` of its own. */
   .ep-code .panel { border: 1px solid var(--code-line); border-radius: 8px; overflow: hidden; background: var(--code-surface); }
-  .ep-code .panel + .panel, .ep-code .cx + .panel { margin-top: 1rem; }
-  .ep-code .panel .bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.55rem 0.9rem; border-bottom: 1px solid var(--code-line); font-size: 0.75rem; color: var(--code-dim); }
+  .ep-code .panel + .panel, .ep-code .cx + .panel { margin-top: 1.25rem; }
+  .ep-code .panel .bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.7rem 1.1rem; border-bottom: 1px solid var(--code-line); font-size: 0.75rem; color: var(--code-dim); }
   .ep-code .panel .bar b { font-weight: 500; color: var(--code-ink); }
   .ep-code .panel .bar .src { font-size: 0.6875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .ep-code .panel pre {
     margin: 0;
-    padding: 1rem 0.9rem 1.1rem;
+    padding: 1.1rem 1.1rem 1.25rem;
     overflow-x: auto;
     font: 400 0.8125rem/1.65 var(--font-mono);
     color: var(--code-ink);
@@ -542,7 +648,7 @@
   .ep-code .panel pre .cm { color: var(--code-dim); }
   .ep-code .panel pre .kw { color: var(--syn-key); }
   .ep-code .panel pre .st { color: var(--syn-str); }
-  .ep-code .note { margin-top: 0.9rem; font-size: 0.75rem; line-height: 1.5; color: var(--code-dim); }
+  .ep-code .note { margin-top: 1rem; font-size: 0.75rem; line-height: 1.5; color: var(--code-dim); }
   .ep-code .note a { color: var(--code-ink); }
   .ep-code ::selection { background: #2a3550; color: #fff; }
   .ep-code :focus-visible { outline-color: var(--syn-key); }
@@ -552,15 +658,15 @@
   .p { color: var(--code-dim); }
 
   .cx { border: 1px solid var(--code-line); border-radius: 8px; background: var(--code-surface); color: var(--code-ink); overflow: hidden; }
-  .cx-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 0.9rem; padding: 0.55rem 0.9rem; border-bottom: 1px solid var(--code-line); }
+  .cx-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 0.9rem; padding: 0.75rem 1.1rem; border-bottom: 1px solid var(--code-line); }
   .cx-ep { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; color: var(--code-ink); }
   .cx-langs { display: inline-flex; gap: 2px; padding: 2px; border-radius: 6px; background: rgba(255, 255, 255, 0.04); }
   .cx-langs button { padding: 0.25rem 0.55rem; border-radius: 4px; font: 500 0.75rem/1.4 var(--font-mono); color: var(--code-dim); transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease); }
   .cx-langs button:hover { color: var(--code-ink); }
   .cx-langs button[aria-selected='true'] { background: var(--syn-key); color: var(--code-bg); }
-  .cx-sec { padding: 0.8rem 0.9rem; border-bottom: 1px solid var(--code-line); }
-  .cx-cap { display: flex; flex-wrap: wrap; justify-content: flex-start; align-items: baseline; gap: 0.25rem 1rem; font-size: 0.6875rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--code-dim); margin-bottom: 0.55rem; }
-  .cx-params { display: grid; gap: 0.55rem; }
+  .cx-sec { padding: 1rem 1.1rem; border-bottom: 1px solid var(--code-line); }
+  .cx-cap { display: flex; flex-wrap: wrap; justify-content: flex-start; align-items: baseline; gap: 0.25rem 1rem; font-size: 0.6875rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--code-dim); margin-bottom: 0.7rem; }
+  .cx-params { display: grid; gap: 0.65rem; }
   .cx-param { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); align-items: center; gap: 0.6rem; font-size: 0.8125rem; }
   .cx-param > .mono { color: var(--syn-key); }
   .cx-param select, .cx-param input, .cx-param textarea {
@@ -582,15 +688,15 @@
   .cx-req { margin: 0; font: 400 0.8125rem/1.6 var(--font-mono); color: var(--code-ink); white-space: pre-wrap; overflow-wrap: anywhere; }
   .cx-req .k { color: var(--syn-key); }
   .cx-req .s { color: var(--syn-str); }
-  .cx-act { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; padding: 0.7rem 0.9rem; border-bottom: 1px solid var(--code-line); }
+  .cx-act { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; padding: 0.85rem 1.1rem; border-bottom: 1px solid var(--code-line); }
   .cx-send {
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
     padding: 0.5rem 0.9rem;
     border-radius: 6px;
-    background: var(--accent);
-    color: #fff;
+    background: var(--accent-fill);
+    color: var(--accent-ink);
     font: 600 0.875rem/1.2 var(--font-sans);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     transition: transform var(--dur-fast) var(--ease), background-color var(--dur) var(--ease);
@@ -613,13 +719,13 @@
   .cx-cap .cx-status + .cx-copy { margin-left: 0.75rem; }
   .cx-copy:hover { color: var(--code-ink); border-color: var(--code-dim); }
   .cx-outwrap { position: relative; }
-  .cx-outwrap.is-clipped::after { content: ''; position: absolute; left: 0; right: 8px; bottom: 0; height: 2.75rem; background: linear-gradient(to bottom, rgba(19, 26, 42, 0), var(--code-surface)); pointer-events: none; }
+  .cx-outwrap.is-clipped::after { content: ''; position: absolute; left: 0; right: 8px; bottom: 0; height: 2.75rem; background: linear-gradient(to bottom, transparent, var(--code-surface)); pointer-events: none; }
   .cx-out {
     margin: 0;
     min-height: 3.5rem;
-    max-height: 26rem;
+    max-height: 28rem;
     overflow: auto;
-    font: 400 0.8125rem/1.6 var(--font-mono);
+    font: 400 0.8125rem/1.65 var(--font-mono);
     white-space: pre-wrap;
     word-break: break-word;
     scrollbar-color: var(--code-line) transparent;
@@ -628,7 +734,7 @@
   .cx-out::-webkit-scrollbar { width: 8px; }
   .cx-out::-webkit-scrollbar-thumb { background: var(--code-line); border-radius: 4px; }
   @media (max-width: 1023px) { .cx-out { max-height: 20rem; } }
-  .cx-frame { margin: 0.75rem 0 0; font-size: 0.75rem; line-height: 1.5; color: var(--code-dim); }
+  .cx-frame { margin: 1rem 0 0; font-size: 0.75rem; line-height: 1.5; color: var(--code-dim); }
   .cx-frame a { color: var(--code-ink); }
   .is-sending .cx-out { opacity: 0.9; }
 

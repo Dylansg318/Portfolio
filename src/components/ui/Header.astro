@@ -1,30 +1,16 @@
 ---
 import { site } from '../../lib/site';
-
-const path = Astro.url.pathname.replace(/\.html$/, '');
-const isActive = (href: string) =>
-  href === '/' ? path === '/' || path === '/index' : path.startsWith(href);
 ---
-<!-- A slim reference header: the page's own white, one hairline, four words.
-     No wordmark — the home page opens with the name at full size, and "Home"
-     is already in the nav. -->
+<!-- A slim reference header: the page's own colour, one hairline, the name
+     and the controls. The site's navigation is the endpoint rail beside the
+     rows, the way a reference's sidebar is its navigation — this bar stopped
+     repeating it on 2026-09-14. The name sits where a reference puts its
+     product name and is the way back to the front page from anywhere. -->
 <header class="site-head sticky top-0 z-40 border-b border-border bg-nav text-nav-ink">
   <div class="in">
-    <!-- Four short links, so they stay visible on mobile. A hamburger for four
-         items is a tap the visitor should not have to make. -->
-    <nav aria-label="Main">
-      <ul>
-        {
-          site.nav.map((item) => (
-            <li>
-              <a href={item.href} aria-current={isActive(item.href) ? 'page' : undefined}>
-                {item.label}
-              </a>
-            </li>
-          ))
-        }
-      </ul>
-    </nav>
+    <a href="/" class="name" aria-label={`${site.name} — home`}>
+      <span class="long">{site.name}</span><span class="short">{site.shortName}</span>
+    </a>
 
     <div class="right">
       <!-- Plain English ⇄ Engineer: the same pages, two registers. Default is
@@ -40,6 +26,19 @@ const isActive = (href: string) =>
         </button>
       </div>
 
+      <!-- Light ⇄ dark. The choice sticks; with nothing stored the OS
+           preference applies (resolved before first paint in Base.astro).
+           The label says what pressing it does, not what it is. -->
+      <button type="button" class="theme" id="theme-btn" aria-label="Switch to dark mode">
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32 1.41-1.41" />
+        </svg>
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" />
+        </svg>
+      </button>
+
       <a href="/contact" class="cta">Get in touch</a>
     </div>
   </div>
@@ -51,7 +50,7 @@ const isActive = (href: string) =>
      localStorage. Hidden by default so a no-JS visitor and a returning one
      see nothing. -->
 <div id="mode-hint" hidden class="no-print border-b border-border bg-surface-raised text-sm text-ink-muted">
-  <div class="mx-auto flex max-w-(--container-wide) flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-2.5 sm:px-6">
+  <div class="mx-auto flex max-w-(--container-wide) flex-wrap items-center justify-between gap-x-4 gap-y-2 px-5 py-2.5 sm:px-8">
     <p>
       Two ways to read this site: <strong class="font-semibold text-ink">Plain English</strong> for
       what the work did, <strong class="font-semibold text-ink">Engineer</strong> for how. The switch is in the top bar.
@@ -66,15 +65,14 @@ const isActive = (href: string) =>
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    height: 3.25rem;
-    padding-inline: 1rem;
+    height: var(--head-h);
+    padding-inline: 1.25rem;
   }
-  @media (min-width: 640px) { .in { padding-inline: 1.5rem; } }
-  nav ul { display: flex; gap: 1.1rem; font-size: 0.9375rem; font-weight: 600; }
-  nav a { color: var(--nav-muted); text-decoration: none; padding: 0.25rem 0; }
-  nav a:hover, nav a[aria-current='page'] { color: var(--nav-ink); }
-  nav a[aria-current='page'] { box-shadow: inset 0 -2px 0 var(--accent); }
+  @media (min-width: 640px) { .in { padding-inline: 2rem; } }
+  .name { font-size: 0.9375rem; font-weight: 600; color: var(--nav-ink); text-decoration: none; letter-spacing: -0.01em; }
+  .name:hover { color: var(--accent); }
   .right { display: flex; align-items: center; gap: 0.75rem; }
+  @media (min-width: 640px) { .right { gap: 1rem; } }
   .seg {
     display: inline-flex;
     padding: 2px;
@@ -84,19 +82,34 @@ const isActive = (href: string) =>
     font-weight: 500;
   }
   .seg button {
-    padding: 0.2rem 0.55rem;
+    padding: 0.25rem 0.6rem;
     border-radius: 4px;
     color: var(--ink-muted);
     transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
   }
   .seg button[aria-pressed='true'] { background: var(--tab-active); color: var(--tab-active-ink); font-weight: 600; }
-  .seg .short { display: none; }
+  .short { display: none; }
+  .theme {
+    display: inline-grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--ink-muted);
+    transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease), background-color var(--dur) var(--ease);
+  }
+  .theme:hover { color: var(--ink); border-color: var(--border-strong); background: var(--surface-raised); }
+  .theme svg { width: 1rem; height: 1rem; }
+  /* The icon is the one you would get by pressing: a moon in light, a sun in dark. */
+  .theme .sun { display: none; }
+  :global(html[data-theme='dark']) .theme .sun { display: block; }
+  :global(html[data-theme='dark']) .theme .moon { display: none; }
   .cta { font-size: 0.9375rem; font-weight: 600; color: var(--accent); text-decoration: none; white-space: nowrap; }
   .cta:hover { text-decoration: underline; text-underline-offset: 0.25em; }
   @media (max-width: 639px) {
-    nav ul { gap: 0.8rem; font-size: 0.875rem; }
-    .seg .long { display: none; }
-    .seg .short { display: inline; }
+    .long { display: none; }
+    .short { display: inline; }
     .cta { display: none; }
   }
 </style>
@@ -106,17 +119,18 @@ const isActive = (href: string) =>
   // executes once, so top-level setup would go dead after the first
   // soft navigation. astro:page-load also fires on the initial load.
   document.addEventListener('astro:page-load', () => {
+    const root = document.documentElement;
     const buttons = document.querySelectorAll<HTMLButtonElement>('[data-mode-btn]');
 
     const paint = () => {
-      const mode = document.documentElement.dataset.mode === 'eng' ? 'eng' : 'plain';
+      const mode = root.dataset.mode === 'eng' ? 'eng' : 'plain';
       buttons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.modeBtn === mode)));
     };
 
     buttons.forEach((b) =>
       b.addEventListener('click', () => {
         const mode = b.dataset.modeBtn === 'eng' ? 'eng' : 'plain';
-        document.documentElement.dataset.mode = mode;
+        root.dataset.mode = mode;
         try {
           localStorage.setItem('mode', mode);
         } catch {
@@ -131,6 +145,27 @@ const isActive = (href: string) =>
     );
 
     paint();
+
+    // The theme toggle. Base.astro resolved the starting theme before paint;
+    // this flips it, stores it, and keeps the browser chrome's colour in step
+    // (the two hex values are the token block's --bg).
+    const themeBtn = document.getElementById('theme-btn');
+    const paintTheme = () => {
+      const dark = root.dataset.theme === 'dark';
+      themeBtn?.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0f1523' : '#ffffff');
+    };
+    themeBtn?.addEventListener('click', () => {
+      const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+      root.dataset.theme = next;
+      try {
+        localStorage.setItem('theme', next);
+      } catch {
+        /* storage blocked — still flips for this page view */
+      }
+      paintTheme();
+    });
+    paintTheme();
 
     // The one-time hint. Any interaction with the switch counts as having seen it.
     const hint = document.getElementById('mode-hint');

@@ -174,45 +174,53 @@ written in the same voice.
 Every token lives in the one `:root` block of `src/styles/global.css`. Components
 reference semantic names only (`bg-surface`, `text-ink`, `border-border`, `text-code-dim`),
 never a hex. A redesign is one file — this section was rewritten on 2026-09-14 when the
-site moved from a graphite-and-green product look into an **API reference**.
+site moved from a graphite-and-green product look into an **API reference**, and the
+dark theme was added the same day as a second block in the same file (§3.6).
 
 ### 3.1 The two columns
 
-The page is a **white prose column** beside a **continuous dark response column**. The
-prose says what a thing is in plain words; the response beside it is the exact shape —
-a live request and its real answer, an excerpt of real code, the write-up's own map.
-Rows abut, so the dark column runs unbroken from the header to the footer. Below 1024px
-the response stacks under its prose; from 1024px the endpoint rail (14rem) sits on the
-left, the prose takes the middle, and the response column is 30–34rem on the right.
+The page is a **prose column** beside a **continuous dark response column**. The prose
+says what a thing is in plain words; the response beside it is the exact shape — a live
+request and its real answer, an excerpt of real code, the write-up's own map. Rows abut,
+so the dark column runs unbroken from the header to the footer. In the light theme the
+prose column is white; in the dark theme it is navy and the response column goes a step
+darker than it, so the two columns still read as two (§3.6).
 
-| Token | Value | Role |
-|---|---|---|
-| `--bg`, `--surface` | `#ffffff` | The prose column. White, on purpose: a reference is read for minutes at a time. |
-| `--surface-raised` | `#f6f8fa` | Quiet fills: chips, light code excerpts, hover rows, the reading-mode hint. |
-| `--border` | `#e3e8ee` | Every hairline on the light side. |
-| `--border-mid` | `#cfd7df` | Underlines and scrollbars — decorative, not a boundary, so it is not gated. |
-| `--border-strong` | `#7f8b9b` | Bullets and real boundaries. Clears 3:1 on white. |
-| `--ink` | `#0a2540` | Body text and headings. Navy, not black: it is the same hue family as the dark column. |
-| `--ink-muted` | `#425466` | Secondary copy, the `.t` paragraph, job summaries. |
-| `--ink-faint` | `#5b6b82` | Meta: crumbs, dates, captions, the mono labels. Still 4.5:1 on white and on the quiet fill. |
-| `--code-bg` | `#0b0f19` | The response column itself. |
-| `--code-surface` | `#131a2a` | A console or panel on it. |
-| `--code-line` | `#263042` | Hairlines and input borders on the dark side. |
-| `--code-ink` | `#d6deeb` | Code and JSON on the dark side. |
-| `--code-dim` | `#7d8aa5` | Captions, punctuation, the status line, the frame note. |
-| `--syn-key` / `--syn-str` / `--syn-num` | `#9ecbff` / `#a5d6a7` / `#f7c46c` | JSON keys, strings, numbers and literals; also the selected language tab, a 2xx status and a 4xx status. |
+Widths: below 1024px the response stacks under its prose and the rail is a strip of
+names under the header; from 1024px prose and response sit side by side with the
+response at 24rem, so the prose keeps about sixty characters on a laptop; from 1280px
+the rail becomes a 15rem sticky column on the left and the response widens to 30rem;
+from 1536px the response is 36rem.
+
+| Token | Light | Dark | Role |
+|---|---|---|---|
+| `--bg`, `--surface` | `#ffffff` | `#0f1523` | The prose column. White in the light theme, on purpose: a reference is read for minutes at a time. |
+| `--surface-raised` | `#f6f8fa` | `#161d2e` | Quiet fills: chips, light code excerpts, hover rows, the reading-mode hint. |
+| `--border` | `#e3e8ee` | `#222c3f` | Every hairline on the prose side. |
+| `--border-mid` | `#cfd7df` | `#2f3b52` | Underlines and scrollbars — decorative, not a boundary, so it is not gated. |
+| `--border-strong` | `#7f8b9b` | `#6d7d95` | Bullets and real boundaries. Clears 3:1 on the page. |
+| `--ink` | `#0a2540` | `#e8edf5` | Body text and headings. Navy, not black, in the light theme: the same hue family as the dark column. |
+| `--ink-muted` | `#425466` | `#aeb9ca` | Secondary copy, the `.t` paragraph, job summaries. |
+| `--ink-faint` | `#5b6b82` | `#8896ab` | Meta: crumbs, dates, captions, the mono labels. Still 4.5:1 on the page and on the quiet fill. |
+| `--code-bg` | `#0b0f19` | `#080b13` | The response column itself. |
+| `--code-surface` | `#131a2a` | `#111829` | A console or panel on it. |
+| `--code-line` | `#263042` | `#243049` | Hairlines and input borders on the dark side. |
+| `--code-ink` | `#d6deeb` | same | Code and JSON on the dark side. |
+| `--code-dim` | `#7d8aa5` | same | Captions, punctuation, the status line, the frame note. |
+| `--syn-key` / `--syn-str` / `--syn-num` | `#9ecbff` / `#a5d6a7` / `#f7c46c` | same | JSON keys, strings, numbers and literals; also the selected language tab, a 2xx status and a 4xx status. |
 
 ### 3.2 Accent and badges
 
-| Token | Value | Role |
-|---|---|---|
-| `--accent` | `#5e56fb` | Links, the active rail entry's stripe, the filled button, Send, focus rings. A hair darker than the mock's `#635bff` so a link on the quiet fill clears 4.5:1. |
-| `--accent-hover` | `#5249e6` | Hover state of the filled button. |
-| `--accent-ink` | `#ffffff` | Text on an accent fill. |
-| `--accent-wash` | `#eeedff` | Selection, the active rail entry, the active nav tab. |
-| `--get` / `--get-bg` | `#0a6b3f` / `#e2f5ec` | The GET badge. Semantic, not the accent. |
-| `--post` / `--post-bg` | `#4b43d6` / `#eeedff` | The POST badge. |
-| `--ok` / `--warn` / `--danger` | `#0a6b3f` / `#8a5a00` / `#b42318` | Status text on the light side. |
+| Token | Light | Dark | Role |
+|---|---|---|---|
+| `--accent` | `#5e56fb` | `#9d97ff` | The accent **as text**: links, the active rail entry's stripe, the active tab's underline, focus rings. A hair darker than the mock's `#635bff` in light so a link on the quiet fill clears 4.5:1; lightened in dark so it reads on navy. |
+| `--accent-hover` | `#5249e6` | `#b3aeff` | Hover state of accent text. |
+| `--accent-fill` / `--accent-fill-hover` | `#5e56fb` / `#5249e6` | same | The accent **as a fill**: the primary button, Send, the skip link, a game's Start. The same in both themes because white text clears 4.5:1 on it and would not on the lightened text accent — which is why the two are two tokens. |
+| `--accent-ink` | `#ffffff` | same | Text on `--accent-fill`. |
+| `--accent-wash` | `#eeedff` | `#272b58` | Selection, the active rail entry, the active register tab. |
+| `--get` / `--get-bg` | `#0a6b3f` / `#e2f5ec` | `#5fd39c` / `#12312a` | The GET badge. Semantic, not the accent. |
+| `--post` / `--post-bg` | `#4b43d6` / `#eeedff` | `#b4afff` / `#272b58` | The POST badge. |
+| `--ok` / `--warn` / `--danger` | `#0a6b3f` / `#8a5a00` / `#b42318` | `#4fd08f` / `#e5b04a` / `#f8817a` | Status text on the prose side. |
 
 **Method badges are the site's one decorative device**, and they decorate nothing: a
 badge says which verb a row or a rail entry is. The old eyebrow style still exists for the
@@ -249,9 +257,10 @@ captions 0.6875rem uppercase with `0.1em` tracking.
 
 | Token or class | Value | Use |
 |---|---|---|
-| `--container-reading` | `44rem` | The prose column's maximum width. |
+| `--container-reading` | `48rem` | The prose column's maximum width, padding included (3.5rem a side from 1280px). |
 | `--container-wide` | `80rem` | The reading-mode hint's shell; nothing else is boxed — the grid is full-bleed. |
-| `.ref` / `.rail` / `.ep` / `.ep-prose` / `.ep-code` | The grid, the endpoint rail, one row, its prose, its response | The page grammar in CSS. Every reference page is `.ref` → `.rail` + rows. |
+| `.ref` / `.rail` / `.ep` / `.ep-prose` / `.ep-code` | The grid, the endpoint rail, one row, its prose, its response | The page grammar in CSS. Every reference page is `.ref` → `.rail` + rows. The rail is the site's one navigation (§4): a page's plain name over the endpoint it is, 15rem wide from 1280px, a strip of the names below that. |
+| `--head-h` | `3.5rem` | The header's height. The rail, the sticky console and every anchor's scroll margin are measured from it, so it changes in one place. |
 | `.cx` | radius 8px, 1px `--code-line`, `--code-surface` | The try-it console. Bar (method, path, languages) → parameters → request → Send → response. |
 | `.ep-code .panel` | same surface as `.cx` | Anything else on the dark side: an excerpt, the write-up's map, a static response. Scoped to the column — the help desk has a `.panel` of its own. |
 | `.btn` | radius 6px, padding `0.6rem 1rem`, weight 600 | `.btn-primary` is the accent fill with a soft cast; `.btn-ghost` is a mid border. Presses down 1px. |
@@ -289,29 +298,53 @@ Rules:
   once and top-level setup goes dead after the first soft navigation. Every script that
   starts an observer or a loop cleans up on `astro:before-swap`.
 
-### 3.6 One theme
+### 3.6 Two themes
 
-The site has one theme, on purpose. The light/dark split is between the two columns,
-not between two modes of the page, so there is no theme toggle, no `data-theme`, no
-`prefers-color-scheme` branch, and no dark twin of any screenshot. `<meta
-name="theme-color">` is white. The games and the help desk paint their own worlds on
-top of the tokens.
+The site has a light theme and a dark theme, and the two-column split survives both.
+The morning's redesign shipped with one theme on the argument that the light/dark
+split was already between the columns; Dylan asked for the choice back the same
+afternoon, and the dark theme was drawn so that the split still reads: the prose
+column goes navy, the response column goes a step darker than it, and the console
+floats a step lighter than the page.
 
-What survives from the old two-theme machinery: the **reading mode** (`data-mode` on
-`<html>`, `plain` or `eng`) is still set by an inline blocking script before first
-paint and re-applied on `astro:after-swap`, because a View Transitions swap copies the
-incoming document's `<html>` attributes onto the live one.
+How it works:
+
+- **`:root` is the light theme; `:root[data-theme='dark']` overrides only what
+  changes.** Both blocks live in `global.css`, and the dark one is wrapped in
+  `@media screen` so print always gets the light tokens — the résumé PDF is a print of
+  the page.
+- **The attribute is set before first paint** by the inline blocking script in
+  `Base.astro`: the stored choice (`localStorage.theme`), else the OS preference. The
+  server never renders it, so no JS means light. The same script re-applies it — and
+  the reading mode — on `astro:after-swap`, because a View Transitions swap copies the
+  incoming document's `<html>` attributes onto the live one.
+- **The toggle is in the header**, an icon button showing the theme you would get by
+  pressing it. It flips the attribute, stores the choice and rewrites `<meta
+  name="theme-color">` to the theme's `--bg`.
+- **Two accents.** `--accent` (text) lightens in dark; `--accent-fill` (the primary
+  button, Send) does not, because white text clears 4.5:1 on the fill and would not on
+  the lightened text accent. See §3.2.
+- **Expressive Code follows the attribute**: `github-light-default` as the base,
+  `github-dark-default` under `[data-theme='dark']`, its `prefers-color-scheme` query
+  off so the page and its code blocks can never disagree.
+- **Screenshots do not follow it.** A screenshot is a document, not a surface: one
+  capture per project, in the product's light theme, shown as-is in both themes. The
+  paired dark twins removed on 2026-09-14 stay removed.
+- **The games and the help desk paint their own worlds** on top of the tokens. `/desk`
+  is one deliberate light look and pins `color-scheme: light` so the theme stops at
+  its border; a `/play` page follows the theme around the game.
 
 ### 3.7 The contrast gate
 
-`scripts/check-contrast.mjs` parses the `:root` block in `global.css` and fails
-`npm run check` if any pair drops below its threshold. Keep hex values in that block;
-the parser reads nothing else.
+`scripts/check-contrast.mjs` parses the `:root` block in `global.css` and the
+`:root[data-theme='dark']` block merged over it, and fails `npm run check` if any pair
+drops below its threshold in either theme. Keep hex values in those two blocks; the
+parser reads nothing else.
 
 | Pair | Minimum |
 |---|---|
 | `ink`, `ink-muted`, `ink-faint` on `bg` and `surface-raised` | 4.5:1 |
-| `accent` on `bg` and `surface-raised`; `accent-ink` on `accent` | 4.5:1 |
+| `accent` on `bg` and `surface-raised`; `accent-ink` on `accent-fill` | 4.5:1 |
 | `nav-ink` and `nav-muted` on `nav`; `tab-active-ink` on `tab-active` | 4.5:1 |
 | `ok`, `warn`, `danger` on `bg` | 4.5:1 |
 | `get` on `get-bg`; `post` on `post-bg` | 4.5:1 |
@@ -331,8 +364,9 @@ Slack. A demo's `/play` page uses its composed `shareCard` instead (§6).
 
 ## 4. Page grammar
 
-Every reference page is the same object: the **endpoint rail** on the left (the site map
-in the API's own terms — six endpoints plus `GET /api`), then **rows**. A row is one
+Every reference page is the same object: the **endpoint rail** on the left (the site's
+one navigation, in the API's own terms — six endpoints plus `GET /api`, each under the
+plain name of the page it is), then **rows**. A row is one
 endpoint: prose on the left, a try-it console on the right rendered with that endpoint's
 real response, and the prose never says a fact the console does not carry. New pages pick
 one of these shapes or add a row to this table.
@@ -364,11 +398,21 @@ Recurring grammar inside pages:
 - **Rows for everything; a thumbnail only where there is a real one.** An item is a
   hairline-separated row; a project with a screenshot gets it in a 13rem column. There
   are no cards and no generated art.
-- **The same fact once per page.** The header has no wordmark because the home page
-  opens with the name. The rail lists the endpoints once; the crumb above each row names
-  the one the row is.
-- **Four short nav links, no hamburger.** A hamburger for four items is a tap the visitor
-  should not have to make. Labels shorten on a phone (`Plain` / `Tech`) rather than hide.
+- **The same fact once per page.** The rail lists the endpoints once; the crumb above
+  each row names the one the row is. The header carries the name — where a reference
+  puts its product name, and the way home from anywhere — which is the one repeat the
+  home page's `h1` allows.
+- **One navigation, and it is the rail.** The header held four page links and the rail
+  held the same pages as endpoints, and a visitor could not tell which was the map. The
+  header now holds only the name and the controls (the register switch, the theme
+  toggle, *Get in touch*); the rail is the map, with each entry a page's plain name over
+  its endpoint — Home over `GET /api/dylan`, About over `GET /api/experience` — so a
+  Plain English reader and an engineer read the same list. *One project* sits indented
+  under Work and resolves `{id}` on a project page; *Index* (`GET /api`) sits under a
+  hairline. Below 1280px the rail is a strip of the five page names under the header, no
+  endpoints and no hamburger: five words fit a phone, and a hamburger for five is a tap
+  the visitor should not have to make. Header labels shorten on a phone (`Dylan`,
+  `Plain` / `Tech`) rather than hide.
 - **Every heading level is real.** `h1` once, `h2` per row and per contract section,
   `h3` for items. The crumb is a `p`; nothing is a fake heading.
 
@@ -414,9 +458,9 @@ comment there saying what it is for. The parts that shape the site:
 - **`metrics`** are outcome and scale only. See §1.
 - **`links.source`** is omitted for private work; the UI renders no button. An empty
   `links:` key parses as null and fails the schema, so omit the key entirely.
-- **`cover`** is one capture, in the product's own light theme. The site has one theme
-  (§3.6), so the `coverDark` twin and the `srcDark` figure prop were removed on
-  2026-09-14 along with their files.
+- **`cover`** is one capture, in the product's own light theme, shown as-is in both site
+  themes (§3.6). The `coverDark` twin and the `srcDark` figure prop were removed on
+  2026-09-14 along with their files, and stayed removed when the dark theme came back.
 
 ### 5.3 Moved URLs never die
 
@@ -495,9 +539,10 @@ second game is as cheap as the first.
 A screenshot sits on the white prose column, so:
 
 - **Ship one capture, in the product's light theme** (`cover`, or `src` on a `<Figure>`).
-  The site has one theme (§3.6); the paired dark twins were removed on 2026-09-14. Art
-  that has no theme — a game canvas — ships as it is.
-- **Frame it for a 44rem column.** It renders at the prose measure on the project page
+  It is shown as-is in both site themes (§3.6): a screenshot is a document, not a
+  surface. The paired dark twins were removed on 2026-09-14. Art that has no theme — a
+  game canvas — ships as it is.
+- **Frame it for a 41rem column.** It renders at the prose measure on the project page
   and in a 13rem column on a list; a capture that only reads at full width reads nowhere.
 - **Redact in the browser before capture**, with a CSS blur on the leaf elements whose
   text matches the other legal entities, then screenshot. Blurring in the page survives
@@ -534,7 +579,7 @@ The reasoning for each lives as a comment next to the code. This table is the in
 | One endpoint list feeds three things | `endpoints.ts` is what `GET /api` returns, what every console is rendered from, and what the routes implement. Adding an endpoint is one entry plus one route; a console for it is one component call. | `lib/endpoints.ts` |
 | Same-site `page` links are followed relative | Records carry absolute URLs on the canonical host so a pasted record still points home; the console rewrites a same-site one to the current origin, so a preview or a local `wrangler dev` never jumps to production. | `scripts/console.ts`, `Console.astro` |
 | Content collections at request time | The Worker routes call `getCollection` through the same `content.ts` queries the pages use; Astro bundles the data store into the server build, so no snapshot file and no second source of truth. Verified on `wrangler dev` before the first deploy. | `lib/api.ts`, `pages/api/work/[...id].ts` |
-| One theme | The light/dark split is between the columns, not between modes of the page. Two themes would double every new surface and weaken the signature. The toggle, `data-theme`, the `dark:` variant and the dark screenshot twins went together. | `global.css`, `Base.astro`, `Cover.astro`, `Figure.astro` |
+| Two themes, one token file | The light theme is `:root`; the dark theme is one block of overrides under `:root[data-theme='dark']`, resolved before first paint, gated for contrast like the light one, and off in print. Two accents (text and fill) so the button stays legible in both. Screenshots do not follow the theme. | `global.css`, `Base.astro`, `Header.astro`, `ec.config.mjs`, `check-contrast.mjs` |
 | `format: 'file'` and `trailingSlash: 'never'` | Astro's default emitted `/projects/index.html`, which cost every internal link a 307. Canonical URLs are computed from the served path, not the output filename. | `astro.config.mjs`, `Base.astro` |
 | `prerenderEnvironment: 'node'` | workerd forbids runtime WASM, which breaks the Shiki highlighter and OG image generation. Prerendered pages never execute in the Worker anyway. | `astro.config.mjs` |
 | `ProjectData` exported from the schema | Astro's inferred type resolved to `any` and silently removed type safety from every consumer. | `content.config.ts`, `content.ts` |
@@ -613,11 +658,14 @@ The reasoning for each lives as a comment next to the code. This table is the in
 
 1. Change the token, not the component. If a component needs a colour that has no
    token, the design system is missing a token, so add one to the `:root` block with a
-   comment saying what it is for — and, if text sits on it, a pair in the gate.
+   comment saying what it is for, its dark value in the `[data-theme='dark']` block if
+   it changes — and, if text sits on it, a pair in the gate.
 2. Run `npm run check:contrast`. If it fails, the colour changes, not the threshold.
-3. Look at both columns and both registers, on a phone width and at 1440. A console's
-   status line, the language tabs and a long JSON body are the fragile spots on the dark
-   side; a link on the quiet fill is the fragile number on the light side.
+3. Look at both columns, both registers and both themes, on a phone width, at 1100 (the
+   two-column laptop case) and at 1440. A console's status line, the language tabs and a
+   long JSON body are the fragile spots on the dark side; a link on the quiet fill is
+   the fragile number on the light side; in dark, the step between the prose column and
+   the response column is the thing to check by eye — the gate cannot see it.
 4. Look with reduced motion on. Look with JavaScript off (`curl` the built HTML): the
    plain register, every console's request and response, and every list must be present
    as text.
@@ -757,6 +805,9 @@ reference, §11 still governs which facts may appear.
 | 2026-09-14 | The site moves into the API-reference world (mockup C): white prose column beside a continuous dark response column, Source Sans 3 and JetBrains Mono, one blue-violet accent, method badges; every page is a rail plus endpoint rows. One theme — the toggle, `data-theme` and the dark screenshot twins go. §1.3, §3 and §4 rewritten; the eyebrow leaves the reference pages. |
 | 2026-09-14 | A real read-only API under `/api/`, served by the Worker from `site.ts` and the content collection, with `fields`, honest errors and `page` on every record; every console on the site renders its endpoint's real response at build time and Sends for real. `POST /api/contact` answers 503 with a `mailto:` until delivery is configured rather than claiming success. |
 | 2026-09-14 | The résumé PDF regenerated from the page in the new type: one page, no product name. |
+| 2026-09-14 | **Light and dark come back**, hours after "one theme" shipped, because the reader wanted the choice. The dark theme is one block of overrides in the same token file, drawn so the two-column split survives (navy prose, a darker response column, the console a step lighter than the page); the accent splits into `--accent` (text, lightens in dark) and `--accent-fill` (the button, does not); the gate checks both themes; Expressive Code follows the same attribute; screenshots stay one light capture. §3.6 rewritten, §3.1–3.2 tables gain a Dark column, §7 row replaced. |
+| 2026-09-14 | **The rail is the navigation; the header stops repeating it.** Two maps of the same five pages — page names in the top bar, endpoints in the rail — was the thing a first look could not parse. The header keeps the name and the controls; each rail entry is a page's plain name over its endpoint, *One project* indented under Work with `{id}` resolved on a project page, *Index* under a hairline; below 1280px the rail is a strip of the five names. `site.nav` removed. |
+| 2026-09-14 | **Room to breathe.** The header is 3.5rem (`--head-h`, one token the rail, the sticky console and every scroll margin measure from); the prose column's maximum is 48rem with 3.5rem of padding at desktop, so its text measure stays about where it was; the console's sections, bar and caps gained a quarter-rem each way; and the three-column layout waits for 1280px — at 1024px the rail and a 30rem response had left the prose about 180px of text, so 1024–1279 is two columns with a 24rem response and the rail as a strip. |
 
 ## 10. Parked and open
 
@@ -830,3 +881,4 @@ Design section. It is indexed by GitHub search and reachable by URL, which is th
 | 2026-09-03 | First version. Written from the code, the comments, the two plans, and the commit log as of `bc12832`. |
 | 2026-09-14 | §9 gains the impeccable row; §10 parks the three home-page mockups. |
 | 2026-09-14 | The API-reference world: §1.3, §3, §4 rewritten; §5.1–5.3 updated and §5.5 (the API) added; §7, §8.3, §8.5 updated; four §9 rows; §10 re-parked. |
+| 2026-09-14 | Two themes and one navigation: §3.1–3.2 tables gain a Dark column and `--head-h`; §3.6 rewritten as *Two themes*; §3.7, §4 (the rail is the navigation), §5.2, §6.2, §7, §8.3 updated; three §9 rows. |

@@ -20,9 +20,10 @@ const projectSchema = ({ image }: SchemaContext) =>
     /** One sentence. Used on cards AND as the page meta description. */
     blurb: z.string().max(160),
     date: z.coerce.date(),
-    /** Optional — cards fall back to a deterministic generated cover. One
-     *  capture per project, in the product's light theme: the site has one
-     *  theme now, so there is no dark twin to swap in. */
+    /** Optional — a project with no screenshot has no picture. One capture
+     *  per project, in the product's light theme, shown as-is in both site
+     *  themes: a screenshot is a document, not a surface, and a dark twin
+     *  was a second thing to keep in step. */
     cover: image().optional(),
     coverAlt: z.string().optional(),
 

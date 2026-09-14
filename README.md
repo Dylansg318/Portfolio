@@ -161,7 +161,9 @@ number or street address — both are public.
 All colour, spacing and motion tokens live in the one `:root` block of
 `src/styles/global.css`. Every component references semantic names (`bg-surface`,
 `text-ink`, `text-code-dim`), never a literal colour — so a redesign is one file.
-The site has one theme: a white prose column beside a dark response column.
+The page is a prose column beside a dark response column, in a light theme and a dark
+one: `:root` holds the light tokens, `:root[data-theme='dark']` the overrides, and the
+toggle is in the header. The contrast gate checks both.
 
 Every page is built from the pieces in `src/components/ref/` — `Rail` (the
 endpoint list), `Row` (prose left, response right), `Crumb` (the method badge
