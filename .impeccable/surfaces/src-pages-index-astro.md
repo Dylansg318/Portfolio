@@ -1,0 +1,39 @@
+---
+version: 1
+slug: "src-pages-index-astro"
+primary_target: "src/pages/index.astro"
+related_targets: []
+---
+
+# Surface brief · home page (`/`)
+
+Scope: the home page, mocked up as one standalone HTML artifact carrying three switchable variants (A and B decided 2026-09-14 by the rolls; C pinned by Dylan the same day). Visitor mode: Persuade — a recruiter or hiring manager decides in under a minute whether to interview. All three keep the person-first order (name and role → background → selected work → experience → personal → contact), all three carry both registers, and none adds a claim, a number about the person, or a testimonial. Real copy from `src/pages/index.astro` and `src/lib/site.ts`; real screenshots from the project covers. The artifact is a proposal; nothing in `src/` changes until Dylan adopts a variant.
+
+Open decisions: which variant, if any, ships; whether the project cards keep their column labels (At work / Tools for myself / On the side — kept in the mock, the reviewer calls them redundant with the heading); whether Variant B's world would replace `DESIGN_SYSTEM.md` §3 (not written here on purpose — the repo's design authority stays the incumbent until a variant is adopted); Dylan's own service-desk draft was offered as a pin and not taken this round. Two published lines the mock quotes verbatim and the reviewer flagged for the site itself, not the mock: "at scale" in the agent-fleet blurb, and "790 lines" (a size figure) in the Galaxy Defense blurb.
+
+## Direction contract — Variant A · The interview (surface seed 593a357f, dealt lead, locked)
+
+THESIS: The page is the five questions a screener asks, answered in Dylan's words at full size. It refuses the eyebrow-as-label arrangement (SELECTED WORK, EXPERIENCE) and the hint bar that explains the switch instead of demonstrating it.
+OWN-WORLD: The incumbent world unchanged — graphite ground, white ink, Meadow Green accent on emphasis only, Bricolage Grotesque display, IBM Plex Sans body, IBM Plex Mono for the cues. Recognisable with content removed by the tiny green mono cue above each block and the one rule before it.
+STORY: The visitor hears their own questions asked in tiny type and answered plainly; they leave knowing who this is, what he built, how he got here, and how to reach him — and that the page knew what they came to ask.
+FIRST VIEWPORT: Nav as today, no hint bar. Cue WHO IS THIS? top-left in mono green at 12px. Name at clamp(3rem, 8vw, 5rem) left, two lines, green period. The two-register sentence right, on the name's baseline, with the register switch adjacent so the demonstration is visible. One primary button (See the work ↓) and one text link (Resume). Hairline, then cue WHAT DID YOU BUILD? and the tops of three equal cards at the fold.
+FORM: Structure 7 of 7 on the ordered list; the dice dealt 7, 2, 1 and the user locked 7. Signature interaction: the cues type nothing — they are static; the sentence rewrites in place on the switch with a 600 ms cross-fade, exactly the site's existing nameplate morph.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance.
+
+## Direction contract — Variant B · Release notes (direction seed f583fdfb, re-roll 1, assigned, locked)
+
+THESIS: The page is the changelog of one engineer — dated entries down one column, a sticky year rail, the register switch working like a docs site's language tabs across every entry at once. It refuses the dark developer-portfolio card grid and the warehouse metaphors the first roll produced.
+OWN-WORLD: White ground, near-black ink (#111318), one grey (#6b7280), hairlines. Public Sans for text and the name; JetBrains Mono for stamps, tags and the rail. Colour only on type tags (Shipped green, Changed amber, Removed red) and on nothing else; buttons are black fills. Recognisable with content removed by the year rail at a fixed x and the mono stamp above every title.
+STORY: The visitor reads a record, not a pitch: dated entries, the newest first, each with its evidence beside it; they believe it because it is shaped like the thing they already trust, and they switch the view when the prose is too plain or too technical.
+FIRST VIEWPORT: Slim header, nav left, "View: Plain English | Engineer" segmented control right. Left rail 1/6 wide, years 2026 · 2025 · 2022 · 2021 · 2020 in mono, current marked by a hairline. Main column: stamp 2026-09 · current; name as entry title at clamp(2.75rem, 6vw, 4.5rem); the sentence as entry body; mono role · location · measured line; black button See the work ↓ and link Resume. Hairline; the first Shipped entry (MHLHUB, screenshot right) enters at the fold.
+FORM: Direction 6 of 7 on the re-rolled ordered list (API reference, service-desk console, status page, whiteboard sketch, pull request, changelog, observability dashboard); assigned 6, locked. Signature interaction: the View switch swaps every entry's prose at once with one 300 ms cross-fade, and the rail's hairline follows the entry in view (scroll-spy), the changelog's own motion.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance.
+
+## Direction contract — Variant C · API reference (direction seed f583fdfb re-roll 1, IMPECCABLE'S PICK, pinned by the user 2026-09-14)
+
+THESIS: The page is a reference to one person: every section is an endpoint, the centre column is the Plain English register, the dark right column is the Engineer register, and both are visible at once. It refuses the developer-portfolio card grid and the hidden second register.
+OWN-WORLD: White prose column (#ffffff, ink #0a2540, grey #425466, hairline #e3e8ee) beside a continuous dark response column (#0b0f19) with three-colour syntax (keys blue-light, strings green-light, numbers amber). Source Sans 3 for prose, JetBrains Mono for code, badges and the endpoint list. One blue-violet (#635bff) for links, the active endpoint and the filled button; method badges carry their own semantic colour. Recognisable with content removed by the three columns and the method badges.
+STORY: The visitor reads the person the way they read a service they are about to depend on: what it is in plain words on the left, the exact shape on the right, and an action at the end of each endpoint; they never have to flip a switch to see the other register.
+FIRST VIEWPORT: Slim header, nav left. Left column 14rem: REFERENCE caption, endpoints GET /dylan (active), GET /work, GET /experience, GET /away-from-work, POST /contact with method badges. Centre: mono breadcrumb GET /dylan, h1 Dylan San Gabriel, the Plain English sentence and the by-hand paragraph, a definition list (role, location, timezone, measured), a filled button See the work and a link Resume. Right, dark, full height: a Response panel holding the Engineer sentence and a JSON object of the same facts. At the fold the GET /work row begins.
+FORM: Direction 1 of 7 on the re-rolled ordered list; not dealt by the dice, offered as the pick card, pinned by the user in words after the round closed. Signature interaction: the endpoint list follows the row in view; the dark column scrolls with its rows so a response is always beside its prose. On narrow screens the columns stack, prose then response, and both registers stay visible.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance.
