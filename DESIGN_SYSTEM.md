@@ -713,8 +713,11 @@ it ships or is dropped for good.
   (the current tokens; the eyebrows become the five questions a screener asks), **B,
   Release notes** (a light changelog world: Public Sans, JetBrains Mono, a sticky year
   rail, type tags), **C, API reference** (three columns; Plain English prose in the
-  middle, the Engineer register as a dark response column, both on screen at once).
-  All three keep the person-first order and every fact on the site today. Adopting B or
+  middle, the Engineer register as a dark response column, both on screen at once —
+  and, after a second pass, a try-it console on every endpoint: real parameters, the
+  request in four languages, a Send that opens the page it describes; the whole site
+  exists in that world behind a hash router). All three keep the person-first order and
+  every fact on the site today. Dylan prefers C and is still exploring. Adopting B or
   C rewrites §3 and the `/` row of §4; adopting A changes the `/` row and softens the
   eyebrow rule. Nothing in `src/` changed. The first roll (shelf tags, shipping label)
   was re-rolled on the owner's steer: the world has to be the one he is moving into.
