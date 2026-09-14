@@ -8,7 +8,6 @@ parent: internal-erp
 status: live
 role: sole engineer
 cover: ./repricer-dashboard.png
-coverDark: ./repricer-dashboard-dark.png
 coverAlt: >-
   The repricer dashboard: buy-box winning, sibling-hold, losing and unwinnable
   counts, push success rates, a breakdown of why the engine isn't undercutting,
@@ -50,7 +49,6 @@ metrics:
 ---
 
 import logShot from './repricer-log.png';
-import logShotDark from './repricer-log-dark.png';
 
 <PlainOnly>
 
@@ -126,7 +124,6 @@ Those are judgment calls; the engine's job is to make them visible, not make the
 
 <Figure
   src={logShot}
-  srcDark={logShotDark}
   alt="The repricing log: 8,413 pushes over seven days, each row showing the product, the old and new price, the percentage change, the trigger source and the reason the engine moved."
   caption="Seven days of the log — 8,413 pushes across 169 pages. Each row carries the reason it moved, including the cases the engine declined to chase: 'deferred_sibling_reserve: primary twin has a fresh 12h window — holding this account's down-move in reserve to retake if re-undercut'. Product names and the second storefront's name are blurred."
   wide

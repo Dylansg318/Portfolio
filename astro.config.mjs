@@ -70,45 +70,29 @@ export default defineConfig({
 
   fonts: [
     {
-      // Body copy. This was Inter until 2026-09-01. Inter is the default face of
-      // the AI/SaaS era — competent, and so ubiquitous that the page reads as a
-      // template before a word of it is read. Plex was drawn for IBM, a company
-      // that builds industrial systems, and it shows: squared terminals, a
-      // mechanical rhythm, a distinctive `a` and `g`. This site is barcodes,
-      // thermal printers, carrier invoices and a warehouse floor plan, so the
-      // body face should read as the manual for a machine, not as a pitch deck.
+      // The one text face, for prose and headings alike. Source Sans was drawn
+      // for user interfaces and documentation and it reads that way: open
+      // counters, a plain italic, no display personality to spend. Headings
+      // are the same face, heavier. The site is an API reference now; a
+      // reference does not pair a display face with its body.
       provider: fontProviders.fontsource(),
-      name: 'IBM Plex Sans',
+      name: 'Source Sans 3',
       cssVariable: '--font-sans',
-      weights: [400, 500, 600, 700],
-      styles: ['normal'],
+      weights: [400, 600, 700],
+      styles: ['normal', 'italic'],
       subsets: ['latin'],
-      fallbacks: ['system-ui', 'sans-serif'],
+      fallbacks: ['ui-sans-serif', 'system-ui', 'sans-serif'],
     },
     {
-      // Display face for headlines only — body copy is Plex Sans. Deliberately
-      // kept when the body face changed: Bricolage is uncommon and is the one
-      // place this site shows personality, so it was never the thing that made
-      // the page look generic.
+      // Paths, keys, numbers, the console and every code block. JetBrains
+      // Mono is what most engineers already read code in, which is the point.
       provider: fontProviders.fontsource(),
-      name: 'Bricolage Grotesque',
-      cssVariable: '--font-display',
-      weights: [600, 700, 800],
-      styles: ['normal'],
-      subsets: ['latin'],
-      fallbacks: ['IBM Plex Sans', 'system-ui', 'sans-serif'],
-    },
-    {
-      // Moved off JetBrains Mono with the body face, so code and prose come from
-      // one superfamily and the page reads as a single system rather than an
-      // assembly of tastes.
-      provider: fontProviders.fontsource(),
-      name: 'IBM Plex Mono',
+      name: 'JetBrains Mono',
       cssVariable: '--font-mono',
-      weights: [400, 700],
+      weights: [400, 500, 600],
       styles: ['normal'],
       subsets: ['latin'],
-      fallbacks: ['ui-monospace', 'monospace'],
+      fallbacks: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
     },
   ],
 

@@ -2,9 +2,10 @@
  * Contrast gate for the design tokens.
  *
  * Colour choices are the easiest thing in a design system to get quietly wrong:
- * a token gets nudged, a theme drifts, and nobody notices until someone can't
- * read the site. This parses src/styles/global.css and fails the build if any
- * text/background pair drops below its WCAG threshold.
+ * a token gets nudged and nobody notices until someone can't read the site.
+ * This parses the `:root` block of src/styles/global.css — the prose column,
+ * the method badges and the dark response column all live there — and fails
+ * the build if any text/background pair drops below its WCAG threshold.
  *
  * Run: node scripts/check-contrast.mjs
  */
@@ -36,44 +37,53 @@ function contrast(a, b) {
 
 // [foreground, background, minimum, what it is]
 const PAIRS = [
+  // the prose column
   ['ink', 'bg', 4.5, 'body text on page'],
-  ['ink', 'surface', 4.5, 'body text on card'],
-  ['ink', 'surface-raised', 4.5, 'body text on raised surface'],
+  ['ink', 'surface-raised', 4.5, 'body text on a quiet fill'],
   ['ink-muted', 'bg', 4.5, 'secondary text on page'],
-  ['ink-muted', 'surface', 4.5, 'secondary text on card'],
+  ['ink-muted', 'surface-raised', 4.5, 'secondary text on a quiet fill'],
   ['ink-faint', 'bg', 4.5, 'meta text on page'],
-  ['ink-faint', 'surface', 4.5, 'meta text on card'],
+  ['ink-faint', 'surface-raised', 4.5, 'meta text on a quiet fill'],
   ['accent', 'bg', 4.5, 'link on page'],
-  ['accent', 'surface', 4.5, 'link on card'],
+  ['accent', 'surface-raised', 4.5, 'link on a quiet fill'],
   ['accent-ink', 'accent', 4.5, 'button label on accent'],
-  ['nav-ink', 'nav', 4.5, 'nav label on nav bar'],
-  ['nav-muted', 'nav', 4.5, 'inactive nav label on nav bar'],
-  ['tab-active-ink', 'tab-active', 4.5, 'active tab label'],
-  ['ok', 'surface', 4.5, 'success text'],
-  ['danger', 'surface', 4.5, 'error text'],
+  ['nav-ink', 'nav', 4.5, 'nav label on the header'],
+  ['nav-muted', 'nav', 4.5, 'inactive nav label on the header'],
+  ['tab-active-ink', 'tab-active', 4.5, 'active nav label on its wash'],
+  ['ok', 'bg', 4.5, 'success text'],
+  ['warn', 'bg', 4.5, 'warning text'],
+  ['danger', 'bg', 4.5, 'error text'],
   ['border-strong', 'bg', 3, 'UI boundary (non-text)'],
+  // method badges
+  ['get', 'get-bg', 4.5, 'GET badge'],
+  ['post', 'post-bg', 4.5, 'POST badge'],
+  // the response column
+  ['code-ink', 'code-bg', 4.5, 'code on the column'],
+  ['code-ink', 'code-surface', 4.5, 'code on a panel'],
+  ['code-dim', 'code-bg', 4.5, 'caption on the column'],
+  ['code-dim', 'code-surface', 4.5, 'caption on a panel'],
+  ['syn-key', 'code-surface', 4.5, 'JSON key on a panel'],
+  ['syn-str', 'code-surface', 4.5, 'JSON string on a panel'],
+  ['syn-num', 'code-surface', 4.5, 'JSON number on a panel'],
+  ['code-bg', 'syn-key', 4.5, 'selected language tab'],
+  ['accent-ink', 'accent', 4.5, 'Send label'],
+  ['code-line', 'code-surface', 1.2, 'hairline on a panel (visible, not text)'],
 ];
 
 let failed = 0;
-for (const [theme, selector] of [
-  ['light', ':root {'],
-  ['dark', "[data-theme='dark'] {"],
-]) {
-  const t = tokensFor(selector);
-  console.log(`\n${theme}`);
-  for (const [fg, bg, min, label] of PAIRS) {
-    if (!t[fg] || !t[bg]) {
-      console.log(`  SKIP  ${label} (missing --${fg} or --${bg})`);
-      continue;
-    }
-    const r = contrast(t[fg], t[bg]);
-    const ok = r >= min;
-    if (!ok) failed++;
-    console.log(
-      `  ${ok ? 'pass' : 'FAIL'}  ${r.toFixed(2).padStart(6)} (min ${min})  ${label}` +
-        `  [${fg} on ${bg}]`,
-    );
+const t = tokensFor(':root {');
+for (const [fg, bg, min, label] of PAIRS) {
+  if (!t[fg] || !t[bg]) {
+    console.log(`  SKIP  ${label} (missing --${fg} or --${bg})`);
+    continue;
   }
+  const r = contrast(t[fg], t[bg]);
+  const ok = r >= min;
+  if (!ok) failed++;
+  console.log(
+    `  ${ok ? 'pass' : 'FAIL'}  ${r.toFixed(2).padStart(6)} (min ${min})  ${label}` +
+      `  [${fg} on ${bg}]`,
+  );
 }
 
 if (failed > 0) {
