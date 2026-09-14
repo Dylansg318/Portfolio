@@ -1,249 +1,232 @@
 ---
 import Base from '../layouts/Base.astro';
-import SectionHeading from '../components/ui/SectionHeading.astro';
+import Rail from '../components/ref/Rail.astro';
+import Row from '../components/ref/Row.astro';
+import Crumb from '../components/ref/Crumb.astro';
+import Console from '../components/ref/Console.astro';
 import { site } from '../lib/site';
+import { experienceRecord, personRecord, projectById, resumeRecord } from '../lib/api';
 
-/** The path here, one stop per line.
- *
- *  This used to be three tidy lines that made the retail jobs look like
- *  something to apologise for. They are the opposite: the same thing happened
- *  three times in a row — someone watched me work and handed me more than the
- *  job I was hired for. That is the argument this page is making, so the stops
- *  say what actually happened rather than compressing it into a title. */
-const path = [
-  {
-    id: 'gmu',
-    when: '2020 – 24',
-    what: 'Computer Science coursework, George Mason University',
-    note: "Dean's List. Four years of CS alongside a full-time job — everything below happened while I was in it. I left before the degree was conferred, so what's under it is what I have to show instead.",
-  },
-  {
-    id: 'tmobile',
-    when: '2021 – 22',
-    what: 'T-Mobile — sales associate, then store manager',
-    note: 'My first job. When the store manager was getting ready to leave he decided I was working harder than the rest of the floor and spent his last months training me to replace him. I got the job because the team trusted me to run the place, not because I was the best at selling phones.',
-  },
-  {
-    id: 'thequi',
-    when: '2022 – 25',
-    what: 'The Qui, Korean BBQ & Grill — head server',
-    note: "Promoted twice within months. I was studying for the CYDEO SDET program between shifts — Selenium, Cucumber, REST Assured. That's where the testing habits came from. I still write the test before I trust the fix.",
-  },
-  {
-    id: 'rmh3',
-    when: '2025',
-    what: 'RMH3 Dental Supply — hired off the restaurant floor',
-    note: "They were regulars. They watched me work a section, decided I'd be a good fit for their company, and offered me a job. I started in inventory to learn the products, then shipping, and made it known that the technical work was what I wanted.",
-  },
-  {
-    id: 'erp',
-    when: '2025 – now',
-    what: 'From a customer-service spreadsheet to the ERP',
-    note: "Customer service was entirely online, so consolidating it meant a spreadsheet — and the spreadsheet turned into a system. Pricing came next, because winning the buy box by hand doesn't scale. The ERP grew out of those two problems and now runs the company.",
-  },
-];
+/**
+ * /about is GET /api/experience: the path here, in the order it happened,
+ * then the before picture, how I work, and what I work with. The stops live
+ * in src/lib/site.ts so the page and the endpoint read the same lines.
+ */
+const experience = experienceRecord();
+const before = await projectById('internal-erp', ['problem', 'unique']);
+const how = personRecord('plain', ['principles', 'open_to', 'looking_for']);
+const toolkit = resumeRecord('json', ['skills', 'certifications']);
+const startYear = (start: string) => Number(start.slice(-4));
 ---
 <Base title="About" description={`About ${site.name} — ${site.tagline}`}>
-  <section>
-    <div class="mx-auto max-w-(--container-wide) px-4 pb-12 pt-12 sm:px-6 sm:pt-16">
-      <p class="eyebrow reveal reveal-load">About</p>
-      <h1 class="reveal reveal-load mt-4 max-w-3xl text-4xl font-extrabold tracking-tight text-ink sm:text-6xl" style="--reveal-delay: 60ms">
-        From the restaurant floor to{' '}
-        <span class="text-gradient">the system the company runs on.</span>
-      </h1>
-    </div>
-  </section>
-
-  <div class="mx-auto max-w-(--container-wide) px-4 sm:px-6">
-    <div class="grid gap-12 lg:grid-cols-[1.4fr_1fr]">
-      <div class="space-y-12">
+  <div class="ref">
+    <Rail current="experience" />
+    <div class="ref-main">
+      <Row id="path">
+        <Crumb method="GET" path="/api/experience" />
+        <h1 class="page">From the restaurant floor to the system the company runs on.</h1>
         <!-- Short and specific. Recruiters and their screening tools both parse
              this, and one concrete number beats three adjectives. -->
-        <section class="reveal">
-          <h2 class="font-display text-2xl font-bold text-ink">The short version</h2>
-          <p class="mt-4 max-w-(--container-reading) text-lg leading-relaxed text-ink-muted">
-            I'm the engineer at RMH3 Dental Supply. I designed, built and run{' '}
-            <a class="text-accent hover:underline" href="/projects/internal-erp">the in-house ERP</a>
-            that replaced off-the-shelf software, a stack of spreadsheets, and
-            an inbox somebody sorted by hand. It covers six sales channels and 32,000
-            products, and orders have roughly doubled while I've been here without adding
-            anyone to operations.
-          </p>
-          <p class="mt-4 max-w-(--container-reading) text-lg leading-relaxed text-ink-muted">
-            Most of it started as a spreadsheet, a stack of emails, or a count somebody
-            did on paper every morning. Those are the ones I like, because you find out
-            fast whether the new version actually saved anyone time — the person who used
-            to do it by hand will tell you.
-          </p>
-        </section>
+        <p class="lead">
+          I'm the engineer at {site.employer.name}. I designed, built and run{' '}
+          <a href="/projects/internal-erp">the in-house ERP</a> that replaced off-the-shelf
+          software, a stack of spreadsheets, and an inbox somebody sorted by hand. It covers six
+          sales channels and 32,000 products, and orders have roughly doubled while I've been
+          here without adding anyone to operations.
+        </p>
+        <p class="t">
+          Most of it started as a spreadsheet, a stack of emails, or a count somebody did on
+          paper every morning. Those are the ones I like, because you find out fast whether the
+          new version actually saved anyone time — the person who used to do it by hand will
+          tell you.
+        </p>
 
-        <!-- How I got here -->
-        <section>
-          <h2 class="reveal font-display text-2xl font-bold text-ink">How I got here</h2>
-          <ol class="mt-5 space-y-4">
-            {path.map((stop, i) => (
-              <li id={stop.id} class="tile reveal flex scroll-mt-24 flex-col gap-1 p-5 sm:flex-row sm:gap-6" style={`--reveal-delay: ${i * 70}ms`}>
-                <span class="shrink-0 pt-0.5 font-mono text-sm tabular-nums text-accent sm:w-24">{stop.when}</span>
-                <span>
-                  <span class="block font-semibold text-ink">{stop.what}</span>
-                  <span class="mt-1 block text-sm leading-relaxed text-ink-muted">{stop.note}</span>
-                </span>
-              </li>
-            ))}
-          </ol>
-        </section>
+        <h2 class="mt">How I got here</h2>
+        <ol class="stops">
+          {site.path.map((stop) => (
+            <li id={stop.id}>
+              <span class="when mono">{stop.when}</span>
+              <div>
+                <h3>{stop.what}</h3>
+                <p>{stop.note}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
 
-        <!-- The before picture. Without it "I built an ERP" is an unverifiable
-             claim; with it, the size of the change is obvious and the reader
-             can judge it themselves. -->
-        <section class="reveal">
-          <h2 class="font-display text-2xl font-bold text-ink">What it ran on before</h2>
-          <p class="mt-4 max-w-(--container-reading) leading-relaxed text-ink-muted">
-            RMH3 has sold dental supplies since 1993, and it's a family business, not a
-            technical one. When I arrived the work ran on QuickBooks for the books and
-            SellerCloud for inventory, wired together roughly — plus Shopify apps, a stack
-            of Google Sheets in Notion for orders and customer-service cases, CSVs for
-            importing catalogues and product images, and pen and paper on the warehouse
-            floor. No barcodes on the shelves and no scanners.
-          </p>
-          <p class="mt-4 max-w-(--container-reading) leading-relaxed text-ink-muted">
-            It wasn't for lack of trying. They had paid SellerCloud for custom API
-            connections and hired contractors on and off for a couple of years to build
-            around the gaps. None of it held, partly because Net32 — the channel that
-            matters most to this business — offers very little API for prices or orders,
-            so the hard part was never the part anyone quoted for. That's the situation
-            the ERP replaced.
-          </p>
-        </section>
+        <h2 class="mt">Experience</h2>
+        <div id="jobs">
+          {site.experience.map((job) => (
+            <div class="job" data-year={startYear(job.start)}>
+              <p class="when mono">{job.start} — {job.end}</p>
+              <h3>{job.title} <span>· {job.org}, {job.place}</span></h3>
+              <p>{job.summary}</p>
+            </div>
+          ))}
+        </div>
+        <p id="jobs-empty" class="t" hidden>Nothing started that late.</p>
+
+        <h2 class="mt">Education</h2>
+        {site.education.map((e) => (
+          <div class="job">
+            <p class="when mono">{e.when}</p>
+            <h3>{e.title} <span>· {e.org}, {e.place}</span></h3>
+            <p>{e.detail}</p>
+          </div>
+        ))}
+
+        <Console slot="code" id="experience" endpoint="experience" body={experience} />
+      </Row>
+
+      <!-- The before picture. Without it "I built an ERP" is an unverifiable
+           claim; with it, the size of the change is obvious and the reader
+           can judge it themselves. -->
+      <Row id="before">
+        <h2>What it ran on before</h2>
+        <p class="t">
+          RMH3 has sold dental supplies since 1993, and it's a family business, not a technical
+          one. When I arrived the work ran on QuickBooks for the books and SellerCloud for
+          inventory, wired together roughly — plus Shopify apps, a stack of Google Sheets in
+          Notion for orders and customer-service cases, CSVs for importing catalogues and product
+          images, and pen and paper on the warehouse floor. No barcodes on the shelves and no
+          scanners.
+        </p>
+        <p class="t">
+          It wasn't for lack of trying. They had paid SellerCloud for custom API connections and
+          hired contractors on and off for a couple of years to build around the gaps. None of it
+          held, partly because Net32 — the channel that matters most to this business — offers
+          very little API for prices or orders, so the hard part was never the part anyone quoted
+          for. That's the situation the ERP replaced.
+        </p>
 
         <!-- The answer to "sole engineer at a small company, so who checks
              your work?" — the honest version is more interesting than the
              defensive one. -->
-        <section class="reveal">
-          <h2 class="font-display text-2xl font-bold text-ink">Who I work with</h2>
-          <p class="mt-4 max-w-(--container-reading) leading-relaxed text-ink-muted">
-            I'm the only engineer here, but that isn't the same as working alone. The owner
-            runs the front of the business — branding, the storefront, the catalogue — and
-            ships changes to it by directing AI agents. My job is to make that safe to do:
-            I own the backend, the environments it all runs on (Shopify, Railway, GitHub,
-            Harness) and the hooks and rules that decide what is allowed to land.
-          </p>
-          <p class="mt-4 max-w-(--container-reading) leading-relaxed text-ink-muted">
-            So most of what I build is for people who don't write code, and more and more
-            of it is tooling that lets them build too. That's a different job from writing
-            features, and it's most of what I do now.{' '}
-            <a class="text-accent hover:underline" href="/projects/agent-fleet">
-              How that actually works →
-            </a>
-          </p>
-        </section>
-      </div>
+        <h2 class="mt">Who I work with</h2>
+        <p class="t">
+          I'm the only engineer here, but that isn't the same as working alone. The owner runs
+          the front of the business — branding, the storefront, the catalogue — and ships changes
+          to it by directing AI agents. My job is to make that safe to do: I own the backend, the
+          environments it all runs on (Shopify, Railway, GitHub, Harness) and the hooks and rules
+          that decide what is allowed to land.
+        </p>
+        <p class="t">
+          So most of what I build is for people who don't write code, and more and more of it is
+          tooling that lets them build too. That's a different job from writing features, and
+          it's most of what I do now.{' '}
+          <a href="/projects/agent-fleet" class="c-link">How that actually works <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+        </p>
+        <Console
+          slot="code"
+          id="before"
+          endpoint="project"
+          params={{ id: 'internal-erp', fields: 'problem,unique' }}
+          options={{ id: [{ value: 'internal-erp', label: 'internal-erp' }] }}
+          body={before}
+        />
+      </Row>
 
-      <aside class="space-y-6">
-        <div class="tile reveal p-6" style="--reveal-delay: 80ms">
-          <p class="eyebrow">Facts</p>
-          <dl class="mt-4 space-y-3 text-sm">
-            <div class="flex justify-between gap-4"><dt class="text-ink-faint">Based in</dt><dd class="text-right text-ink">{site.location}</dd></div>
-            <div class="flex justify-between gap-4"><dt class="text-ink-faint">Timezone</dt><dd class="text-right text-ink">{site.timezone}</dd></div>
-            <div class="flex justify-between gap-4"><dt class="text-ink-faint">Open to</dt><dd class="text-right text-ink">Backend · full-stack · remote or NoVA</dd></div>
-            <div class="flex justify-between gap-4"><dt class="text-ink-faint">Email</dt><dd class="text-right"><a class="text-accent hover:underline" href={`mailto:${site.email}`}>{site.email}</a></dd></div>
-          </dl>
-          <div class="mt-5 flex flex-wrap gap-2">
-            <a href="/contact" class="btn btn-primary text-sm">Get in touch</a>
-            <a href={site.resumeUrl} class="btn btn-ghost text-sm">Resume</a>
-            <a href={site.resumePdf} class="btn btn-ghost text-sm" download="Dylan-San-Gabriel-Resume.pdf">PDF</a>
+      <Row id="how">
+        <h2>How I work</h2>
+        {site.principles.map((p) => (
+          <div class="principle">
+            <h3>{p.title}</h3>
+            <p class="t">{p.body}</p>
           </div>
-        </div>
+        ))}
+        <h2 class="mt">Right now</h2>
+        <p class="t">
+          Running a fleet of AI coding sessions against one codebase without them corrupting each
+          other. It's mostly hooks and rules that make the dangerous operations impossible instead
+          of just telling you not to.{' '}
+          <a href="/projects/agent-fleet" class="c-link">The write-up <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+        </p>
+        <h2 class="mt">Off the clock</h2>
+        <p class="t">
+          Cooking, mostly. I play a bit of music. And I'll drive further than I should for a
+          restaurant I haven't tried yet.
+        </p>
+        <Console slot="code" id="how" endpoint="dylan" params={{ view: 'plain', fields: 'principles,open_to,looking_for' }} body={how} />
+      </Row>
 
-        <div class="tile reveal p-6" style="--reveal-delay: 140ms">
-          <p class="eyebrow">Education</p>
-          <ul class="mt-4 space-y-4">
-            {site.education.map((e) => (
-              <li>
-                <p class="font-semibold text-ink">{e.title}</p>
-                <p class="text-sm text-ink-muted">{e.org} · {e.when}</p>
-                <p class="mt-1 text-sm leading-relaxed text-ink-faint">{e.detail}</p>
-              </li>
-            ))}
-          </ul>
+      <!-- Skills. The one long list that earns its length — it is scanned, not read. -->
+      <Row id="toolkit">
+        <h2>What I work with</h2>
+        <p class="t">Ordered by how often I reach for it, not alphabetically.</p>
+        <dl class="skills">
+          {site.skills.map((row) => (
+            <>
+              <dt class="mono">{row.group}</dt>
+              <dd>{row.items.join(', ')}</dd>
+            </>
+          ))}
+        </dl>
+        <h2 class="mt">Certifications</h2>
+        <ul class="certs">
+          {site.certifications.map((c) => (
+            <li>{c.name} <span class="mono">· {c.issuer} · {c.id}</span></li>
+          ))}
+        </ul>
+        <dl class="facts">
+          <dt class="mono">based_in</dt><dd>{site.location}</dd>
+          <dt class="mono">timezone</dt><dd>{site.timezone}</dd>
+          <dt class="mono">open_to</dt><dd>Backend · full-stack · remote or Northern Virginia</dd>
+          <dt class="mono">email</dt><dd><a href={`mailto:${site.email}`}>{site.email}</a></dd>
+        </dl>
+        <div class="actions">
+          <a href="/contact" class="btn btn-primary">Get in touch</a>
+          <a href={site.resumeUrl} class="c-link">Resume <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+          <a href={site.resumePdf} class="c-link" download="Dylan-San-Gabriel-Resume.pdf">PDF</a>
         </div>
-
-        <div class="tile reveal p-6" style="--reveal-delay: 200ms">
-          <p class="eyebrow">Certifications</p>
-          <ul class="mt-4 space-y-2 text-sm">
-            {site.certifications.map((c) => (
-              <li>
-                <span class="text-ink">{c.name}</span>
-                <span class="text-ink-faint"> · {c.issuer} · {c.id}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </aside>
+        <Console slot="code" id="toolkit" endpoint="resume" params={{ fields: 'skills,certifications' }} body={toolkit} />
+      </Row>
     </div>
-
-    <!-- Full width, deliberately: in the left column these two were squeezed
-         into a third of the page with the sidebar already finished above them,
-         which left a dead rectangle on the right. Spanning the container also
-         lets the two columns above end level with each other. -->
-    <section class="mt-12 grid gap-4 md:grid-cols-2">
-      <div class="tile reveal p-6">
-        <p class="eyebrow">Right now</p>
-        <p class="mt-3 leading-relaxed text-ink-muted">
-          Running a fleet of AI coding sessions against one codebase without them
-          corrupting each other. It's mostly hooks and rules that make the dangerous
-          operations impossible instead of just telling you not to.{' '}
-          <a class="text-accent hover:underline" href="/projects/agent-fleet">The write-up →</a>
-        </p>
-      </div>
-      <div class="tile reveal p-6" style="--reveal-delay: 70ms">
-        <p class="eyebrow">Off the clock</p>
-        <p class="mt-3 leading-relaxed text-ink-muted">
-          Cooking, mostly. I play a bit of music. And I'll drive further than I should
-          for a restaurant I haven't tried yet.
-        </p>
-      </div>
-    </section>
-
-    <!-- Moved off the home page, where it sat 300px from a tile saying the same
-         three things in different words. It belongs with the story, not in
-         front of the work. -->
-    <section class="mt-20">
-      <SectionHeading
-        eyebrow="Principles"
-        title="Three things I've learned the expensive way"
-      />
-      <div class="grid gap-4 md:grid-cols-3">
-        {site.principles.map((p, i) => (
-          <article class="tile reveal p-6" style={`--reveal-delay: ${i * 80}ms`}>
-            <span class="font-display text-4xl font-extrabold text-accent/60">0{i + 1}</span>
-            <h3 class="mt-3 font-display text-xl font-bold text-ink">{p.title}</h3>
-            <p class="mt-3 text-sm leading-relaxed text-ink-muted">{p.body}</p>
-          </article>
-        ))}
-      </div>
-    </section>
-
-    <!-- Skills. The one long list that earns its length — it is scanned, not read. -->
-    <section class="mt-20 pb-8">
-      <SectionHeading
-        eyebrow="Toolkit"
-        title="What I work with"
-        lead="Ordered by how often I reach for it, not alphabetically."
-        link={{ href: '/resume', label: 'Full resume' }}
-      />
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {site.skills.map((row, i) => (
-          <div class="tile reveal p-5" style={`--reveal-delay: ${i * 50}ms`}>
-            <p class="text-xs font-semibold uppercase tracking-wide text-ink-faint">{row.group}</p>
-            <ul class="mt-3 flex flex-wrap gap-1.5">
-              {row.items.map((item) => (
-                <li class="rounded-md bg-surface-raised px-2 py-1 text-sm text-ink">{item}</li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
-    </section>
   </div>
 </Base>
+
+<style>
+  .certs { margin-top: 0.75rem; font-size: 0.9375rem; color: var(--ink-muted); }
+  .certs li { padding-block: 0.25rem; }
+  .certs .mono { font-size: 0.75rem; color: var(--ink-faint); }
+</style>
+
+<script>
+  // `since` in three places — the address, the console's parameter, and the
+  // list — kept as one. A Send on GET /api/experience?since=2022 hides the
+  // jobs that started earlier, exactly as the response does.
+  document.addEventListener('astro:page-load', () => {
+    const jobs = [...document.querySelectorAll<HTMLElement>('#jobs .job[data-year]')];
+    if (jobs.length === 0) return;
+    const empty = document.getElementById('jobs-empty');
+    const consoleEl = document.querySelector<HTMLElement>('.cx[data-key="experience"]');
+
+    const apply = (since: string, { push = true, tellConsole = true } = {}) => {
+      const y = /^\d{4}$/.test(since) ? Number(since) : 0;
+      let shown = 0;
+      jobs.forEach((j) => {
+        const show = !y || Number(j.dataset.year) >= y;
+        j.hidden = !show;
+        if (show) shown++;
+      });
+      if (empty) empty.hidden = shown > 0;
+      if (push) {
+        const url = new URL(location.href);
+        if (y) url.searchParams.set('since', String(y));
+        else url.searchParams.delete('since');
+        history.replaceState(null, '', url);
+      }
+      if (tellConsole) consoleEl?.dispatchEvent(new CustomEvent('console:set', { detail: { since: y ? String(y) : '' } }));
+    };
+
+    const onSent = (e: Event) => {
+      const d = (e as CustomEvent<{ key: string; params: Record<string, string> }>).detail;
+      if (d?.key === 'experience') apply(d.params.since || '', { tellConsole: false });
+    };
+    document.addEventListener('console:sent', onSent);
+    document.addEventListener('astro:before-swap', () => document.removeEventListener('console:sent', onSent), { once: true });
+
+    // Deferred a tick so the console has mounted its listeners first.
+    const initial = new URLSearchParams(location.search).get('since');
+    if (initial) setTimeout(() => apply(initial, { push: false }), 0);
+  });
+</script>

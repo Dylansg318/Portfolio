@@ -1,116 +1,155 @@
 ---
 import Base from '../../layouts/Base.astro';
-import ProjectCard from '../../components/ui/ProjectCard.astro';
-import WorkRow from '../../components/ui/WorkRow.astro';
-import { getProjects, getChildren } from '../../lib/content';
+import Rail from '../../components/ref/Rail.astro';
+import Row from '../../components/ref/Row.astro';
+import Crumb from '../../components/ref/Crumb.astro';
+import Console from '../../components/ref/Console.astro';
+import Cover from '../../components/ui/Cover.astro';
+import { getProjects, getChildren, getAllProjects, statusLabel } from '../../lib/content';
 import { CATEGORIES, categoryLabel } from '../../lib/categories';
+import { workList, projectById } from '../../lib/api';
 
 const projects = await getProjects();
 // Subsystems are listed once, under their parent, instead of competing with it
-// in the grid. See `parent` in src/content.config.ts.
+// in the list. See `parent` in src/content.config.ts.
 const subsystems = await getChildren('internal-erp');
 // The tabs are the categories with something filed under them, in the order
 // src/lib/categories.ts declares — not the stack, which grew one chip per
 // library until the row was a keyword cloud. An empty shelf gets no tab.
 const categories = CATEGORIES.filter((c) => projects.some((p) => p.data.category === c));
+const ids = (await getAllProjects()).map((p) => ({ value: p.id, label: p.id }));
+
+const work = await workList();
+const inside = await projectById('internal-erp', ['subsystems']);
 ---
 <Base title="Work" description="Everything I've built and written up: the problem, what was non-obvious, and what came out of it.">
-  <section>
-    <div class="mx-auto max-w-(--container-wide) px-4 pb-10 pt-12 sm:px-6 sm:pt-16">
-      <p class="eyebrow reveal reveal-load">Work</p>
-      <h1 class="reveal reveal-load mt-4 text-4xl font-extrabold tracking-tight text-ink sm:text-6xl" style="--reveal-delay: 60ms">
-        Projects, written up{' '}<span class="text-gradient">properly.</span>
-      </h1>
-      <p class="reveal reveal-load mt-5 max-w-(--container-reading) text-lg text-ink-muted" style="--reveal-delay: 120ms">
-        Each one says what the problem was, what was non-obvious about the approach, and what
-        came out of it, in the same places every time, so you can compare them.
-      </p>
-    </div>
-  </section>
-
-  <div class="mx-auto max-w-(--container-wide) px-4 sm:px-6">
-    {categories.length > 1 && (
-      <div class="reveal flex flex-wrap gap-2" role="group" aria-label="Filter by kind of project">
-        <button
-          type="button"
-          data-filter="all"
-          aria-pressed="true"
-          class="rounded-lg border border-accent bg-accent px-3 py-1.5 text-sm font-medium text-accent-ink"
-        >
-          All
-        </button>
-        {categories.map((category) => (
-          <button
-            type="button"
-            data-filter={category}
-            aria-pressed="false"
-            class="rounded-lg border border-border px-3 py-1.5 text-sm text-ink-muted transition-colors hover:border-border-strong hover:text-ink"
-          >
-            {categoryLabel[category]}
-          </button>
-        ))}
-      </div>
-    )}
-
-    <div id="project-grid" class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {projects.map((project, i) => (
-        <div data-category={project.data.category}>
-          <ProjectCard project={project} delay={(i % 3) * 70} />
-        </div>
-      ))}
-    </div>
-
-    <p id="empty-state" class="hidden py-16 text-center text-ink-muted">
-      Nothing matches that filter.
-    </p>
-
-    {subsystems.length > 0 && (
-      <section class="mt-20 border-t border-border pt-10">
-        <p class="eyebrow reveal">Inside the ERP</p>
-        <p class="reveal mt-3 max-w-(--container-reading) text-ink-muted">
-          Three parts of the ERP with write-ups of their own. They are not separate
-          projects — they are the pieces that made the whole thing work.
+  <div class="ref">
+    <Rail current="work" />
+    <div class="ref-main">
+      <Row id="work">
+        <Crumb method="GET" path="/api/work" />
+        <h1 class="page">Projects, written up properly.</h1>
+        <p class="lead">
+          Each one says what the problem was, what was non-obvious about the approach, and what
+          came out of it, in the same places every time, so you can compare them.
         </p>
-        <div class="mt-8 border-t border-border">
-          {subsystems.map((project, i) => <WorkRow project={project} delay={i * 50} />)}
+
+        {categories.length > 1 && (
+          <nav class="cats" aria-label="Filter by kind of project">
+            <ul role="group">
+              <li><button type="button" data-filter="all" aria-pressed="true">All</button></li>
+              {categories.map((category) => (
+                <li><button type="button" data-filter={category} aria-pressed="false">{categoryLabel[category]}</button></li>
+              ))}
+            </ul>
+          </nav>
+        )}
+
+        <div class="items" id="work-list">
+          {projects.map((project) => {
+            const { data } = project;
+            return (
+              <article class:list={['item', data.cover && 'has-pic']} data-category={data.category}>
+                <div>
+                  <h3><a href={`/projects/${project.id}`}>{data.title}</a></h3>
+                  <p class="status">
+                    {statusLabel[data.status]} · {data.date.getFullYear()}{data.role && ` · ${data.role}`}
+                  </p>
+                  <p class="t">
+                    <span class="only-plain">{data.plainBlurb ?? data.blurb}</span>
+                    <span class="only-eng">{data.blurb}</span>
+                  </p>
+                  <p class="more"><a href={`/projects/${project.id}`} class="c-link">Read the project <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a></p>
+                </div>
+                {data.cover && (
+                  <div class:list={['pic', data.cover.width === data.cover.height && 'sq']}>
+                    <Cover cover={data.cover} alt={data.coverAlt ?? ''} widths={[320, 640]} sizes="(max-width: 640px) 100vw, 208px" />
+                  </div>
+                )}
+              </article>
+            );
+          })}
         </div>
-      </section>
-    )}
+        <p id="work-empty" class="t" hidden>Nothing filed under this category yet.</p>
+
+        <Console slot="code" id="work" endpoint="work" body={work} />
+      </Row>
+
+      {subsystems.length > 0 && (
+        <Row id="inside">
+          <h2>Inside the ERP</h2>
+          <p class="t">
+            Six parts of the ERP with write-ups of their own. They are not separate projects —
+            they are the pieces that made the whole thing work.
+          </p>
+          <ul class="subs">
+            {subsystems.map((s) => (
+              <li>
+                <a href={`/projects/${s.id}`}>{s.data.title}</a>
+                <p>
+                  <span class="only-plain">{s.data.plainBlurb ?? s.data.blurb}</span>
+                  <span class="only-eng">{s.data.blurb}</span>
+                </p>
+              </li>
+            ))}
+          </ul>
+          <Console
+            slot="code"
+            id="inside"
+            endpoint="project"
+            params={{ id: 'internal-erp', fields: 'subsystems' }}
+            options={{ id: ids }}
+            body={inside}
+          />
+        </Row>
+      )}
+    </div>
   </div>
 </Base>
 
 <script>
-  // Re-run on every View Transitions navigation: a bundled module
-  // executes once, so top-level setup would go dead after the first
-  // soft navigation. astro:page-load also fires on the initial load.
+  // The tabs, the ?category= in the address, and the console's `category`
+  // parameter are one control in three places. Any of them changing moves
+  // the other two. Vanilla — no framework runtime on the index page.
   document.addEventListener('astro:page-load', () => {
-    // Vanilla filtering — no framework runtime on the index page.
-    const buttons = document.querySelectorAll<HTMLButtonElement>('[data-filter]');
-    const cards = document.querySelectorAll<HTMLElement>('#project-grid > [data-category]');
-    const empty = document.getElementById('empty-state');
+    const buttons = [...document.querySelectorAll<HTMLButtonElement>('[data-filter]')];
+    if (buttons.length === 0) return;
+    const cards = [...document.querySelectorAll<HTMLElement>('#work-list > [data-category]')];
+    const empty = document.getElementById('work-empty');
+    const consoleEl = document.querySelector<HTMLElement>('.cx[data-key="work"]');
+    const known = new Set(buttons.map((b) => b.dataset.filter!));
 
-    const ACTIVE = ['border-accent', 'bg-accent', 'text-accent-ink', 'font-medium'];
-    const IDLE = ['border-border', 'text-ink-muted'];
-
-    buttons.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const filter = btn.dataset.filter!;
-
-        buttons.forEach((b) => {
-          const on = b === btn;
-          b.setAttribute('aria-pressed', String(on));
-          b.classList.remove(...(on ? IDLE : ACTIVE));
-          b.classList.add(...(on ? ACTIVE : IDLE));
-        });
-
-        let shown = 0;
-        cards.forEach((card) => {
-          const match = filter === 'all' || card.dataset.category === filter;
-          card.hidden = !match;
-          if (match) shown++;
-        });
-        empty?.classList.toggle('hidden', shown > 0);
+    const apply = (filter: string, { push = true, tellConsole = true } = {}) => {
+      const f = known.has(filter) ? filter : 'all';
+      buttons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filter === f)));
+      let shown = 0;
+      cards.forEach((card) => {
+        const match = f === 'all' || card.dataset.category === f;
+        card.hidden = !match;
+        if (match) shown++;
       });
-    });
+      if (empty) empty.hidden = shown > 0;
+      if (push) {
+        const url = new URL(location.href);
+        if (f === 'all') url.searchParams.delete('category');
+        else url.searchParams.set('category', f);
+        history.replaceState(null, '', url);
+      }
+      if (tellConsole) consoleEl?.dispatchEvent(new CustomEvent('console:set', { detail: { category: f === 'all' ? '' : f } }));
+    };
+
+    buttons.forEach((btn) => btn.addEventListener('click', () => apply(btn.dataset.filter!)));
+
+    // A Send on the /api/work console with a category filters the list.
+    const onSent = (e: Event) => {
+      const d = (e as CustomEvent<{ key: string; params: Record<string, string> }>).detail;
+      if (d?.key === 'work') apply(d.params.category || 'all', { tellConsole: false });
+    };
+    document.addEventListener('console:sent', onSent);
+    document.addEventListener('astro:before-swap', () => document.removeEventListener('console:sent', onSent), { once: true });
+
+    // Deferred a tick so the console has mounted its listeners first.
+    const initial = new URLSearchParams(location.search).get('category');
+    if (initial) setTimeout(() => apply(initial, { push: false }), 0);
   });
 </script>

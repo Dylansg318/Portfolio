@@ -1,10 +1,23 @@
 ---
 import Base from '../layouts/Base.astro';
-import HomeProject from '../components/ui/HomeProject.astro';
+import Rail from '../components/ref/Rail.astro';
+import Row from '../components/ref/Row.astro';
+import Crumb from '../components/ref/Crumb.astro';
+import Console from '../components/ref/Console.astro';
 import Nameplate from '../components/ui/Nameplate.astro';
 import Cover from '../components/ui/Cover.astro';
 import { site } from '../lib/site';
-import { getProjects } from '../lib/content';
+import { getProjects, statusLabel } from '../lib/content';
+import { personRecord, workList, experienceRecord, awayRecord } from '../lib/api';
+import { escape } from '../lib/console-render';
+import bashGuard from '../../code/session-lock/bash-guard.cjs?raw';
+
+/**
+ * The home page is a reference to one person. Every row is an endpoint: the
+ * prose on the left says what it is in plain words, the console on the right
+ * shows the exact shape and answers for real. Person first, then the work,
+ * then the path here, then the rest of life, then how to get in touch.
+ */
 
 // Curate for breadth: production ownership, developer tooling, and an
 // independent product. The complete catalog remains on /projects.
@@ -14,127 +27,173 @@ const selections = [
   { id: 'agent-fleet', label: 'Tools for myself', focus: 'What keeps five to ten coding agents on one repo from losing work.' },
   { id: 'receipt-splitter', label: 'On the side', focus: 'The whole thing on my own, from the phone camera to the split.' },
 ];
-const selected = selections.flatMap((selection) => {
-  const project = projects.find((p) => p.id === selection.id);
-  return project ? [{ ...selection, project }] : [];
+const selected = selections.flatMap((s) => {
+  const project = projects.find((p) => p.id === s.id);
+  return project ? [{ ...s, project }] : [];
 });
 const game = projects.find((p) => p.id === 'galaxy-defense');
+
+// The responses at rest — the same records the Worker returns, built by the
+// same functions, so the page never shows a body the API would not.
+const dylan = personRecord('engineer');
+const work = await workList();
+const experience = experienceRecord();
+const away = await awayRecord(true);
+const contactAtRest = {
+  to: site.email,
+  subject: 'Hello from your portfolio',
+  message: '(waiting for your message)',
+};
+
+// One of the hooks from the agent-fleet write-up, straight from the public
+// code tree (`?raw` inlines the file at build), so the excerpt is the real
+// thing and re-reads itself on every build. Lines are 1-based and inclusive.
+const EXCERPT_FILE = 'code/session-lock/bash-guard.cjs';
+const [FROM, TO] = [204, 219];
+const excerpt = bashGuard
+  .split('\n')
+  .slice(FROM - 1, TO)
+  .map((l) => l.replace(/^  /, ''))
+  .join('\n');
+const excerptHtml = escape(excerpt)
+  .replace(/(\/\/.*)$/gm, '<span class="cm">$1</span>')
+  .replace(/\b(if|const|new|return)\b/g, '<span class="kw">$1</span>')
+  .replace(/(&#39;[^&]*?(?:&(?!#39;)[^&]*?)*&#39;)/g, '<span class="st">$1</span>');
 ---
 <Base>
-  <section aria-labelledby="intro-heading">
-    <div class="mx-auto max-w-(--container-wide) px-4 pb-16 pt-16 sm:px-6 sm:pb-20 sm:pt-24">
-      <div class="grid gap-10 lg:grid-cols-[1.05fr_1fr] lg:items-end lg:gap-16">
-        <div class="reveal reveal-load">
-          <p class="eyebrow">{site.role}</p>
-          <h1 id="intro-heading" class="mt-6 font-display text-[clamp(3rem,8vw,5rem)] lg:text-[clamp(3rem,6.5vw,5rem)] font-extrabold leading-[0.94] tracking-[-0.055em] text-ink">
-            Dylan{' '}<span class="block whitespace-nowrap">San Gabriel<span class="text-accent">.</span></span>
-          </h1>
-          <p class="mt-6 text-sm text-ink-faint">{site.location} · {site.timezone}</p>
+  <div class="ref">
+    <Rail current="dylan" hrefs={{ dylan: '#dylan', work: '#work', experience: '#experience', contact: '#contact' }} />
+    <div class="ref-main">
+      <Row id="dylan">
+        <Crumb method="GET" path="/api/dylan" />
+        <h1>{site.name}</h1>
+        <Nameplate class="lead" />
+        <p class="t">
+          Before this, software was something I had to use on a shift — a register, a POS, a count
+          that never matched the shelf. Most of what I build now replaces something someone was doing
+          by hand.
+        </p>
+        <dl class="facts">
+          <dt class="mono">role</dt><dd>{site.role}</dd>
+          <dt class="mono">location</dt><dd>{site.location} · {site.timezone}</dd>
+          <dt class="mono">mostly</dt><dd>{site.mainly.focus} · {site.mainly.stack.join(', ')}</dd>
+          <dt class="mono">open_to</dt><dd>{site.availability}</dd>
+          <dt class="mono">measured</dt><dd>{site.statsAsOf}</dd>
+        </dl>
+        <div class="actions">
+          <a href="#work" class="btn btn-primary">See the work <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12l7 7 7-7"/></svg></a>
+          <a href={site.resumeUrl} class="c-link">Resume <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+          <a href="/about" class="c-link">About me <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
         </div>
-        <div class="reveal reveal-load" style="--reveal-delay: 100ms">
-          <Nameplate class="text-lg leading-relaxed text-ink-muted sm:text-xl" />
-          <p class="mt-5 text-base leading-relaxed text-ink-muted">
-            Before this, software was something I had to use on a shift — a register,
-            a POS, a count that never matched the shelf. Most of what I build now
-            replaces something someone was doing by hand.
+        <Console slot="code" id="dylan" endpoint="dylan" params={{ view: 'engineer' }} body={dylan} />
+      </Row>
+
+      <Row id="work">
+        <Crumb method="GET" path="/api/work" />
+        <h2>One at work, one for myself, one on the side.</h2>
+        <p class="t"><a href="/projects" class="c-link">All projects <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a></p>
+        <div class="items">
+          {selected.map(({ project, label, focus }) => {
+            const { data } = project;
+            return (
+              <article class:list={['item', data.cover && 'has-pic']}>
+                <div>
+                  <h3><a href={`/projects/${project.id}`}>{data.title}</a></h3>
+                  <p class="status">{label} · {statusLabel[data.status]} · {data.date.getFullYear()}</p>
+                  <p class="focus">{focus}</p>
+                  <p class="t">
+                    <span class="only-plain">{data.plainBlurb ?? data.blurb}</span>
+                    <span class="only-eng">{data.blurb}</span>
+                  </p>
+                  <p class="more"><a href={`/projects/${project.id}`} class="c-link">Read the project <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a></p>
+                </div>
+                {data.cover && (
+                  <div class="pic">
+                    <Cover cover={data.cover} alt={data.coverAlt ?? ''} widths={[320, 640]} sizes="(max-width: 640px) 100vw, 208px" />
+                  </div>
+                )}
+              </article>
+            );
+          })}
+        </div>
+        <Fragment slot="code">
+          <Console id="work" endpoint="work" body={work} />
+          <div class="panel">
+            <div class="bar mono"><span><b>Excerpt</b> · one of the hooks</span><span class="src">{EXCERPT_FILE} · {FROM}–{TO}</span></div>
+            <pre set:html={excerptHtml} />
+          </div>
+          <p class="note mono">
+            Thirteen sanitized production modules with their tests are public:
+            <a href={site.links.code} rel="noopener">github.com/Dylansg318/Portfolio/code</a>
           </p>
-          <div class="mt-8 flex flex-wrap gap-3">
-            <a href="#work" class="btn btn-primary">See the work <span aria-hidden="true">↓</span></a>
-            <a href={site.resumeUrl} class="btn btn-ghost">Resume</a>
-            <a href="/about" class="btn btn-ghost">About me</a>
-          </div>
-        </div>
-      </div>
-      <div class="mt-12 flex flex-wrap gap-x-8 gap-y-3 border-t border-border pt-5 text-sm text-ink-muted">
-        <p><span class="text-ink">Mostly backend</span> · TypeScript, Node, Postgres</p>
-        <a href="#experience" class="text-accent hover:underline">Retail → hospitality → software <span aria-hidden="true">↓</span></a>
-      </div>
-    </div>
-  </section>
+        </Fragment>
+      </Row>
 
-  <section id="work" aria-labelledby="work-heading" class="scroll-mt-24 border-t border-border">
-    <div class="mx-auto max-w-(--container-wide) px-4 py-16 sm:px-6 sm:py-20">
-      <div class="reveal flex flex-wrap items-end justify-between gap-5">
-        <div>
-          <p class="eyebrow">Selected work</p>
-          <h2 id="work-heading" class="mt-3 text-3xl font-bold sm:text-4xl">One at work, one for myself, one on the side.</h2>
-        </div>
-        <a href="/projects" class="text-sm font-medium text-accent hover:underline">All projects →</a>
-      </div>
-      <div class="mt-10 grid gap-x-8 gap-y-12 md:grid-cols-3">
-        {selected.map(({ project, label, focus }, i) => (
-          <HomeProject project={project} label={label} focus={focus} number={i + 1} />
-        ))}
-      </div>
-    </div>
-  </section>
-
-  <section id="experience" aria-labelledby="experience-heading" class="scroll-mt-24 border-t border-border">
-    <div class="mx-auto grid max-w-(--container-wide) gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[1fr_1.65fr] lg:gap-20">
-      <div class="reveal">
-        <p class="eyebrow">Experience</p>
-        <h2 id="experience-heading" class="mt-3 text-3xl font-bold sm:text-4xl">How I got here.</h2>
-        <p class="mt-5 leading-relaxed text-ink-muted">
-          I managed a T-Mobile store, then ran front-of-house at a Korean BBQ restaurant.
-          I was taking CS classes at George Mason the whole time, and finished a software
-          testing bootcamp between shifts.
+      <Row id="experience">
+        <Crumb method="GET" path="/api/experience" />
+        <h2>How I got here.</h2>
+        <p class="t">
+          I managed a T-Mobile store, then ran front-of-house at a Korean BBQ restaurant. I was
+          taking CS classes at George Mason the whole time, and finished a software testing bootcamp
+          between shifts.
         </p>
-        <a href="/about#tmobile" class="mt-5 inline-block text-sm font-medium text-accent hover:underline">The longer story →</a>
-      </div>
-      <ol class="career-path">
         {site.experience.map((job) => (
-          <li class="reveal relative border-l border-border-strong pb-9 pl-7 last:pb-0">
-            <span aria-hidden="true" class="absolute -left-[5px] top-1.5 size-[9px] rounded-full bg-accent"></span>
-            <p class="font-mono text-xs text-ink-faint">{job.start} — {job.end}</p>
-            <h3 class="mt-2 text-xl font-semibold">{job.title}</h3>
-            <p class="mt-1 text-sm text-ink-faint">{job.org}</p>
-            <p class="mt-3 max-w-xl text-sm leading-relaxed text-ink-muted">{job.summary}</p>
-          </li>
-        ))}
-      </ol>
-    </div>
-  </section>
-
-  <section aria-labelledby="personal-heading" class="border-t border-border">
-    <div class="mx-auto grid max-w-(--container-wide) gap-10 px-4 py-16 sm:px-6 sm:py-20 md:grid-cols-2 md:items-center md:gap-20">
-      <div class="reveal">
-        <p class="eyebrow">Away from work</p>
-        <h2 id="personal-heading" class="mt-3 text-3xl font-bold sm:text-4xl">Cooking, music, one more side project.</h2>
-        <p class="mt-5 leading-relaxed text-ink-muted">
-          I cook, I play a bit of music, and I'm always trying a restaurant I haven't
-          been to yet. There's usually a side project going that I talked myself into.
-        </p>
-        <a href="/desk" class="mt-5 inline-block text-sm font-medium text-accent hover:underline">Take a look around my help desk →</a>
-      </div>
-      {game && (
-        <a href={`/projects/${game.id}`} class="reveal group grid grid-cols-[7rem_1fr] items-center gap-5 border-y border-border py-6 sm:grid-cols-[9rem_1fr]">
-          {game.data.cover && <Cover cover={game.data.cover} alt={game.data.coverAlt ?? ''} class="aspect-square w-full rounded-lg object-cover" widths={[160, 320]} sizes="144px" />}
-          <div>
-            <p class="font-mono text-xs text-ink-faint">2020 · Where it started</p>
-            <h3 class="mt-2 text-xl font-semibold group-hover:text-accent">Galaxy Defense</h3>
-            <p class="mt-2 text-sm leading-relaxed text-ink-muted">A high-school game with a shop, upgrades, and a boss fight. Still playable.</p>
-            <p class="mt-3 text-sm font-medium text-accent">Play &amp; read the story →</p>
+          <div class="job">
+            <p class="when mono">{job.start} — {job.end}</p>
+            <h3>{job.title} <span>· {job.org}</span></h3>
+            <p>{job.summary}</p>
           </div>
-        </a>
-      )}
-    </div>
-  </section>
+        ))}
+        <p class="actions"><a href="/about" class="c-link">The longer story <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a></p>
+        <Console slot="code" id="experience" endpoint="experience" body={experience} />
+      </Row>
 
-  <section aria-labelledby="contact-heading" class="border-t border-border">
-    <div class="mx-auto max-w-(--container-wide) px-4 py-16 sm:px-6 sm:py-20">
-      <p class="eyebrow reveal">Contact</p>
-      <h2 id="contact-heading" class="reveal mt-3 text-3xl font-bold sm:text-4xl">What I'm looking for.</h2>
-      <p class="reveal mt-5 max-w-(--container-reading) text-lg leading-relaxed text-ink-muted">
-        A backend or full-stack role, remote or in Northern Virginia. If that's what
-        you're hiring for, let me know. The form is the quickest way to reach me; email
-        works too.
-      </p>
-      <div class="reveal mt-7 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
-        <a href="/contact" class="btn btn-primary">Get in touch</a>
-        <a href={`mailto:${site.email}`} class="text-accent hover:underline">{site.email}</a>
-        {site.links.github && <a href={site.links.github} rel="me noopener" class="text-ink-muted hover:underline">GitHub</a>}
-        {site.links.linkedin && <a href={site.links.linkedin} rel="me noopener" class="text-ink-muted hover:underline">LinkedIn</a>}
-      </div>
+      <Row id="away">
+        <Crumb method="GET" path="/api/away-from-work" />
+        <h2>Cooking, music, one more side project.</h2>
+        <p class="t">{site.away.note}</p>
+        {game && (
+          <div class="items">
+            <article class:list={['item', game.data.cover && 'has-pic']}>
+              <div>
+                <h3><a href={`/projects/${game.id}`}>{game.data.title}</a></h3>
+                <p class="status">2020 · Where it started</p>
+                <p class="t">A high-school game with a shop, upgrades, and a boss fight. Still playable.</p>
+                <p class="more"><a href={`/play/${game.id}`} class="c-link">Play <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a></p>
+              </div>
+              {game.data.cover && (
+                <div class="pic sq">
+                  <Cover cover={game.data.cover} alt={game.data.coverAlt ?? ''} widths={[160, 320]} sizes="144px" />
+                </div>
+              )}
+            </article>
+          </div>
+        )}
+        <p class="actions"><a href="/desk" data-astro-reload class="c-link">Take a look around my help desk <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a></p>
+        <Console slot="code" id="away" endpoint="away" body={away} />
+      </Row>
+
+      <Row id="contact">
+        <Crumb method="POST" path="/api/contact" />
+        <h2>What I'm looking for.</h2>
+        <p class="t">
+          {site.lookingFor} The console on the right sends me a message; email works too.
+        </p>
+        <div class="actions">
+          <a href="/contact" class="btn btn-primary">Get in touch</a>
+          <a href={`mailto:${site.email}`} class="c-link">{site.email}</a>
+          {site.links.github && <a href={site.links.github} rel="me noopener" class="c-link quiet">GitHub</a>}
+          {site.links.linkedin && <a href={site.links.linkedin} rel="me noopener" class="c-link quiet">LinkedIn</a>}
+        </div>
+        <Console
+          slot="code"
+          id="contact"
+          endpoint="contact"
+          body={contactAtRest}
+          status={0}
+          frame="Live: the route validates for real. Until mail delivery is configured it answers 503 with a mailto link, and Send opens it with your message in it."
+        />
+      </Row>
     </div>
-  </section>
+  </div>
 </Base>
