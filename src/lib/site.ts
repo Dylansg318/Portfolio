@@ -97,8 +97,8 @@ export const site = {
    *  a reviewer can actually read. */
   resumeProjects: [
     {
-      title: 'MHLHUB — the ERP',
-      href: '/projects/mhlhub',
+      title: 'The internal ERP',
+      href: '/projects/internal-erp',
       stack: 'TypeScript, Express, React, PostgreSQL',
       blurb:
         'How the system is shaped, the rules that stopped the expensive mistakes, screenshots of it running.',
@@ -160,9 +160,9 @@ export const site = {
       start: 'Jun 2025',
       end: 'Present',
       summary:
-        'The only engineer at a family-run dental distributor. Built and run MHLHUB, the in-house ERP that replaced off-the-shelf software, spreadsheets and inbox triage across six sales channels.',
+        'The only engineer at a family-run dental distributor. Built and run the in-house ERP that replaced off-the-shelf software, spreadsheets and inbox triage across six sales channels.',
       bullets: [
-        'Sole engineer for MHLHUB, the in-house ERP that replaced SellerCloud and a stack of spreadsheets: order intake from six sales channels, inventory, shipping, customer service, returns, invoicing and a two-way QuickBooks Desktop sync.',
+        'Sole engineer for the in-house ERP that replaced SellerCloud and a stack of spreadsheets: order intake from six sales channels, inventory, shipping, customer service, returns, invoicing and a two-way QuickBooks Desktop sync.',
         'Daily orders grew from about 270 to about 520 on a 32,000-product catalog with no added operations headcount.',
         'Replaced a morning pricing spreadsheet with a repricing engine that re-evaluates every product every 60 seconds with cooldowns, floors and a no-price-war rule; 138,000+ price changes, each logged with its reason.',
         'Integrated eBay, Amazon SP-API, Shopify, Walmart, Net32 and three carriers: 300,000+ orders ingested, every raw payload stored before parsing, and a source-scan guard so channel code can never write the product catalog.',

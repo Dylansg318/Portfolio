@@ -8,7 +8,7 @@ import { CATEGORIES, categoryLabel } from '../../lib/categories';
 const projects = await getProjects();
 // Subsystems are listed once, under their parent, instead of competing with it
 // in the grid. See `parent` in src/content.config.ts.
-const subsystems = await getChildren('mhlhub');
+const subsystems = await getChildren('internal-erp');
 // The tabs are the categories with something filed under them, in the order
 // src/lib/categories.ts declares — not the stack, which grew one chip per
 // library until the row was a keyword cloud. An empty shelf gets no tab.
@@ -66,7 +66,7 @@ const categories = CATEGORIES.filter((c) => projects.some((p) => p.data.category
 
     {subsystems.length > 0 && (
       <section class="mt-20 border-t border-border pt-10">
-        <p class="eyebrow reveal">Inside MHLHUB</p>
+        <p class="eyebrow reveal">Inside the ERP</p>
         <p class="reveal mt-3 max-w-(--container-reading) text-ink-muted">
           Three parts of the ERP with write-ups of their own. They are not separate
           projects — they are the pieces that made the whole thing work.

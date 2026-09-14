@@ -41,7 +41,7 @@ Six ideas carry the whole site. When a new feature or page conflicts with one of
 the feature changes, not the principle.
 
 1. **Proof over claims.** Every sentence on the site must survive someone opening the
-   MHLHUB commit log, the `code/` tree, or a reference check. Numbers are measured, dated
+   the ERP's commit log, the `code/` tree, or a reference check. Numbers are measured, dated
    (`statsAsOf` in `src/lib/site.ts`), and are outcome or scale figures, never size
    figures. Lines of code, table counts, and endpoint counts were removed on purpose:
    they say how big a thing is, not how well it works, and a reader who knows that
@@ -119,7 +119,7 @@ Rules that keep the switch honest:
 
 | Field | Shape | Example |
 |---|---|---|
-| `title` | Sentence case. Says what the thing is or does, often as a clause after a comma or a claim with a twist. Never a product name alone unless it is a game. | *MHLHUB, the ERP that runs a dental supply company* · *Repricing every minute without a race to the bottom* · *Split the check from a photo* |
+| `title` | Sentence case. Says what the thing is or does, often as a clause after a comma or a claim with a twist. Never a product name alone unless it is a game. | *The internal ERP that runs a dental supply company* · *Repricing every minute without a race to the bottom* · *Split the check from a photo* |
 | `blurb` | One sentence, ≤160 characters, Engineer register. Doubles as the meta description. | *One system for orders, inventory, repricing, shipping, service and books across six sales channels, built from scratch, about 500 orders a day.* |
 | `plainBlurb` | ≤200 characters, business words only. Falls back to `blurb` when absent. | *The company sold on six websites using six different tools that never agreed. I built the one system that runs it all, about 500 orders a day.* |
 | `role` | Lower case, middle-dot separated facts. | `sole engineer · 13 daily users` · `solo · side project` · `contributor · team of 10` |
@@ -353,7 +353,7 @@ Recurring grammar inside pages:
   opens with the name at full size. The flagship card's generated cover carries the
   headline metric, so the row below it skips that metric.
 - **Facts about the system sit on the system, not on the person.** The four stats moved
-  from the hero onto the MHLHUB card, where they are facts about software rather than a
+  from the hero onto the ERP card, where they are facts about software rather than a
   boast about an author.
 - **Four short nav links, no hamburger.** A hamburger for four items is a tap the visitor
   should not have to make. Labels shorten on mobile (`Plain` / `Tech`) rather than hide.
@@ -382,7 +382,7 @@ home page is true only on the home page.
 Frontmatter is enforced by the schema in `src/content.config.ts`; every field has a
 comment there saying what it is for. The parts that shape the site:
 
-- **`featured`** orders listings (higher first, then date). Current bands: MHLHUB 100,
+- **`featured`** orders listings (higher first, then date). Current bands: the ERP 100,
   its subsystems 90 / 80 / 75 / 65 / 60 / 0, agent fleet 70, second brain 50, receipt splitter
   40, ERP test automation 30, Galaxy Defense 25, this site 10. A new project picks a slot
   in that order; the flagship on the home page is whatever is highest. Subsystem ranks
@@ -601,7 +601,7 @@ for each is in the commit, the plan, or the code comment named.
 | 2026-08-31 | The desk queue as cards: a front door that reads in five seconds. |
 | 2026-08-31 | Galaxy Defense ported from block code to canvas and made playable as the reference island demo. |
 | 2026-08-31 | Deploys moved to an on-demand Mac script to stop paying per push. |
-| 2026-09-01 | Home page becomes a nameplate: three sections, one flagship card plus rows, one contact exit. Stats move onto the MHLHUB card. The three ERP subsystems nest under MHLHUB with redirects. About becomes the credential narrative. First redacted screenshots. ([plan](docs/plans/2026-08-31-portfolio-nameplate-and-collapse.md)) |
+| 2026-09-01 | Home page becomes a nameplate: three sections, one flagship card plus rows, one contact exit. Stats move onto the ERP card. The three ERP subsystems nest under it with redirects. About becomes the credential narrative. First redacted screenshots. ([plan](docs/plans/2026-08-31-portfolio-nameplate-and-collapse.md)) |
 | 2026-09-01 | The repository went public. GitHub link, Source buttons, and the `code/` excerpt tree turned on. Push to `main` deploys again. |
 | 2026-09-01 | Body and code move to IBM Plex; Bricolage stays for display. |
 | 2026-09-01 | The résumé becomes a one-page ATS-shaped page with a generated PDF; the title everywhere is Software Engineer; the degree line is coursework. |
@@ -640,7 +640,7 @@ This supersedes the earlier three-section homepage and employer-only nameplate r
 name and role → short background → selected projects → experience → personal interests
 → contact. The first nameplate sentence still stays identical in both registers.
 
-Selected work is curated for breadth: MHLHUB, agent tooling, and the independent receipt
+Selected work is curated for breadth: the ERP, agent tooling, and the independent receipt
 splitter. Each preview explains what the work demonstrates, uses a real screenshot where
 available, and links to the complete case study. The catalog stays on /projects. No ERP
 metrics appear in the introduction. The career timeline uses site.experience so dates
@@ -746,7 +746,7 @@ for what goes in the repo, in the plans, and in this document:
 - **Nothing from the private vault** except the shape of a line. The loops borrow its
   grammar; every fact in them is already on `/about`.
 - **Private capture and access paths are described, not documented.** "Authenticated
-  through the internal testing path documented in the MHLHUB repo" is the whole sentence.
+  through the internal testing path documented in the ERP's repo" is the whole sentence.
 - **Untracked by design**: `.playwright-mcp/` (capture scratch), `worker-configuration.d.ts`
   (generated), `.dev.vars` (secrets), `dist/`, `.astro/`, large demo bundles, and video.
   A new kind of scratch output gets a `.gitignore` line before the first capture, not

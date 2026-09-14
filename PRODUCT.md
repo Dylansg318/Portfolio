@@ -80,7 +80,7 @@ switch; plain is the default and is what crawlers and no-JS readers get.
 - Production metrics, measured August 2026 (`src/lib/site.ts` → `stats`): ~520
   orders a day (up from ~270), 32K products / 49K channel listings, 6 sales channels,
   180 scheduled jobs.
-- Redacted screenshots of MHLHUB and the receipt splitter under
+- Redacted screenshots of the internal ERP and the receipt splitter under
   `src/content/projects/*/` and `public/`, paired light and dark.
 - Career record (`site.experience`): Software Engineer at RMH3 Dental Supply
   (Jun 2025–present); Head Server, The Qui (Aug 2022–Jun 2025); Store Manager,

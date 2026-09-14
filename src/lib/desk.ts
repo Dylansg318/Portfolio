@@ -96,14 +96,14 @@ export const tickets: Ticket[] = [
       },
     ],
     resolution: {
-      headline: 'Built MHLHUB, the ERP the company now runs on.',
+      headline: 'Built the ERP the company now runs on.',
       points: [
         '≈520 orders a day through one system, up from ≈270',
         '32,000 products · 49,000 channel listings · one PostgreSQL database',
         '≈180 scheduled jobs handling work that used to be manual',
         'Order volume roughly doubled with no added operations headcount',
       ],
-      slug: 'mhlhub',
+      slug: 'internal-erp',
       linkLabel: 'Read the full write-up',
     },
   },

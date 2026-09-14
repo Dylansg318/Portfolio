@@ -23,14 +23,25 @@ export default defineConfig({
   trailingSlash: 'never',
   build: { format: 'file' },
 
-  // The three ERP subsystems used to be top-level projects. They are now
-  // children of MHLHUB and live under its path. Anything already linking to
-  // the old URLs — a sent résumé, a search result, a message — must still land
-  // on the write-up rather than a 404.
+  // Moved URLs never die. The three ERP subsystems used to be top-level
+  // projects and now live under the ERP's path; the ERP itself was renamed on
+  // 2026-09-14 (its product name meant nothing to a reader and was one more
+  // identifying detail in a public repo). Anything already linking to an old
+  // URL — a sent résumé, a search result, a message — must still land on the
+  // write-up rather than a 404. Each subsystem is listed by hand: Astro only
+  // accepts a dynamic redirect whose destination is itself a route pattern,
+  // and the write-ups render from one `/projects/[...slug]` route.
   redirects: {
-    '/projects/repricer': '/projects/mhlhub/repricing',
-    '/projects/channel-sync': '/projects/mhlhub/channel-sync',
-    '/projects/quickbooks': '/projects/mhlhub/quickbooks',
+    '/projects/mhlhub': '/projects/internal-erp',
+    '/projects/mhlhub/repricing': '/projects/internal-erp/repricing',
+    '/projects/mhlhub/channel-sync': '/projects/internal-erp/channel-sync',
+    '/projects/mhlhub/inventory': '/projects/internal-erp/inventory',
+    '/projects/mhlhub/printing': '/projects/internal-erp/printing',
+    '/projects/mhlhub/quickbooks': '/projects/internal-erp/quickbooks',
+    '/projects/mhlhub/toolbox': '/projects/internal-erp/toolbox',
+    '/projects/repricer': '/projects/internal-erp/repricing',
+    '/projects/channel-sync': '/projects/internal-erp/channel-sync',
+    '/projects/quickbooks': '/projects/internal-erp/quickbooks',
   },
 
   // Everything prerenders by default. Only routes that explicitly opt out

@@ -19,7 +19,7 @@ export const loops: Loop[] = [
   { when: '2020', text: 'shipped a game with no arrays', href: '/projects/galaxy-defense', done: true },
   { when: '2022', text: 'the manager left me the store', href: '/about#tmobile', done: true },
   { when: '2025', text: 'hired off the restaurant floor', href: '/about#rmh3', done: true },
-  { when: '2025', text: 'the spreadsheet became the system', href: '/projects/mhlhub', done: true },
+  { when: '2025', text: 'the spreadsheet became the system', href: '/projects/internal-erp', done: true },
   { when: '2026', text: 'unknown', href: '/contact', done: false, title: 'The next one. Get in touch.' },
 ];
 

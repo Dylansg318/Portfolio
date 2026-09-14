@@ -247,7 +247,7 @@ The script stays because a push can only ever ship `main` exactly as pushed. It
 still owns `--build-only`, `--ref`, redeploying without a new commit, and the case
 where Actions itself is the thing that's broken.
 
-The Linux VM is its own colima profile, `portfolio`. MHLHUB's break-glass script
+The Linux VM is its own colima profile, `portfolio`. The ERP repo's break-glass script
 reuses whatever VM is already running, so sharing `default` would let one project
 silently resize the other's.
 

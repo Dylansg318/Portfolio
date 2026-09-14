@@ -11,7 +11,7 @@
 #   (--ref), redeploying with no new commit, running the full gates locally before
 #   you push (--build-only), or shipping while Actions is degraded.
 #
-#   Modelled on MHLHUB's scripts/deploy-from-mac.sh, which does the same thing for
+#   Modelled on the ERP repo's scripts/deploy-from-mac.sh, which does the same thing for
 #   the same reason. Same discipline: build a CLEAN WORKTREE at the pushed commit,
 #   never whatever happens to be sitting in your working tree.
 #
@@ -70,7 +70,7 @@ set -euo pipefail
 
 # --- config ------------------------------------------------------------------
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-COLIMA_PROFILE="portfolio"          # NOT `default` — that one belongs to MHLHUB's
+COLIMA_PROFILE="portfolio"          # NOT `default` — that one belongs to the ERP repo's
                                     # break-glass script, which reuses whatever VM is
                                     # already running. Sharing it would let one project
                                     # silently resize the other's.

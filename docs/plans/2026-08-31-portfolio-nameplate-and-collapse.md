@@ -12,13 +12,13 @@ compensation for missing evidence: nine write-ups, ~9,600 words, zero screenshot
 **Approach:**
 1. **Hero → nameplate.** Name, discipline, location, then one factual sentence of employment.
    No first-person claim ("I build the software that runs…"), no availability sales line. The
-   four stat tiles move onto the MHLHUB card, where they are facts about a system rather than a
+   four stat tiles move onto the ERP card, where they are facts about a system rather than a
    boast about a person.
 2. **Homepage → three sections** (nameplate / the work / contact). 17 boxes → ~7. One contact
    exit instead of four. Removed content moves to `/about` and `/resume`, which already carry it.
 3. **Collapse the ERP** as parent + children: `repricer`, `channel-sync` and `quickbooks` move to
-   `src/content/projects/mhlhub/<slug>/index.mdx`, which the existing `**/index.mdx` glob renders
-   at `/projects/mhlhub/<slug>` with no route changes. Top-level work list reads 6, not 9.
+   `src/content/projects/internal-erp/<slug>/index.mdx`, which the existing `**/index.mdx` glob renders
+   at `/projects/internal-erp/<slug>` with no route changes. Top-level work list reads 6, not 9.
 4. **`/about` becomes the credential narrative** — the actual through-line: recruited off a
    restaurant floor by a customer, then inventory → shipping → customer service → automation →
    the ERP; T-Mobile salesman → store manager; all during a GMU CS degree.
@@ -43,7 +43,7 @@ compensation for missing evidence: nine write-ups, ~9,600 words, zero screenshot
 - The narrative contract in `src/content.config.ts` (`problem` / `unique` / `learned` required)
   keeps failing the build rather than publishing a half-finished write-up.
 - No dead URLs: every moved project keeps a working path from its old one.
-- Every claim on the site must survive someone opening `RMH3Dental/MHLHUB` and reading the log.
+- Every claim on the site must survive someone opening the ERP's private repo and reading the log.
 - No screenshot ships with a real customer name, price, or vendor identifier.
 
 ## Verification contract
@@ -52,7 +52,7 @@ compensation for missing evidence: nine write-ups, ~9,600 words, zero screenshot
 |---|---|---|---|
 | 1 | Identity + role accuracy | `npm run check` | 0 errors |
 | 2 | Homepage strip | `grep -c '<!-- =' src/pages/index.astro` | 3 section markers |
-| 3 | ERP collapse | `npm run build` then `ls dist/client/projects/mhlhub/` | `repricing.html`, `channel-sync.html`, `quickbooks.html` exist |
+| 3 | ERP collapse | `npm run build` then `ls dist/client/projects/internal-erp/` | `repricing.html`, `channel-sync.html`, `quickbooks.html` exist |
 | 3 | Old URLs alive | `grep -c '' public/_redirects` | 3 redirect rules |
 | 3 | Top-level list is 6 | `node -e` over the built `/projects` page | 6 cards |
 | 4 | About narrative | `npm run check && npm run build` | 0 errors, build succeeds |
@@ -60,10 +60,10 @@ compensation for missing evidence: nine write-ups, ~9,600 words, zero screenshot
 ## Scope ledger
 
 - [x] 1. `site.ts` — nameplate identity, employer facts, enablement framing, Harness   DONE (uncommitted)
-- [x] 2. Homepage → nameplate / the work / contact; stats onto the MHLHUB card          DONE (uncommitted)
+- [x] 2. Homepage → nameplate / the work / contact; stats onto the ERP card          DONE (uncommitted)
 - [x] 3. ERP collapse: nested content, `parent` field, subsystem cards, redirects       DONE (uncommitted)
 - [x] 4. `/about` → credential narrative + principles moved off the homepage            DONE (uncommitted)
-- [x] 5. Redacted screenshots for MHLHUB and the repricer                              DONE (uncommitted)
+- [x] 5. Redacted screenshots for the ERP and the repricer                              DONE (uncommitted)
 
 ## Slice detail — current slice
 
@@ -81,7 +81,7 @@ compensation for missing evidence: nine write-ups, ~9,600 words, zero screenshot
 
 `npm run check` → 0 errors / 0 warnings / 0 hints. `npm run build` → 18 pages indexed.
 
-Built routes confirm the collapse: `/projects/mhlhub/{repricing,channel-sync,quickbooks}.html`
+Built routes confirm the collapse: `/projects/internal-erp/{repricing,channel-sync,quickbooks}.html`
 exist, `dist/client/_redirects` carries three 301s from the old flat paths, and both the home
 page and `/projects` list six top-level items instead of nine. Home page went 6 sections / 17
 boxes / ~716 words → 3 sections / 1 card + 5 rows, and four contact exits → one.
@@ -95,14 +95,14 @@ Two fixes found by looking at the rendered page rather than the diff:
 ## Slice 5 — screenshots (added after the fact)
 
 Captured from the live app, authenticated through the internal agent-testing path documented
-in the MHLHUB repo (details private).
+in the ERP's repo (details private).
 
 Shipped, after redaction:
-- `mhlhub/warehouse-map.png` — the floor-plan editor, 119 numbered locations across two
-  buildings. MHLHUB's cover. Nothing sensitive in it.
-- `mhlhub/repricing/repricer-dashboard.png` — buy-box win/loss, push success rates, the
+- `internal-erp/warehouse-map.png` — the floor-plan editor, 119 numbered locations across two
+  buildings. the ERP's cover. Nothing sensitive in it.
+- `internal-erp/repricing/repricer-dashboard.png` — buy-box win/loss, push success rates, the
   "why we're losing" breakdown, and the safety rails. The repricing page's cover.
-- `mhlhub/repricing/repricer-log.png` — 8,592 pushes over seven days with a reason per row.
+- `internal-erp/repricing/repricer-log.png` — 8,592 pushes over seven days with a reason per row.
   Rendered as a `<Figure wide>` OUTSIDE the PlainOnly/EngOnly blocks so both reading modes
   get it; a picture needs no jargon to be useful.
 

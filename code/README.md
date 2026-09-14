@@ -1,6 +1,6 @@
-# Code excerpts from MHLHUB
+# Code excerpts from the internal ERP
 
-MHLHUB is a private production ERP — orders, inventory, repricing, shipping,
+The internal ERP is a private production system — orders, inventory, repricing, shipping,
 customer service and books for a dental-supply e-commerce company, roughly 500
 orders a day across six sales channels. The system itself can't be open-sourced,
 but a lot of the engineering inside it is general. This tree holds the pieces
