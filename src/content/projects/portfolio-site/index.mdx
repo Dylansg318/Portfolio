@@ -22,8 +22,8 @@ unique: >-
   in one frontmatter field, and neither costs a reader anything until they click.
 
 learned:
-  - Making the write-up fields required in the schema, rather than merely conventional, turns "explain what you learned" from a habit into a build error. The tooling does the remembering.
-  - The cheapest performance win isn't optimising the heavy thing, it's not loading the heavy thing. Click-to-start on every demo and video removes the cost entirely for the majority of visitors who only came to read.
+  - Making the write-up fields required in the schema, not just conventional, turns "explain what you learned" from a habit into a build error. The tooling does the remembering.
+  - The cheapest performance win isn't optimising the heavy thing, it's not loading it. Click-to-start on every demo and video removes the cost entirely for the majority of visitors who only came to read.
   - Committing to design tokens before designing anything means the eventual visual pass is one file, not an audit of every component.
 
 aiNote: >-
@@ -56,15 +56,15 @@ demo:
   fullscreen: false
 ---
 
-This page is the template. Everything below demonstrates a component you can use in
-your own write-ups, delete the prose, keep the shapes.
+This page is the template. Everything below shows a component you can use in your own
+write-ups; delete the prose, keep the shapes.
 
 ## The demo seam
 
 The frontmatter above declares `demo.kind: island`, which mounts a component from
 `src/demos/galaxy-defense/`. It's a real game, a Code.org project of mine ported to
-canvas, not a placeholder, and it's the same island the
-[Galaxy Defense](/projects/galaxy-defense) write-up mounts. One folder, two pages:
+canvas, and it's the same island the [Galaxy Defense](/projects/galaxy-defense)
+write-up mounts. One folder, two pages:
 
 <Demo demo={frontmatter.demo} title={frontmatter.title} />
 
@@ -78,14 +78,9 @@ demo:
   aspect: "16 / 9"
 ```
 
-No component changes, no build config, no architecture decision. A 40MB WASM bundle
-sits in `public/` and gets a sandboxed iframe injected on click.
-
-<Takeaway>
-  The seam exists so that adding the *second* game is as cheap as the first. Most
-  architecture debt comes from solving one case well and discovering the second case
-  needs a different shape.
-</Takeaway>
+No component changes, no build config. A 40MB WASM bundle sits in `public/` and gets a
+sandboxed iframe injected on click. The seam exists so the *second* game costs the same
+as the first.
 
 ## Code that can't go stale
 
@@ -96,11 +91,11 @@ below isn't a copy, it's the file:
 
 Pasted code drifts from the code it describes. This can't, because there's only one
 copy. If the file moves or gets deleted, the build fails instead of quietly showing
-you something that used to be true.
+something that used to be true.
 
 ## Video
 
-Video is never committed here, GitHub rejects files over 100MB and Cloudflare caps a
+Video is never committed here; GitHub rejects files over 100MB and Cloudflare caps a
 static asset at 25MiB, so a three-minute screen capture breaks both. `<Video>` takes a
 provider and an id, renders a poster, and only injects the real player on click:
 
@@ -108,12 +103,12 @@ provider and an id, renders a poster, and only injects the real player on click:
 <Video provider="youtube" id="dQw4w9WgXcQ" title="Walkthrough of the order pipeline" />
 ```
 
-Three videos on a page cost nothing until one is watched. Swapping YouTube for Bunny
-or Cloudflare Stream later is a prop change on a handful of files.
+Three videos on a page cost nothing until one is watched. Swapping YouTube for Bunny or
+Cloudflare Stream later is a prop change.
 
 ## What the reader always gets
 
-Every project renders **The problem** and **What was unique** above the write-up, and
-**What I learned** below it — in the same places, every time. A reader comparing two
+Every project renders **The problem** and **What was unique** above the write-up and
+**What I learned** below it, in the same places every time. A reader comparing two
 projects finds the same answers in the same spots, which is what makes a portfolio
-scannable rather than a pile of posts.
+scannable instead of a pile of posts.

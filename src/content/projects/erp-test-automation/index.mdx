@@ -1,7 +1,7 @@
 ---
 title: Testing an ERP by hand, then automating a cloud app
 blurb: Two sprints on the CYDEO SDET program — fourteen user stories tested by hand against an ERP, then a Cucumber and Selenium suite against a cloud app.
-plainBlurb: Ten of us taught robots to re-test a business app every night, after testing it by hand first, which is how we found the bugs the robots would have missed.
+plainBlurb: Ten of us taught robots to re-test a business app every night, after testing it by hand first, which is how we found the bugs the robots would've missed.
 date: 2024-07-15
 featured: 30
 status: archived
@@ -46,17 +46,18 @@ links:
 ## The story
 
 The capstone of my testing program: teams of ten, two sprints, and a business app with
-logins, calendars, contacts, sales orders and expenses. Re-checking it by hand after every
-change took a whole day.
+logins, calendars, contacts, sales orders and expenses. Re-checking it by hand after
+every change took a whole day.
 
 We did something that felt slow and turned out to be the fastest path: before writing
 any automation, we tested everything by hand and wrote down exactly what "working"
-means. That hand pass caught real bugs a robot would have sailed past, an error message
+means. That hand pass caught real bugs a robot would've sailed past — an error message
 missing a word, an automatic logout that never happened, a menu missing an option. Then
-we taught the robots to repeat those checks, every night, in minutes instead of a day.
+we taught the robots to repeat those checks every night, in minutes instead of a day.
 
-This project is where my professional reflexes come from: check it yourself before you
-trust it, write down what "correct" means, and never trust a test that has never failed.
+That's where the habits behind everything else on this site come from: check it yourself
+before you trust it, write down what "correct" means, and don't trust a test that's
+never failed.
 
 </PlainOnly>
 
@@ -65,39 +66,33 @@ trust it, write down what "correct" means, and never trust a test that has never
 ## The setup
 
 Ten people, two sprints, two applications. Sprint 1 was BriteERP and it was entirely
-manual — fourteen user stories, acceptance criteria written out, executed by hand, bugs
+manual: fourteen user stories, acceptance criteria written out, executed by hand, bugs
 logged. Sprint 2 was TryCloud, and there we split the stories by module and shared one
-framework: a configuration-driven WebDriver factory, a hooks class for setup and
+framework — a configuration-driven WebDriver factory, a hooks class for setup and
 teardown, browser utilities, and page objects per screen. I owned the Deck module end to
-end — the feature file, the page object and the step definitions. A third sprint covered
+end: the feature file, the page object and the step definitions. A third sprint covered
 API testing with REST Assured against a library system, where I took the create-a-user
 endpoint.
 
 ## Manual before automated
 
-The instinct on a test-automation course is to start automating. We didn't. Each user story
-got acceptance criteria, and each criterion was executed by hand first. That surfaced real
-defects: the login error read "Wrong username password" with the "or" missing, the
+The instinct on a test-automation course is to start automating. We didn't. Each user
+story got acceptance criteria, and each criterion was run by hand first. That turned up
+real defects: the login error read "Wrong username password" with the "or" missing, the
 three-minute idle logout never fired, and the Point-of-Sale action menu was missing its
-Import option. It meant the feature files that followed described behaviour we had
-watched, not behaviour we hoped for.
+Import option. The feature files that followed described behaviour we'd watched, not
+behaviour we hoped for.
 
 ## The framework
 
-Cucumber scenarios in Gherkin, step definitions in Java, Selenium underneath. Page objects
-held the locators (XPath and CSS), so a UI change was one edit. A properties file chose
-the browser and the environment. Jenkins ran the suite on a schedule and on demand, with
-Cucumber's HTML report as the artefact.
+Cucumber scenarios in Gherkin, step definitions in Java, Selenium underneath. Page
+objects held the locators (XPath and CSS), so a UI change was one edit. A properties
+file chose the browser and the environment. Jenkins ran the suite on a schedule and on
+demand, with Cucumber's HTML report as the artefact.
 
-<Takeaway>
-  Testing habits are what I carried forward. I still write the manual check before the
-  automated one, and I still don't trust a green run I haven't seen fail.
-</Takeaway>
+## What stuck
 
-## What it taught me
-
-This is where the discipline behind everything else on this site comes from: verify before
-you assert, make the check explicit, and treat a test that can't fail as a test that hasn't
-passed.
+I still write the manual check before the automated one, and I still don't trust a
+green run I haven't seen fail.
 
 </EngOnly>
