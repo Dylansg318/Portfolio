@@ -1,0 +1,80 @@
+---
+import Method from './Method.astro';
+
+/**
+ * The endpoint rail: the site map in the API's own terms. Sticky beside the
+ * rows at desktop, a scrolling strip under the header on a phone.
+ *
+ * `current` names the entry for this page. A page whose rows are themselves
+ * endpoints (the home page) passes anchors for those entries, and the small
+ * script below moves the highlight as the reader scrolls.
+ */
+interface Props {
+  current?: string;
+  /** Per-key href overrides — the home page points its own rows at anchors. */
+  hrefs?: Record<string, string>;
+}
+const { current, hrefs = {} } = Astro.props;
+
+const ITEMS: { key: string; method: 'GET' | 'POST'; path: string; href: string }[] = [
+  { key: 'dylan', method: 'GET', path: '/api/dylan', href: '/' },
+  { key: 'work', method: 'GET', path: '/api/work', href: '/projects' },
+  { key: 'project', method: 'GET', path: '/api/work/{id}', href: '/projects/internal-erp' },
+  { key: 'experience', method: 'GET', path: '/api/experience', href: '/about' },
+  { key: 'resume', method: 'GET', path: '/api/resume', href: '/resume' },
+  { key: 'contact', method: 'POST', path: '/api/contact', href: '/contact' },
+];
+---
+<nav class="rail" aria-label="Reference">
+  <p class="cap">Reference</p>
+  <ol>
+    {ITEMS.map((it) => {
+      const href = hrefs[it.key] ?? it.href;
+      return (
+        <li>
+          <a href={href} data-rail={it.key} aria-current={it.key === current ? 'page' : undefined}>
+            <Method method={it.method} /><span class="mono">{it.path}</span>
+          </a>
+        </li>
+      );
+    })}
+    <li>
+      <a href="/api" data-rail="index" class="mono" title="The index of every endpoint, as JSON">
+        <span class="m get">GET</span><span class="mono">/api</span>
+      </a>
+    </li>
+  </ol>
+</nav>
+
+<script>
+  // Scroll-spy for a page whose rows are endpoints: as a row with an id
+  // reaches the top third of the viewport, its rail entry lights. Anchors
+  // only — an entry that links to another page keeps its server-set state.
+  document.addEventListener('astro:page-load', () => {
+    const rail = document.querySelector<HTMLElement>('.rail');
+    if (!rail) return;
+    // On a phone the rail is a strip; bring the current entry into view
+    // without moving the page.
+    const list = rail.querySelector<HTMLElement>('ol');
+    const current = rail.querySelector<HTMLElement>('a[aria-current="page"]');
+    if (list && current && list.scrollWidth > list.clientWidth) {
+      list.scrollLeft = Math.max(0, current.offsetLeft - (list.clientWidth - current.offsetWidth) / 2);
+    }
+    const anchors = [...rail.querySelectorAll<HTMLAnchorElement>('a[href^="#"]')];
+    if (anchors.length === 0 || !('IntersectionObserver' in window)) return;
+    const rows = anchors
+      .map((a) => document.getElementById(a.getAttribute('href')!.slice(1)))
+      .filter((el): el is HTMLElement => !!el);
+    const light = (id: string) =>
+      anchors.forEach((a) => a.setAttribute('aria-current', a.getAttribute('href') === `#${id}` ? 'true' : 'false'));
+    const io = new IntersectionObserver(
+      (entries) => {
+        const hit = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+        if (hit) light((hit.target as HTMLElement).id);
+      },
+      { rootMargin: '-15% 0px -70% 0px', threshold: 0 },
+    );
+    rows.forEach((r) => io.observe(r));
+    document.addEventListener('astro:before-swap', () => io.disconnect(), { once: true });
+  });
+</script>

@@ -1,0 +1,175 @@
+---
+import { endpoint, type ParamSpec } from '../../lib/endpoints';
+import { abs } from '../../lib/api';
+import { LANGS, colorSnippet, escape, formatBytes, highlight, snippet, statusLabel, type Params } from '../../lib/console-render';
+import Method from './Method.astro';
+
+/**
+ * The try-it console — one per endpoint row.
+ *
+ * Everything a reader sees before pressing Send is rendered here at build
+ * time: the request in cURL, and the REAL response, because `body` is what
+ * the page got from the same function the Worker route calls. The script in
+ * src/scripts/console.ts then takes over: parameters rewrite the request in
+ * four languages, Send fetches the live endpoint and streams the answer in,
+ * and if the answer names a page, the page opens.
+ */
+interface Props {
+  /** A key from src/lib/endpoints.ts. */
+  endpoint: string;
+  /** Starting parameter values, overriding the endpoint's defaults. */
+  params?: Params;
+  /** Options for a select whose choices depend on the page (the project ids). */
+  options?: Record<string, { value: string; label: string }[]>;
+  /** The response at rest — the same record the endpoint returns. */
+  body: unknown;
+  status?: number;
+  /** The one-line note under the response. */
+  frame?: string;
+  /** The Send button's label. */
+  send?: string;
+  /** Unique on the page; prefixes every input id. */
+  id: string;
+}
+
+const VAR: Record<string, string> = {
+  dylan: 'dylan',
+  work: 'work',
+  project: 'project',
+  experience: 'experience',
+  resume: 'resume',
+  away: 'away',
+  contact: 'sent',
+};
+
+const {
+  endpoint: key,
+  params: overrides = {},
+  options = {},
+  body,
+  status = 200,
+  frame = 'Live: this is the answer from this site’s API, not a mock. Send re-runs the request with your parameters; if the answer names a page, it opens.',
+  send = 'Send',
+  id,
+} = Astro.props;
+
+const ep = endpoint(key);
+const req = { method: ep.method, path: ep.path, varName: VAR[key] ?? 'data' };
+const specs: ParamSpec[] = ep.params
+  .filter((p) => !p.optional || overrides[p.name] !== undefined)
+  .map((p) => ({ ...p, options: options[p.name] ?? p.options }));
+const values: Params = {};
+for (const p of specs) values[p.name] = overrides[p.name] ?? p.value ?? '';
+
+const origin = abs('');
+const request = colorSnippet(snippet(req, values, origin, 'curl'));
+const pretty = JSON.stringify(body, null, 2);
+const out = highlight(body);
+const bytes = new TextEncoder().encode(pretty).length;
+
+// The page a response points at, if it is not this one.
+const here = Astro.url.pathname.replace(/index\.html$/, '').replace(/\.html$/, '') || '/';
+const page = body && typeof body === 'object' && 'page' in body ? String((body as { page: unknown }).page) : '';
+let open: { href: string; label: string } | null = null;
+if (page) {
+  try {
+    const u = new URL(page);
+    const path = u.pathname.replace(/\/$/, '') || '/';
+    const ours = u.origin === new URL(origin).origin;
+    if (!ours || path !== here) {
+      // A same-site link is written relative, so a preview or a local build
+      // stays on its own host.
+      open = { href: ours ? `${u.pathname}${u.search}` : page, label: u.pathname.endsWith('.pdf') ? 'Open the PDF' : `Open ${u.pathname}${u.search}` };
+    }
+  } catch {
+    open = { href: page, label: 'Open' };
+  }
+}
+// status 0 is the at-rest state of a write: nothing has been sent yet.
+const neutral = status === 0;
+const ok = status >= 200 && status < 300;
+const data = { key, method: ep.method, path: ep.path, varName: req.varName, source: ep.source, site: origin };
+---
+<div class="cx" data-ep={JSON.stringify(data)} data-key={key}>
+  <div class="cx-bar">
+    <span class="cx-ep"><Method method={ep.method} /><span class="mono">{ep.path}</span></span>
+    <div class="cx-langs" role="tablist" aria-label="Language">
+      {LANGS.map((l) => (
+        <button type="button" role="tab" data-lang={l.id} aria-selected={l.id === 'curl' ? 'true' : 'false'}>{l.label}</button>
+      ))}
+    </div>
+  </div>
+
+  {specs.length > 0 && (
+    <div class="cx-sec">
+      <p class="cx-cap mono">{ep.method === 'GET' ? 'Parameters' : 'Body'}</p>
+      <div class="cx-params">
+        {specs.map((p) => {
+          const iid = `cx-${id}-${p.name}`;
+          const v = values[p.name];
+          return (
+            <label class="cx-param" for={iid} title={p.description}>
+              <span class="mono">{p.name}</span>
+              {p.type === 'select' ? (
+                <select id={iid} name={p.name}>
+                  {(p.options ?? []).map((o) => (
+                    <option value={o.value} selected={o.value === v}>{o.label}</option>
+                  ))}
+                </select>
+              ) : p.type === 'textarea' ? (
+                <textarea id={iid} name={p.name} rows="3" placeholder={p.placeholder ?? ''}>{v}</textarea>
+              ) : p.type === 'checkbox' ? (
+                <span class="cx-check">
+                  <input id={iid} type="checkbox" name={p.name} checked={v === 'true'} />
+                  <span class="mono">{p.hint ?? 'true'}</span>
+                </span>
+              ) : (
+                <input
+                  id={iid}
+                  type={p.type}
+                  name={p.name}
+                  value={v}
+                  placeholder={p.placeholder ?? ''}
+                  autocomplete={p.type === 'email' ? 'email' : 'off'}
+                  spellcheck="false"
+                />
+              )}
+            </label>
+          );
+        })}
+      </div>
+    </div>
+  )}
+
+  <div class="cx-sec">
+    <p class="cx-cap mono"><span>Request</span><button type="button" class="cx-copy" data-copy="req">Copy</button></p>
+    <pre class="cx-req mono" tabindex="0" set:html={request} />
+  </div>
+
+  <div class="cx-act">
+    <button type="button" class="cx-send">
+      {send}
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
+    <span class="cx-src mono">source: {ep.source}</span>
+  </div>
+
+  <div class="cx-sec cx-resp">
+    <p class="cx-cap mono">
+      <span>Response</span>
+      <span class="cx-status" aria-live="polite">
+        <span class={neutral ? 'neutral' : ok ? 'ok' : 'bad'}>{neutral ? 'Not sent' : statusLabel(status)}</span> · {formatBytes(bytes)}
+        {open && (
+          <span class="cx-more"> · <a class="cx-open" href={open.href}>{open.label} <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a></span>
+        )}
+      </span>
+      <button type="button" class="cx-copy" data-copy="out">Copy</button>
+    </p>
+    <div class="cx-outwrap"><pre class="cx-out mono" tabindex="0" set:html={out} /></div>
+    <p class="cx-frame" set:html={escape(frame)} />
+  </div>
+</div>
+
+<script>
+  import '../../scripts/console';
+</script>

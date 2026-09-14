@@ -29,8 +29,12 @@ export const site = {
     site: 'https://rmh3dental.com',
   },
 
-  /** Shown as a pill in the hero. Empty string hides it. */
+  /** What I'm open to, in four words. */
   availability: 'Open to backend / full-stack roles',
+
+  /** The one-line answer to "what do you mostly do", as the home page and
+   *  GET /api/dylan give it. */
+  mainly: { focus: 'Mostly backend', stack: ['TypeScript', 'Node', 'Postgres'] },
 
   /** Professional contact. The contact form is the primary route; this is the
    *  fallback for people who prefer their own mail client.
@@ -227,6 +231,58 @@ export const site = {
     { name: 'Programming using JavaScript', issuer: 'Certiport', id: '57SR-4Tp8' },
     { name: 'Programming using Python', issuer: 'Certiport', id: 'uadx-XMRJ' },
   ],
+
+  /** The path here, one stop per line — the spine of /about and of
+   *  GET /api/experience.
+   *
+   *  This used to be three tidy lines that made the retail jobs look like
+   *  something to apologise for. They are the opposite: the same thing happened
+   *  three times in a row — someone watched me work and handed me more than the
+   *  job I was hired for. That is the argument the page is making, so the stops
+   *  say what actually happened rather than compressing it into a title. */
+  path: [
+    {
+      id: 'gmu',
+      when: '2020 – 24',
+      what: 'Computer Science coursework, George Mason University',
+      note: "Dean's List. Four years of CS alongside a full-time job — everything below happened while I was in it. I left before the degree was conferred, so what's under it is what I have to show instead.",
+    },
+    {
+      id: 'tmobile',
+      when: '2021 – 22',
+      what: 'T-Mobile — sales associate, then store manager',
+      note: 'My first job. When the store manager was getting ready to leave he decided I was working harder than the rest of the floor and spent his last months training me to replace him. I got the job because the team trusted me to run the place, not because I was the best at selling phones.',
+    },
+    {
+      id: 'thequi',
+      when: '2022 – 25',
+      what: 'The Qui, Korean BBQ & Grill — head server',
+      note: "Promoted twice within months. I was studying for the CYDEO SDET program between shifts — Selenium, Cucumber, REST Assured. That's where the testing habits came from. I still write the test before I trust the fix.",
+    },
+    {
+      id: 'rmh3',
+      when: '2025',
+      what: 'RMH3 Dental Supply — hired off the restaurant floor',
+      note: "They were regulars. They watched me work a section, decided I'd be a good fit for their company, and offered me a job. I started in inventory to learn the products, then shipping, and made it known that the technical work was what I wanted.",
+    },
+    {
+      id: 'erp',
+      when: '2025 – now',
+      what: 'From a customer-service spreadsheet to the ERP',
+      note: "Customer service was entirely online, so consolidating it meant a spreadsheet — and the spreadsheet turned into a system. Pricing came next, because winning the buy box by hand doesn't scale. The ERP grew out of those two problems and now runs the company.",
+    },
+  ],
+
+  /** Away from work, in one line each. GET /api/away-from-work returns these
+   *  beside the first thing I ever shipped. */
+  away: {
+    note: "I cook, I play a bit of music, and I'm always trying a restaurant I haven't been to yet. There's usually a side project going that I talked myself into.",
+    interests: ['cooking', 'a bit of music', "restaurants I haven't tried yet", 'one more side project'],
+  },
+
+  /** What I'm looking for, as the last row of the home page says it. */
+  lookingFor:
+    "A backend or full-stack role, remote or in Northern Virginia. If that's what you're hiring for, let me know.",
 
   /** How I work — three things, in my own words. */
   principles: [

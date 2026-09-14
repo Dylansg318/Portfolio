@@ -1,0 +1,8 @@
+---
+/** The HTTP method as a badge — semantic colour, never the accent. */
+interface Props {
+  method: 'GET' | 'POST';
+}
+const { method } = Astro.props;
+---
+<span class:list={['m', method.toLowerCase()]}>{method}</span>

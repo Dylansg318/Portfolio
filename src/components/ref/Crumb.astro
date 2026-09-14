@@ -1,0 +1,11 @@
+---
+import Method from './Method.astro';
+
+/** The line above a heading that says which endpoint this row is. */
+interface Props {
+  method: 'GET' | 'POST';
+  path: string;
+}
+const { method, path } = Astro.props;
+---
+<p class="crumb mono"><Method method={method} /> <b>{path}</b></p>
