@@ -1,6 +1,11 @@
 ---
 import { render } from 'astro:content';
+import type { MarkdownHeading } from 'astro';
 import Base from '../../layouts/Base.astro';
+import Rail from '../../components/ref/Rail.astro';
+import Row from '../../components/ref/Row.astro';
+import Crumb from '../../components/ref/Crumb.astro';
+import Console from '../../components/ref/Console.astro';
 import Demo from '../../components/mdx/Demo.astro';
 import CodeFile from '../../components/mdx/CodeFile.astro';
 import Video from '../../components/mdx/Video.astro';
@@ -10,6 +15,7 @@ import PlainOnly from '../../components/mdx/PlainOnly.astro';
 import EngOnly from '../../components/mdx/EngOnly.astro';
 import Cover from '../../components/ui/Cover.astro';
 import { getAllProjects, getChildren, getProjectNeighbours, statusLabel } from '../../lib/content';
+import { projectById } from '../../lib/api';
 
 // Routes come from getAllProjects, not getProjects: subsystems are hidden from
 // LISTINGS, not from the site. The draft exclusion still gates route generation
@@ -24,16 +30,28 @@ export async function getStaticPaths() {
 
 const { project } = Astro.props;
 const { data } = project;
-const { Content } = await render(project);
+const { Content, headings } = await render(project);
 const { prev, next } = await getProjectNeighbours(project.id);
 
 // A subsystem shows where it belongs; a parent shows what it contains.
 const all = await getAllProjects();
 const parent = data.parent ? all.find((p) => p.id === data.parent) : undefined;
 const children = await getChildren(project.id);
+const ids = all.map((p) => ({ value: p.id, label: p.id }));
 
 // Components available inside the MDX body.
 const components = { Demo, CodeFile, Video, Figure, Takeaway, PlainOnly, EngOnly };
+
+// The responses at rest — from the same functions the Worker route calls.
+const full = await projectById(project.id);
+const contractFields = data.aiNote ? ['problem', 'unique', 'ai'] : ['problem', 'unique'];
+const contract = await projectById(project.id, contractFields);
+const learned = await projectById(project.id, ['learned']);
+const inside = children.length > 0 ? await projectById(project.id, ['subsystems']) : null;
+
+const playable = data.demo.kind !== 'none' && data.demo.fullscreen;
+const when = data.date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+const sections = (headings as MarkdownHeading[]).filter((h) => h.depth === 2);
 ---
 
 <Base
@@ -41,205 +59,219 @@ const components = { Demo, CodeFile, Video, Figure, Takeaway, PlainOnly, EngOnly
   description={data.blurb}
   ogImage={`/og/projects/${project.id}.png`}
 >
-  <article>
-    <!-- Hero -->
-    <header class="border-b border-border">
-      <div class="mx-auto max-w-(--container-wide) px-4 py-12 sm:px-6 sm:py-16">
+  <div class="ref">
+    <Rail current="project" hrefs={{ project: `/projects/${project.id}` }} />
+    <article class="ref-main">
+      <Row id="project">
         <!-- A subsystem says what it is part of. Landing on the repricing
              write-up from a search result should never leave a reader unsure
              whether they are looking at a standalone tool or one organ of
              something larger. -->
         {parent ? (
-          <nav class="mb-8 flex flex-wrap items-center gap-1.5 text-sm text-ink-muted" aria-label="Breadcrumb">
-            <a href="/projects" class="transition-colors hover:text-ink">All projects</a>
-            <span aria-hidden="true" class="text-ink-faint">/</span>
-            <a href={`/projects/${parent.id}`} class="transition-colors hover:text-ink">
-              {parent.data.title.split(',')[0]}
-            </a>
-            <span aria-hidden="true" class="text-ink-faint">/</span>
-            <span class="text-ink-faint">
-              {project.id.split('/').pop()!.replace(/-/g, ' ').replace(/^./, (c: string) => c.toUpperCase())}
-            </span>
+          <nav class="back" aria-label="Breadcrumb">
+            <a href="/projects">All work</a> <span class="quiet">/</span>
+            <a href={`/projects/${parent.id}`}>{parent.data.title.split(/,| that /)[0]}</a> <span class="quiet">/</span>
+            <span class="quiet">{project.id.split('/').pop()!.replace(/-/g, ' ')}</span>
           </nav>
         ) : (
-          <a
-            href="/projects"
-            class="mb-8 inline-flex items-center gap-1.5 text-sm text-ink-muted transition-colors hover:text-ink"
-          >
-            <span aria-hidden="true">←</span> All projects
-          </a>
+          <p class="back"><a href="/projects">← All work</a></p>
         )}
-
-        <div class="flex flex-wrap items-center gap-3 text-sm">
-          <span
-            class:list={[
-              'rounded-full px-2.5 py-1 text-xs font-medium',
-              data.status === 'live' && 'bg-ok/15 text-ok',
-              data.status === 'wip' && 'bg-warn/15 text-warn',
-              data.status === 'archived' && 'bg-ink-faint/15 text-ink-muted',
-            ]}
-          >
-            {statusLabel[data.status]}
-          </span>
-          <time class="text-ink-faint" datetime={data.date.toISOString()}>
-            {data.date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}
-          </time>
-          {data.role && <span class="text-ink-faint">· {data.role}</span>}
-        </div>
-
-        <h1 class="mt-4 max-w-4xl text-4xl font-extrabold tracking-tight text-ink sm:text-6xl">
-          {data.title}
-        </h1>
-        <p class="mt-5 max-w-(--container-reading) text-lg leading-relaxed text-ink-muted sm:text-xl">{data.blurb}</p>
-
-        <ul class="mt-6 flex flex-wrap gap-2">
-          {data.stack.map((tech) => (
-            <li class="rounded-lg border border-border bg-surface px-2.5 py-1 text-sm text-ink-muted">
-              {tech}
-            </li>
-          ))}
+        <Crumb method="GET" path={`/api/work/${project.id}`} />
+        <h1 class="page">{data.title}</h1>
+        <p class="status">
+          {statusLabel[data.status]} · <time datetime={data.date.toISOString()}>{when}</time>{data.role && ` · ${data.role}`}
+        </p>
+        <p class="lead">
+          <span class="only-plain">{data.plainBlurb ?? data.blurb}</span>
+          <span class="only-eng">{data.blurb}</span>
+        </p>
+        <ul class="chips">
+          {data.stack.map((tech) => <li>{tech}</li>)}
         </ul>
 
-        {(data.links.source || data.links.live || data.links.writeup) && (
-          <div class="mt-6 flex flex-wrap gap-3">
-            {data.links.live && (
-              <a href={data.links.live} rel="noopener" class="btn btn-primary text-sm">View live</a>
-            )}
-            {data.links.source && (
-              <a href={data.links.source} rel="noopener" class="btn btn-ghost text-sm">Source</a>
-            )}
-            {data.links.writeup && (
-              <a href={data.links.writeup} rel="noopener" class="btn btn-ghost text-sm">External write-up</a>
-            )}
+        {(playable || data.links.live || data.links.source || data.links.writeup) && (
+          <div class="actions">
+            {playable && <a href={`/play/${project.id}`} class="btn btn-primary">Play <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>}
+            {data.links.live && !playable && <a href={data.links.live} rel="noopener" class="btn btn-primary">View live</a>}
+            {data.links.live && playable && <a href={data.links.live} rel="noopener" class="c-link">View live</a>}
+            {data.links.source && <a href={data.links.source} rel="noopener" class="c-link">Source <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>}
+            {data.links.writeup && <a href={data.links.writeup} rel="noopener" class="c-link">External write-up <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>}
           </div>
         )}
 
         {data.metrics.length > 0 && (
-          <dl class="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <dl class="metrics">
             {data.metrics.map((m) => (
-              <div class="tile p-4">
-                <dd class="font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">{m.value}</dd>
-                <dt class="mt-1 text-xs uppercase tracking-wide text-ink-faint">{m.label}</dt>
-              </div>
+              <>
+                <dt class="mono">{m.label}</dt>
+                <dd>{m.value}</dd>
+              </>
             ))}
           </dl>
         )}
-      </div>
-    </header>
 
-    {data.cover ? (
-      <div class="mx-auto max-w-(--container-wide) px-4 sm:px-6">
-        <Cover
-          cover={data.cover}
-          coverDark={data.coverDark}
-          alt={data.coverAlt ?? ''}
-          class="-mt-8 w-full rounded-xl border border-border shadow-xl"
-          widths={[640, 1024, 1600]}
-          sizes="(max-width: 1152px) 100vw, 1152px"
+        {data.cover && (
+          <figure class="cover">
+            <Cover cover={data.cover} alt={data.coverAlt ?? ''} widths={[640, 1024, 1400]} sizes="(max-width: 1024px) 100vw, 44rem" />
+            {data.coverAlt && <figcaption>{data.coverAlt}</figcaption>}
+          </figure>
+        )}
+        <!-- A project without cover art gets nothing here. A generated
+             gradient standing in for a screenshot is what makes a portfolio
+             look padded. -->
+
+        <Console slot="code" id="project" endpoint="project" params={{ id: project.id }} options={{ id: ids }} body={full} />
+      </Row>
+
+      <!-- THE CONTRACT: rendered identically on every project, so a reader
+           comparing two projects finds the same answers in the same place. -->
+      <Row id="contract">
+        <h2>The problem</h2>
+        <p class="t">{data.problem}</p>
+        <h2 class="mt">What was unique</h2>
+        <p class="t">{data.unique}</p>
+        {data.aiNote && (
+          <>
+            <h2 class="mt">Where AI fit in</h2>
+            <p class="t">{data.aiNote}</p>
+          </>
+        )}
+        <Console
+          slot="code"
+          id="contract"
+          endpoint="project"
+          params={{ id: project.id, fields: contractFields.join(',') }}
+          options={{ id: ids }}
+          body={contract}
         />
-      </div>
-    ) : null}
-    <!-- A project without cover art gets NO band. The generated gradient still
-         earns its place on a card, where a thumbnail slot has to hold
-         something — but stretched full-width here it was a saturated slab
-         carrying no information, and on the grey ground it read as the loudest
-         thing on the page. Colour is for highlights; this was wallpaper. -->
-
-    <!-- THE CONTRACT: rendered identically on every project, so a reader
-         comparing two projects finds the same answers in the same place. -->
-    <div class="mx-auto max-w-(--container-reading) px-4 py-12 sm:px-6">
-      <section class="grid gap-6 sm:grid-cols-2">
-        <div class="tile p-6">
-          <h2 class="eyebrow mb-3 !font-sans text-xs !tracking-[0.12em]">The problem</h2>
-          <p class="text-[0.975rem] leading-relaxed text-ink">{data.problem}</p>
-        </div>
-        <div class="tile p-6">
-          <h2 class="eyebrow mb-3 !font-sans text-xs !tracking-[0.12em]">What was unique</h2>
-          <p class="text-[0.975rem] leading-relaxed text-ink">{data.unique}</p>
-        </div>
-      </section>
-
-      {data.aiNote && (
-        <aside class="mt-6 flex gap-4 rounded-2xl border border-border bg-surface/60 p-5">
-          <span class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg bg-surface-raised text-sm font-bold text-ink-muted" aria-hidden="true">
-            AI
-          </span>
-          <div>
-            <h2 class="text-xs font-semibold uppercase tracking-[0.12em] text-ink-faint">Where AI fit in</h2>
-            <p class="mt-1.5 text-sm leading-relaxed text-ink-muted">{data.aiNote}</p>
-          </div>
-        </aside>
-      )}
+      </Row>
 
       <!-- The parts of the system, before the long read rather than after it.
            Someone who came for "how does the repricing work" should not have
            to finish 1,300 words about the whole ERP to find out that there is
            a dedicated write-up for it. -->
       {children.length > 0 && (
-        <section class="mt-12">
-          <h2 class="eyebrow mb-4 !font-sans text-xs !tracking-[0.12em]">Inside it</h2>
-          <div class="grid gap-3 sm:grid-cols-3">
+        <Row id="inside">
+          <h2>Inside it</h2>
+          <ul class="subs">
             {children.map((child) => (
-              <a
-                href={`/projects/${child.id}`}
-                class="tile group flex flex-col p-5 transition-colors hover:border-border-strong"
-              >
-                <h3 class="font-display text-base font-bold leading-snug text-ink transition-colors group-hover:text-accent">
-                  {child.data.title}
-                </h3>
-                {child.data.metrics[0] && (
-                  <p class="mt-3 font-display text-2xl font-extrabold tracking-tight text-ink">
-                    {child.data.metrics[0].value}{' '}
-                    <span class="font-sans text-xs font-medium uppercase tracking-wide text-ink-faint">
-                      {child.data.metrics[0].label}
-                    </span>
-                  </p>
-                )}
-                <span class="mt-auto pt-4 text-sm font-medium text-accent transition-transform group-hover:translate-x-0.5">
-                  Read it →
-                </span>
-              </a>
+              <li>
+                <a href={`/projects/${child.id}`}>{child.data.title}</a>
+                <p>
+                  <span class="only-plain">{child.data.plainBlurb ?? child.data.blurb}</span>
+                  <span class="only-eng">{child.data.blurb}</span>
+                </p>
+              </li>
             ))}
-          </div>
-        </section>
+          </ul>
+          <Console
+            slot="code"
+            id="inside"
+            endpoint="project"
+            params={{ id: project.id, fields: 'subsystems' }}
+            options={{ id: ids }}
+            body={inside}
+          />
+        </Row>
       )}
 
-      <div class="prose-portfolio mt-12">
-        <Content components={components} />
-      </div>
-
-      <section class="mt-12 rounded-2xl border border-accent/25 bg-accent-wash/30 p-6 sm:p-8">
-        <h2 class="eyebrow mb-4 !font-sans text-xs !tracking-[0.12em] !text-accent">What I learned</h2>
-        <ul class="space-y-3">
-          {data.learned.map((lesson) => (
-            <li class="flex gap-3 text-[0.975rem] leading-relaxed text-ink">
-              <span class="mt-2 size-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true" />
-              <span>{lesson}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      {(prev || next) && (
-        <nav class="mt-12 flex gap-4 border-t border-border pt-8" aria-label="More projects">
-          {prev && (
-            <a href={`/projects/${prev.id}`} class="group flex-1 text-left">
-              <span class="text-xs uppercase tracking-wide text-ink-faint">Previous</span>
-              <span class="mt-1 block font-medium text-ink transition-colors group-hover:text-accent">
-                {prev.data.title}
-              </span>
-            </a>
+      <!-- The long read. Beside it the dark column carries the write-up's own
+           map — its sections, as anchors — so a reader can jump the way they
+           would in a reference. -->
+      <Row id="writeup">
+        <div class="prose-portfolio">
+          <Content components={components} />
+        </div>
+        <Fragment slot="code">
+          {sections.length > 0 && (
+            <nav class="panel" aria-label="In this write-up">
+              <div class="bar mono"><span><b>In this write-up</b></span><span class="src">{sections.length} sections</span></div>
+              <ol class="toc">
+                {sections.map((h) => (
+                  <li><a href={`#${h.slug}`}>{h.text}</a></li>
+                ))}
+              </ol>
+            </nav>
           )}
-          {next && (
-            <a href={`/projects/${next.id}`} class="group flex-1 text-right">
-              <span class="text-xs uppercase tracking-wide text-ink-faint">Next</span>
-              <span class="mt-1 block font-medium text-ink transition-colors group-hover:text-accent">
-                {next.data.title}
-              </span>
-            </a>
-          )}
-        </nav>
-      )}
-    </div>
-  </article>
+        </Fragment>
+      </Row>
+
+      <Row id="learned">
+        <h2>What I learned</h2>
+        <ol class="learned">
+          {data.learned.map((lesson) => <li>{lesson}</li>)}
+        </ol>
+        {(prev || next) && (
+          <nav class="prevnext" aria-label="More projects">
+            {prev ? <a href={`/projects/${prev.id}`}>← {prev.data.title}</a> : <span />}
+            {next && <a href={`/projects/${next.id}`}>{next.data.title} →</a>}
+          </nav>
+        )}
+        <Console
+          slot="code"
+          id="learned"
+          endpoint="project"
+          params={{ id: project.id, fields: 'learned' }}
+          options={{ id: ids }}
+          body={learned}
+        />
+      </Row>
+    </article>
+  </div>
 </Base>
+
+<style>
+  .toc { padding: 0.5rem 0; }
+  .toc li { border-top: 1px solid var(--code-line); }
+  .toc li:first-child { border-top: 0; }
+  .toc a {
+    display: block;
+    padding: 0.55rem 0.9rem;
+    font-size: 0.8125rem;
+    color: var(--code-ink);
+    text-decoration: none;
+  }
+  .toc a:hover { color: var(--syn-key); background: rgba(255, 255, 255, 0.03); }
+  .toc li[aria-current='true'] a { color: var(--syn-key); box-shadow: inset 2px 0 0 var(--syn-key); }
+</style>
+
+<script>
+  // The write-up's own map lights the section in view, and lists only the
+  // sections the current register shows: a heading inside the other
+  // register's block is display:none, and a link to it would go nowhere.
+  document.addEventListener('astro:page-load', () => {
+    const links = [...document.querySelectorAll<HTMLAnchorElement>('.toc a[href^="#"]')];
+    if (links.length === 0) return;
+    const pairs = links
+      .map((a) => ({ a, el: document.getElementById(decodeURIComponent(a.getAttribute('href')!.slice(1))) }))
+      .filter((x): x is { a: HTMLAnchorElement; el: HTMLElement } => !!x.el);
+    const prune = () => {
+      let shown = 0;
+      pairs.forEach(({ a, el }) => {
+        const visible = el.getClientRects().length > 0;
+        a.parentElement!.hidden = !visible;
+        if (visible) shown++;
+      });
+      const panel = links[0]?.closest<HTMLElement>('.panel');
+      if (panel) panel.hidden = shown === 0;
+      const count = panel?.querySelector<HTMLElement>('.bar .src');
+      if (count) count.textContent = `${shown} ${shown === 1 ? 'section' : 'sections'}`;
+    };
+    prune();
+    const mo = new MutationObserver(prune);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-mode'] });
+    document.addEventListener('astro:before-swap', () => mo.disconnect(), { once: true });
+    if (!('IntersectionObserver' in window)) return;
+    const targets = pairs.map((x) => x.el);
+    const io = new IntersectionObserver(
+      (entries) => {
+        const hit = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+        if (!hit) return;
+        links.forEach((a) => a.parentElement!.setAttribute('aria-current', String(a.getAttribute('href') === `#${(hit.target as HTMLElement).id}`)));
+      },
+      { rootMargin: '-10% 0px -75% 0px', threshold: 0 },
+    );
+    targets.forEach((t) => io.observe(t));
+    document.addEventListener('astro:before-swap', () => io.disconnect(), { once: true });
+  });
+</script>

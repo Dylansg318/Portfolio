@@ -1,16 +1,43 @@
 ---
 import Base from '../layouts/Base.astro';
+import Rail from '../components/ref/Rail.astro';
+import Row from '../components/ref/Row.astro';
+import Method from '../components/ref/Method.astro';
+import { highlight } from '../lib/console-render';
+
+// The page is static, so the path is filled in by the script below; the
+// response is what the API says about a route that does not exist.
+const body = {
+  status: 404,
+  error: 'not_found',
+  detail: 'No such page.',
+  hint: 'GET /api lists every endpoint; /projects lists every write-up.',
+};
 ---
 <Base title="Not found" noindex>
-  <div class="mx-auto flex max-w-(--container-reading) flex-col items-center px-4 py-32 text-center">
-    <p class="text-6xl font-bold text-accent">404</p>
-    <h1 class="mt-4 text-2xl font-semibold text-ink">That page doesn't exist</h1>
-    <p class="mt-2 text-ink-muted">It may have been renamed, or never existed at all.</p>
-    <a
-      href="/"
-      class="mt-8 rounded-lg bg-accent px-5 py-2.5 font-medium text-accent-ink transition-colors hover:bg-accent-hover"
-    >
-      Back home
-    </a>
+  <div class="ref">
+    <Rail />
+    <div class="ref-main">
+      <Row id="missing">
+        <p class="crumb mono"><Method method="GET" /> <b id="missing-path">/…</b></p>
+        <h1 class="page">That page doesn't exist.</h1>
+        <p class="t">It may have been renamed, or never existed at all. The old addresses that were meant to keep working still do.</p>
+        <div class="actions">
+          <a href="/" class="btn btn-primary">Back home</a>
+          <a href="/projects" class="c-link">All work <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+        </div>
+        <div class="panel" slot="code">
+          <div class="bar mono"><span><b>Response</b></span><span class="src"><span class="n">404 Not Found</span></span></div>
+          <pre set:html={highlight(body)} />
+        </div>
+      </Row>
+    </div>
   </div>
 </Base>
+
+<script>
+  document.addEventListener('astro:page-load', () => {
+    const el = document.getElementById('missing-path');
+    if (el) el.textContent = location.pathname + location.search;
+  });
+</script>
