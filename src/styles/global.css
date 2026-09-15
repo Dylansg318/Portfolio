@@ -994,6 +994,10 @@
     overscroll-behavior: contain;
     padding: 1.25rem 1rem 2rem;
     display: grid;
+    /* max-content rows, not auto: .gp-host clips its corners with overflow:
+       hidden, which lets an auto row shrink it to the panel's height. A game
+       taller than the panel was then cut off with nothing left to scroll. */
+    grid-auto-rows: max-content;
     align-content: start;
     justify-items: center;
     gap: 1rem;
