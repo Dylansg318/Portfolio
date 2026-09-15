@@ -217,7 +217,7 @@ from 1536px the response is 36rem.
 | `--accent-hover` | `#5249e6` | `#b3aeff` | Hover state of accent text. |
 | `--accent-fill` / `--accent-fill-hover` | `#5e56fb` / `#5249e6` | same | The accent **as a fill**: the primary button, Send, the skip link, a game's Start. The same in both themes because white text clears 4.5:1 on it and would not on the lightened text accent — which is why the two are two tokens. |
 | `--accent-ink` | `#ffffff` | same | Text on `--accent-fill`. |
-| `--accent-wash` | `#eeedff` | `#272b58` | Selection, the active rail entry, the active register tab. |
+| `--accent-wash` | `#eeedff` | `#262c36` | Selection, the active rail entry, the active register tab (`--tab-active` is the same value). A purple wash in light; GitHub's neutral selected grey in dark, where the accent stripe carries the colour. |
 | `--get` / `--get-bg` | `#0a6b3f` / `#e2f5ec` | `#5fd39c` / `#12312a` | The GET badge. Semantic, not the accent. |
 | `--post` / `--post-bg` | `#4b43d6` / `#eeedff` | `#b4afff` / `#272b58` | The POST badge. |
 | `--ok` / `--warn` / `--danger` | `#0a6b3f` / `#8a5a00` / `#b42318` | `#4fd08f` / `#e5b04a` / `#f8817a` | Status text on the prose side. |
@@ -323,7 +323,7 @@ afternoon, and the dark theme was drawn so that the split still reads: the prose
 column goes near-black, the response column goes a step darker than it, and the console
 floats a step lighter than the page.
 The dark grounds are GitHub's own dark neutrals (`#0d1117` page, `#010409` inset, `#151b23`
-raised) since 2026-09-15: the first dark theme was navy, and next to GitHub — where an
+raised, `#262c36` selected) since 2026-09-15: the first dark theme was navy, and next to GitHub — where an
 engineer reading this spends the day — navy read as a theme rather than as a dark mode.
 
 How it works:
@@ -844,7 +844,7 @@ reference, §11 still governs which facts may appear.
 | 2026-09-14 | **The rail is the navigation; the header stops repeating it.** Two maps of the same five pages — page names in the top bar, endpoints in the rail — was the thing a first look could not parse. The header keeps the name and the controls; each rail entry is a page's plain name over its endpoint, *One project* indented under Work with `{id}` resolved on a project page, *Index* under a hairline; below 1280px the rail is a strip of the five names. `site.nav` removed. |
 | 2026-09-14 | **Room to breathe.** The header is 3.5rem (`--head-h`, one token the rail, the sticky console and every scroll margin measure from); the prose column's maximum is 48rem with 3.5rem of padding at desktop, so its text measure stays about where it was; the console's sections, bar and caps gained a quarter-rem each way; and the three-column layout waits for 1280px — at 1024px the rail and a 30rem response had left the prose about 180px of text, so 1024–1279 is two columns with a 24rem response and the rail as a strip. |
 | 2026-09-14 | **The home page becomes a still frame, and games open in a side panel.** Dylan's idea, mocked first (a claude.ai artifact) and decided in four answers: home page only; out, then in, with a rise; a response drawer on a phone; Back leaves the page. The frame is a sticky `.ref-main` inside a `.ref` given the scroll length, every row a layer in one place, the column grounds painted by the frame so a fading row never fades its background. A game opens over the response column the way a desktop app's side panel does — expand, ↗ its own page, ✕ — on every page where one is playable; the write-ups' inline islands became *Play* cards and the project page's *Play* button opens the panel instead of leaving. Island demos gained `keyboard`. Two traps found testing: a router listens for link clicks before a bubbling handler, so the panel catches Play in the capture phase; and below 1280px the scroll length stretched the rail strip's grid row and pushed the frame 2,300px down the page. |
-| 2026-09-15 | **The dark theme goes GitHub-neutral.** Dylan asked for the dark background to read like GitHub's. The navy grounds and hairlines became GitHub's dark neutrals — page `#0d1117`, response column `#010409`, raised fills and the console `#151b23`, hairlines `#21262d` / `#30363d` — keeping the split (response column darker than the prose, console lighter than the page). Text colours, the accent, the badges and the light theme are unchanged; the contrast gate passes both themes. §3.1–3.2, §3.6 updated. |
+| 2026-09-15 | **The dark theme goes GitHub-neutral.** Dylan asked for the dark background to read like GitHub's. The navy grounds and hairlines became GitHub's dark neutrals — page `#0d1117`, response column `#010409`, raised fills and the console `#151b23`, hairlines `#21262d` / `#30363d` — keeping the split (response column darker than the prose, console lighter than the page). The same day the selected highlight (the active rail entry, the active register tab, selection) went from the purple wash `#272b58` to GitHub's selected grey `#262c36`: the purple read loud on near-black. Text colours, the accent, the badges (POST keeps its purple ground) and the light theme are unchanged; the contrast gate passes both themes. §3.1–3.2, §3.6 updated. |
 
 ## 10. Parked and open
 
@@ -920,4 +920,4 @@ Design section. It is indexed by GitHub search and reachable by URL, which is th
 | 2026-09-14 | The API-reference world: §1.3, §3, §4 rewritten; §5.1–5.3 updated and §5.5 (the API) added; §7, §8.3, §8.5 updated; four §9 rows; §10 re-parked. |
 | 2026-09-14 | Two themes and one navigation: §3.1–3.2 tables gain a Dark column and `--head-h`; §3.6 rewritten as *Two themes*; §3.7, §4 (the rail is the navigation), §5.2, §6.2, §7, §8.3 updated; three §9 rows. |
 | 2026-09-14 | The still frame and the game panel: §3.5 gains two rules, §4's `/` row, §6.1 *Where an island is played*, §8.2 two lines, one §9 row. |
-| 2026-09-15 | The dark theme's grounds and hairlines move to GitHub's dark neutrals: §3.1 table, §3.2, §3.6, one §9 row. |
+| 2026-09-15 | The dark theme's grounds, hairlines and selected highlight move to GitHub's dark neutrals: §3.1 table, §3.2, §3.6, one §9 row. |
