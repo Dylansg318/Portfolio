@@ -183,7 +183,7 @@ The page is a **prose column** beside a **continuous dark response column**. The
 says what a thing is in plain words; the response beside it is the exact shape — a live
 request and its real answer, an excerpt of real code, the write-up's own map. Rows abut,
 so the dark column runs unbroken from the header to the footer. In the light theme the
-prose column is white; in the dark theme it is navy and the response column goes a step
+prose column is white; in the dark theme it is GitHub's near-black and the response column goes a step
 darker than it, so the two columns still read as two (§3.6).
 
 Widths: below 1024px the response stacks under its prose and the rail is a strip of
@@ -194,17 +194,17 @@ from 1536px the response is 36rem.
 
 | Token | Light | Dark | Role |
 |---|---|---|---|
-| `--bg`, `--surface` | `#ffffff` | `#0f1523` | The prose column. White in the light theme, on purpose: a reference is read for minutes at a time. |
-| `--surface-raised` | `#f6f8fa` | `#161d2e` | Quiet fills: chips, light code excerpts, hover rows, the reading-mode hint. |
-| `--border` | `#e3e8ee` | `#222c3f` | Every hairline on the prose side. |
-| `--border-mid` | `#cfd7df` | `#2f3b52` | Underlines and scrollbars — decorative, not a boundary, so it is not gated. |
-| `--border-strong` | `#7f8b9b` | `#6d7d95` | Bullets and real boundaries. Clears 3:1 on the page. |
+| `--bg`, `--surface` | `#ffffff` | `#0d1117` | The prose column. White in the light theme, on purpose: a reference is read for minutes at a time. |
+| `--surface-raised` | `#f6f8fa` | `#151b23` | Quiet fills: chips, light code excerpts, hover rows, the reading-mode hint. |
+| `--border` | `#e3e8ee` | `#21262d` | Every hairline on the prose side. |
+| `--border-mid` | `#cfd7df` | `#30363d` | Underlines and scrollbars — decorative, not a boundary, so it is not gated. |
+| `--border-strong` | `#7f8b9b` | `#656c76` | Bullets and real boundaries. Clears 3:1 on the page. |
 | `--ink` | `#0a2540` | `#e8edf5` | Body text and headings. Navy, not black, in the light theme: the same hue family as the dark column. |
 | `--ink-muted` | `#425466` | `#aeb9ca` | Secondary copy, the `.t` paragraph, job summaries. |
 | `--ink-faint` | `#5b6b82` | `#8896ab` | Meta: crumbs, dates, captions, the mono labels. Still 4.5:1 on the page and on the quiet fill. |
-| `--code-bg` | `#0b0f19` | `#080b13` | The response column itself. |
-| `--code-surface` | `#131a2a` | `#111829` | A console or panel on it. |
-| `--code-line` | `#263042` | `#243049` | Hairlines and input borders on the dark side. |
+| `--code-bg` | `#0b0f19` | `#010409` | The response column itself. |
+| `--code-surface` | `#131a2a` | `#151b23` | A console or panel on it. |
+| `--code-line` | `#263042` | `#30363d` | Hairlines and input borders on the dark side. |
 | `--code-ink` | `#d6deeb` | same | Code and JSON on the dark side. |
 | `--code-dim` | `#7d8aa5` | same | Captions, punctuation, the status line, the frame note. |
 | `--syn-key` / `--syn-str` / `--syn-num` | `#9ecbff` / `#a5d6a7` / `#f7c46c` | same | JSON keys, strings, numbers and literals; also the selected language tab, a 2xx status and a 4xx status. |
@@ -213,7 +213,7 @@ from 1536px the response is 36rem.
 
 | Token | Light | Dark | Role |
 |---|---|---|---|
-| `--accent` | `#5e56fb` | `#9d97ff` | The accent **as text**: links, the active rail entry's stripe, the active tab's underline, focus rings. A hair darker than the mock's `#635bff` in light so a link on the quiet fill clears 4.5:1; lightened in dark so it reads on navy. |
+| `--accent` | `#5e56fb` | `#9d97ff` | The accent **as text**: links, the active rail entry's stripe, the active tab's underline, focus rings. A hair darker than the mock's `#635bff` in light so a link on the quiet fill clears 4.5:1; lightened in dark so it reads on the dark ground. |
 | `--accent-hover` | `#5249e6` | `#b3aeff` | Hover state of accent text. |
 | `--accent-fill` / `--accent-fill-hover` | `#5e56fb` / `#5249e6` | same | The accent **as a fill**: the primary button, Send, the skip link, a game's Start. The same in both themes because white text clears 4.5:1 on it and would not on the lightened text accent — which is why the two are two tokens. |
 | `--accent-ink` | `#ffffff` | same | Text on `--accent-fill`. |
@@ -320,8 +320,11 @@ The site has a light theme and a dark theme, and the two-column split survives b
 The morning's redesign shipped with one theme on the argument that the light/dark
 split was already between the columns; Dylan asked for the choice back the same
 afternoon, and the dark theme was drawn so that the split still reads: the prose
-column goes navy, the response column goes a step darker than it, and the console
+column goes near-black, the response column goes a step darker than it, and the console
 floats a step lighter than the page.
+The dark grounds are GitHub's own dark neutrals (`#0d1117` page, `#010409` inset, `#151b23`
+raised) since 2026-09-15: the first dark theme was navy, and next to GitHub — where an
+engineer reading this spends the day — navy read as a theme rather than as a dark mode.
 
 How it works:
 
@@ -841,6 +844,7 @@ reference, §11 still governs which facts may appear.
 | 2026-09-14 | **The rail is the navigation; the header stops repeating it.** Two maps of the same five pages — page names in the top bar, endpoints in the rail — was the thing a first look could not parse. The header keeps the name and the controls; each rail entry is a page's plain name over its endpoint, *One project* indented under Work with `{id}` resolved on a project page, *Index* under a hairline; below 1280px the rail is a strip of the five names. `site.nav` removed. |
 | 2026-09-14 | **Room to breathe.** The header is 3.5rem (`--head-h`, one token the rail, the sticky console and every scroll margin measure from); the prose column's maximum is 48rem with 3.5rem of padding at desktop, so its text measure stays about where it was; the console's sections, bar and caps gained a quarter-rem each way; and the three-column layout waits for 1280px — at 1024px the rail and a 30rem response had left the prose about 180px of text, so 1024–1279 is two columns with a 24rem response and the rail as a strip. |
 | 2026-09-14 | **The home page becomes a still frame, and games open in a side panel.** Dylan's idea, mocked first (a claude.ai artifact) and decided in four answers: home page only; out, then in, with a rise; a response drawer on a phone; Back leaves the page. The frame is a sticky `.ref-main` inside a `.ref` given the scroll length, every row a layer in one place, the column grounds painted by the frame so a fading row never fades its background. A game opens over the response column the way a desktop app's side panel does — expand, ↗ its own page, ✕ — on every page where one is playable; the write-ups' inline islands became *Play* cards and the project page's *Play* button opens the panel instead of leaving. Island demos gained `keyboard`. Two traps found testing: a router listens for link clicks before a bubbling handler, so the panel catches Play in the capture phase; and below 1280px the scroll length stretched the rail strip's grid row and pushed the frame 2,300px down the page. |
+| 2026-09-15 | **The dark theme goes GitHub-neutral.** Dylan asked for the dark background to read like GitHub's. The navy grounds and hairlines became GitHub's dark neutrals — page `#0d1117`, response column `#010409`, raised fills and the console `#151b23`, hairlines `#21262d` / `#30363d` — keeping the split (response column darker than the prose, console lighter than the page). Text colours, the accent, the badges and the light theme are unchanged; the contrast gate passes both themes. §3.1–3.2, §3.6 updated. |
 
 ## 10. Parked and open
 
@@ -916,3 +920,4 @@ Design section. It is indexed by GitHub search and reachable by URL, which is th
 | 2026-09-14 | The API-reference world: §1.3, §3, §4 rewritten; §5.1–5.3 updated and §5.5 (the API) added; §7, §8.3, §8.5 updated; four §9 rows; §10 re-parked. |
 | 2026-09-14 | Two themes and one navigation: §3.1–3.2 tables gain a Dark column and `--head-h`; §3.6 rewritten as *Two themes*; §3.7, §4 (the rail is the navigation), §5.2, §6.2, §7, §8.3 updated; three §9 rows. |
 | 2026-09-14 | The still frame and the game panel: §3.5 gains two rules, §4's `/` row, §6.1 *Where an island is played*, §8.2 two lines, one §9 row. |
+| 2026-09-15 | The dark theme's grounds and hairlines move to GitHub's dark neutrals: §3.1 table, §3.2, §3.6, one §9 row. |

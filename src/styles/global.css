@@ -52,7 +52,7 @@
 
   /* the one accent. `--accent` is the accent AS TEXT (links, the active
      entry's stripe, focus rings) and lightens in the dark theme so it still
-     reads on navy; `--accent-fill` is the accent AS A FILL (the primary
+     reads on the dark ground; `--accent-fill` is the accent AS A FILL (the primary
      button, Send) and is the same in both themes, because white text on it
      clears 4.5:1 and white text on the lightened one would not. */
   --accent: #5e56fb;             /* a hair darker than the mock so a link on the quiet fill clears 4.5:1 */
@@ -93,26 +93,27 @@
   --shadow-btn: 0 1px 2px rgba(10, 37, 64, 0.12), 0 4px 12px -6px rgba(99, 91, 255, 0.5);
 }
 
-/* The dark theme: the prose column goes navy, the response column goes a step
-   darker than it so the split between the two survives, and the accent-as-text
+/* The dark theme: GitHub's dark neutrals — the prose column goes near-black
+   (#0d1117), the response column goes a step darker than it (#010409) so the
+   split between the two survives, and the accent-as-text
    lightens. Everything not listed here keeps its light value — the syntax
    colours and the code ink were drawn for a dark surface to begin with. */
 @media screen {
   :root[data-theme='dark'] {
     color-scheme: dark;
 
-    --bg: #0f1523;
-    --surface: #0f1523;
-    --surface-raised: #161d2e;
-    --border: #222c3f;
-    --border-mid: #2f3b52;
-    --border-strong: #6d7d95;
+    --bg: #0d1117;
+    --surface: #0d1117;
+    --surface-raised: #151b23;
+    --border: #21262d;
+    --border-mid: #30363d;
+    --border-strong: #656c76;
 
     --ink: #e8edf5;
     --ink-muted: #aeb9ca;
     --ink-faint: #8896ab;
 
-    --nav: #0f1523;
+    --nav: #0d1117;
     --nav-ink: #e8edf5;
     --nav-muted: #aeb9ca;
     --tab-active: #272b58;
@@ -131,9 +132,9 @@
     --post: #b4afff;
     --post-bg: #272b58;
 
-    --code-bg: #080b13;
-    --code-surface: #111829;
-    --code-line: #243049;
+    --code-bg: #010409;
+    --code-surface: #151b23;
+    --code-line: #30363d;
 
     --shadow-btn: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 12px -6px rgba(99, 91, 255, 0.5);
   }
