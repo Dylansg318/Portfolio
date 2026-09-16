@@ -24,9 +24,17 @@
  *     along the bottom of the frame.
  *   - While a game is open in the side panel the frame holds its scroll, so
  *     the arrow keys steer the game instead of changing rows.
+ *   - A touch screen doesn't get the frame. Everything that moves here is set
+ *     from scroll events, and iOS hands those to the page after the compositor
+ *     has already scrolled, at its own cadence: the prose inside the frame
+ *     moves a beat behind the finger and stutters. It isn't the work — in
+ *     WebKit as an emulated iPhone 16 Pro Max the handler costs under 1ms a
+ *     frame (2026-09-16); it's the delivery. `(pointer: fine)` is the gate, so
+ *     a mouse or a trackpad gets the frame and a finger gets the page.
  *
- * Without JavaScript, or in a window too short for a frame, none of this
- * runs and the home page is the ordinary scrolling reference it was.
+ * Without JavaScript, on a touch screen, or in a window too short for a
+ * frame, none of this runs and the home page is the ordinary scrolling
+ * reference it was.
  */
 
 const LABELS: Record<string, string> = {
@@ -79,6 +87,7 @@ function setup(): (() => void) | undefined {
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
   const narrow = window.matchMedia('(max-width: 1023px)');
   const strip = window.matchMedia('(max-width: 1279px)');
+  const fine = window.matchMedia('(pointer: fine)');
 
   let on = false;
   let seg: Seg[] = [];
@@ -325,7 +334,7 @@ function setup(): (() => void) | undefined {
     measure();
   };
 
-  const fits = () => window.innerHeight >= MIN_FRAME_H;
+  const fits = () => fine.matches && window.innerHeight >= MIN_FRAME_H;
 
   function enable() {
     if (on) return measure();
@@ -381,6 +390,8 @@ function setup(): (() => void) | undefined {
 
   const initialHash = location.hash;
   window.addEventListener('resize', onResize);
+  // A tablet that gains a trackpad, or loses one.
+  fine.addEventListener('change', onResize);
   if (fits()) enable();
 
   // A link to a row (/#work) opens on that row. After the router's own
@@ -393,6 +404,7 @@ function setup(): (() => void) | undefined {
 
   return () => {
     window.removeEventListener('resize', onResize);
+    fine.removeEventListener('change', onResize);
     disable();
   };
 }
