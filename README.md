@@ -185,7 +185,8 @@ is the why.
 ## The API
 
 `/api` is a read-only JSON API over the same facts the pages render, served by
-the Worker at request time. `GET /api` is the index. The endpoints:
+the Worker at request time. `GET /api` is the index, and `/reference` is the same
+list as a page (the rail's *Index* entry). The endpoints:
 
 | Endpoint | Parameters | What it returns |
 |---|---|---|
@@ -196,6 +197,7 @@ the Worker at request time. `GET /api` is the index. The endpoints:
 | `GET /api/resume` | `format=json\|html\|pdf` | The one-page résumé as data; `page` points at the format asked for. |
 | `GET /api/away-from-work` | `playable=true` | Off the clock, and the first program, still playable. |
 | `POST /api/contact` | `{ from, message }` | Validates; `503` with a `mailto:` until delivery is configured, `202` once it is. |
+| `GET /api` | — | The index: every endpoint above, its parameters, its source and the page whose row it is. |
 
 Every GET takes `?fields=a,b` and every record carries `page`, the address of
 the page it describes. The list of endpoints lives in `src/lib/endpoints.ts`; the

@@ -48,6 +48,9 @@ export type Endpoint = {
   params: ParamSpec[];
   /** Which file the answer is read from — shown under the Send button. */
   source: string;
+  /** The page whose row this endpoint is: the rail's entry for it, and the
+   *  `page` each entry of `GET /api` carries. */
+  page: { label: string; href: string };
 };
 
 const CATEGORY = [
@@ -77,6 +80,7 @@ export const ENDPOINTS: Endpoint[] = [
       FIELDS,
     ],
     source: 'src/lib/site.ts',
+    page: { label: 'Home', href: '/' },
   },
   {
     key: 'work',
@@ -94,6 +98,7 @@ export const ENDPOINTS: Endpoint[] = [
       FIELDS,
     ],
     source: 'src/content/projects/*',
+    page: { label: 'Work', href: '/projects' },
   },
   {
     key: 'project',
@@ -112,6 +117,7 @@ export const ENDPOINTS: Endpoint[] = [
       { ...FIELDS, placeholder: 'problem,unique,learned' },
     ],
     source: 'src/content/projects/{id}',
+    page: { label: 'One project', href: '/projects/internal-erp' },
   },
   {
     key: 'experience',
@@ -134,6 +140,7 @@ export const ENDPOINTS: Endpoint[] = [
       FIELDS,
     ],
     source: 'src/lib/site.ts',
+    page: { label: 'About', href: '/about' },
   },
   {
     key: 'resume',
@@ -155,6 +162,7 @@ export const ENDPOINTS: Endpoint[] = [
       FIELDS,
     ],
     source: 'src/lib/site.ts',
+    page: { label: 'Resume', href: '/resume' },
   },
   {
     key: 'away',
@@ -172,6 +180,7 @@ export const ENDPOINTS: Endpoint[] = [
       FIELDS,
     ],
     source: 'src/lib/site.ts · src/content/projects/galaxy-defense',
+    page: { label: 'Away from work', href: '/#away' },
   },
   {
     key: 'contact',
@@ -189,6 +198,18 @@ export const ENDPOINTS: Endpoint[] = [
       },
     ],
     source: 'src/pages/api/contact.ts',
+    page: { label: 'Contact', href: '/contact' },
+  },
+  {
+    // The index lists itself, last: it is an endpoint like the others, with a
+    // page of its own, and a reader of GET /api should find GET /api in it.
+    key: 'index',
+    method: 'GET',
+    path: '/api',
+    description: 'This list: every endpoint, its parameters, where its answer is read from and the page whose row it is.',
+    params: [],
+    source: 'src/lib/endpoints.ts',
+    page: { label: 'Index', href: '/reference' },
   },
 ];
 

@@ -205,6 +205,9 @@ function setup(): (() => void) | undefined {
     const yNow = position();
     if (yNow !== lastY) travel = yNow > lastY ? 1 : -1;
     lastY = yNow;
+    // The first real scroll is the sign the reader knows the frame moves;
+    // the "next" arrow stops nudging from here on (global.css, .still-read).
+    if (yNow > 24) main!.classList.add('still-read');
     window.clearTimeout(settleTimer);
     if (settling || root.dataset.game === 'open') return;
     settleTimer = window.setTimeout(() => {
@@ -364,7 +367,7 @@ function setup(): (() => void) | undefined {
     strip.removeEventListener('change', onBreakpoint);
     cancelAnimationFrame(frame);
     window.clearTimeout(settleTimer);
-    main!.classList.remove('drawer-open', 'still-cut');
+    main!.classList.remove('drawer-open', 'still-cut', 'still-read');
     rows.forEach((r) => {
       r.el.removeAttribute('inert');
       for (const el of [r.prose, r.stick]) {
