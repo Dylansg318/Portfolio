@@ -30,10 +30,10 @@
  *     scrolled, at its own cadence, so anything moved from them lags the
  *     finger and stutters — it isn't the work (under 1ms a frame, measured
  *     2026-09-16 in WebKit as an iPhone 16 Pro Max), it's the delivery. So
- *     `measure()` writes each row's three ranges (in, scroll, out) as scroll
- *     offsets in `animation-range`, plus its overflow in `--ov`, and the
- *     keyframes do the rest; this script keeps the model, the settle, the
- *     jumps, the address, the rail and the drawer. Without scroll-driven
+ *     `measure()` generates one @keyframes per prose column and per response
+ *     (fade in, hold, scroll, hold, fade out, in px) and writes the row's
+ *     whole life as its `animation-range`; this script keeps the model, the
+ *     settle, the jumps, the address, the rail and the drawer. Without scroll-driven
  *     animations it sets opacity and transform itself, as it always did —
  *     but only for a mouse or a trackpad, or with reduced motion, where the
  *     rows swap in a step and a beat of lag is invisible. A touch screen
@@ -56,6 +56,8 @@ const LABELS: Record<string, string> = {
 /** The new row's rise, in px. Zero with reduced motion. */
 const RISE = 16;
 const MIN_FRAME_H = 480;
+/** The CSS path's fade curve: `ease()` below, quad in-out, as a bezier. */
+const EASE = 'cubic-bezier(0.45, 0, 0.55, 1)';
 
 type Row = {
   el: HTMLElement;
@@ -101,6 +103,9 @@ function setup(): (() => void) | undefined {
   let on = false;
   /** This run's motion is the compositor's: ranges, not styles. */
   let css = false;
+  /** The CSS path's generated @keyframes; a new generation each measure. */
+  let sheet: HTMLStyleElement | undefined;
+  let gen = 0;
   let seg: Seg[] = [];
   let total = 0;
   let hold = 0;
@@ -143,14 +148,28 @@ function setup(): (() => void) | undefined {
   }
 
   /**
-   * The CSS path: each row's motion as scroll offsets. The scroll at which the
-   * frame is at y=0 is `base`; every range is `base` plus a frame position.
-   * The prose fades out over the first 45% of the fade and the next row's in
-   * over the last 45%; the response trails on both sides (5–50%, 62–100%).
-   * The same numbers `render()` uses, so the two paths agree to the pixel.
+   * The CSS path: one animation per prose column and per response, its
+   * keyframes generated for the row — fade in, hold, scroll its overflow,
+   * hold, fade out, every value in px — and its range the row's whole life in
+   * scroll offsets. The scroll at which the frame is at y=0 is `base`. The
+   * prose fades out over the first 45% of the fade and in over the last 45%;
+   * the response trails on both sides (5–50%, 62–100%) — the numbers render()
+   * uses, so the two paths agree to the pixel.
+   *
+   * Deliberately one animation and nothing clever: the first cut stacked three
+   * (in, scroll, out) and let a finished one's fill hold the row visible in
+   * between, which desktop WebKit honours and the phone's compositor, in its
+   * own process, did not — Work and About went blank between their fades.
+   * Here the rest state and both ends of every animation are opacity 0, so a
+   * compositor that drops a finished animation shows the same as one that
+   * holds it. The first row's range starts at the top of the document (there
+   * is no "before") and the last row's runs past the end (no "after").
    */
   function ranges() {
     const base = ref!.getBoundingClientRect().top + window.scrollY - headH;
+    const far = document.documentElement.scrollHeight + 5000;
+    gen++;
+    let text = '';
     rows.forEach((r, i) => {
       const s = seg[i]!;
       // Both columns scroll over the taller one's overflow, each by its own,
@@ -159,22 +178,30 @@ function setup(): (() => void) | undefined {
       const fadeAt = s.start + hold + ov;
       const inAt = s.start - fade;
       const scrollAt = s.start + hold / 2;
+      const first = i === 0;
       const last = i === rows.length - 1;
-      const write = (el: HTMLElement, own: number, inA: number, inB: number, outA: number, outB: number) => {
-        const names = [i === 0 ? 'none' : 'still-in', own > 0 ? 'still-scroll' : 'none', last ? 'none' : 'still-out'];
-        const at = (y: number) => `${Math.round(base + y)}px`;
-        const range = [
-          `${at(inAt + fade * inA)} ${at(inAt + fade * inB)}`,
-          `${at(scrollAt)} ${at(scrollAt + ov)}`,
-          `${at(fadeAt + fade * outA)} ${at(fadeAt + fade * outB)}`,
-        ];
-        el.style.setProperty('--ov', String(own));
-        el.style.setProperty('animation-name', names.join(', '));
-        el.style.setProperty('animation-range', range.join(', '));
+      const one = (el: HTMLElement, tag: string, own: number, inA: number, outA: number, outB: number) => {
+        const a = first ? 0 : base + inAt + fade * inA;
+        const b = last ? far : base + fadeAt + fade * outB;
+        const pct = (y: number) => `${(Math.min(1, Math.max(0, (base + y - a) / (b - a))) * 100).toFixed(3)}%`;
+        const at = (p: string, op: number, ty: number, curve?: string) =>
+          `${p}{opacity:${op};transform:translateY(${Math.round(ty)}px)${curve ? `;animation-timing-function:${curve}` : ''}}`;
+        const frames = first
+          ? [at('0%', 1, 0, 'linear')]
+          : [at('0%', 0, RISE, EASE), at(pct(inAt + fade), 1, 0, 'linear')];
+        frames.push(at(pct(scrollAt), 1, 0, 'linear'));
+        if (ov > 0) frames.push(at(pct(scrollAt + ov), 1, -own, 'linear'));
+        if (last) frames.push(at('100%', 1, -own));
+        else frames.push(at(pct(fadeAt + fade * outA), 1, -own, EASE), at('100%', 0, -own - RISE));
+        const name = `still-${tag}${i}-${gen}`;
+        text += `@keyframes ${name}{${frames.join('')}}\n`;
+        el.style.setProperty('animation-name', name);
+        el.style.setProperty('animation-range', `${Math.round(a)}px ${Math.round(b)}px`);
       };
-      write(r.prose, s.ovP, 0.55, 1, 0, 0.45);
-      write(r.stick, s.ovC, 0.62, 1, 0.05, 0.5);
+      one(r.prose, 'p', s.ovP, 0.55, 0, 0.45);
+      one(r.stick, 'c', s.ovC, 0.62, 0.05, 0.5);
     });
+    sheet!.textContent = text;
   }
 
   function locate(y: number) {
@@ -417,6 +444,11 @@ function setup(): (() => void) | undefined {
     css = sda && !reduce.matches;
     root.classList.add('still');
     root.classList.toggle('still-css', css);
+    if (css) {
+      sheet = document.createElement('style');
+      sheet.dataset.still = 'keyframes';
+      document.head.appendChild(sheet);
+    }
     rows.forEach((r) => {
       ro.observe(r.prose);
       ro.observe(r.code);
@@ -469,12 +501,13 @@ function setup(): (() => void) | undefined {
       for (const el of [r.prose, r.stick]) {
         el.style.opacity = '';
         el.style.transform = '';
-        el.style.removeProperty('--ov');
         el.style.removeProperty('animation-name');
         el.style.removeProperty('animation-range');
       }
     });
     railLinks.forEach((a) => a.style.removeProperty('--read'));
+    sheet?.remove();
+    sheet = undefined;
     active = -1;
     css = false;
   }

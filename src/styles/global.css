@@ -876,36 +876,24 @@
   /* ---- the rows on the compositor -----------------------------------------
      With `.still-css` (still-frame.ts, where the browser has scroll-driven
      animations and motion isn't reduced) the script stops setting opacity and
-     transform on scroll and writes each row's ranges instead: three animations
-     on the prose and three on the response, in, scroll, out, as absolute scroll
-     offsets in `animation-range`, with the row's overflow in `--ov`. iOS hands
-     scroll events to the page after it has scrolled, so anything moved from
-     them lags the finger; a scroll timeline is read by the compositor itself.
-     Fill forwards and replace composition do the stacking: the later range
-     wins while it runs and the earlier one's end holds in between. The first
-     row has no in, the last no out, a row that fits no scroll — `none` in that
-     slot, from the script. The ease is the script's quad in-out. ---- */
+     transform on scroll. iOS hands scroll events to the page after it has
+     scrolled, so anything moved from them lags the finger; a scroll timeline
+     is read by the compositor itself. The script writes ONE animation per
+     prose column and per response — its @keyframes generated for that row
+     (fade in, hold, scroll its overflow, hold, fade out, every value in px)
+     and its `animation-range` the row's whole life in scroll offsets. Nothing
+     here depends on a finished animation holding its last frame, on two
+     animations stacking, or on a var() inside a keyframe: the first cut
+     did, and on the phone the compositor runs in another process and dropped
+     the fill, so a row was blank between its fade in and its fade out. The
+     rest state and the keyframes' two ends are the same, opacity 0, so a
+     compositor that drops a finished animation shows the same thing as one
+     that holds it. ---- */
   .still-css .ref-main > .ep .ep-prose,
   .still-css .ref-main > .ep .stick {
-    --rise: 16px;
-    animation-name: none;
+    opacity: 0;
     animation-timeline: scroll(root block);
-    animation-fill-mode: forwards;
-    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1), linear, cubic-bezier(0.45, 0, 0.55, 1);
-  }
-  .still-css .ref-main > .ep:not(:first-of-type) .ep-prose,
-  .still-css .ref-main > .ep:not(:first-of-type) .stick { opacity: 0; }
-  @keyframes still-in {
-    from { opacity: 0; transform: translateY(var(--rise)); }
-    to   { opacity: 1; transform: none; }
-  }
-  @keyframes still-scroll {
-    from { transform: none; }
-    to   { transform: translateY(calc(var(--ov, 0) * -1px)); }
-  }
-  @keyframes still-out {
-    from { opacity: 1; transform: translateY(calc(var(--ov, 0) * -1px)); }
-    to   { opacity: 0; transform: translateY(calc(var(--ov, 0) * -1px - var(--rise))); }
+    animation-fill-mode: both;
   }
 
   /* where you are, pinned to the foot of the prose column */
