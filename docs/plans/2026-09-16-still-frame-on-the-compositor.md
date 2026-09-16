@@ -23,6 +23,9 @@ the frame runs only when the compositor drives it. The settle-to-row waits for t
 lift.
 
 **Rejected:**
+- Three stacked animations per column (in, scroll, out) with `fill-mode: forwards` holding
+  the row between them — the first cut. Correct on desktop WebKit and Chromium, blank between
+  fades on the iPhone, whose compositor runs in another process and dropped the fill.
 - Trim the handler (cache the frame's top, defer `replaceState`) — it is already under 1ms a
   frame; the lag is the engine's, so no trim fixes it.
 - Drive `visibility` from the keyframes too — WebKit accelerates an animation only when every
@@ -58,6 +61,7 @@ values are scroll offsets; a changed `--ov` inside a running keyframe applies li
 - [x] 2. The settle waits for the finger: `touchstart`/`touchend` in `still-frame.ts`   DONE — same commit
 - [x] 3. Docs: `DESIGN_SYSTEM.md` §3.5, §4, §7, §9, §12; the file header   DONE — same commit
 - [x] 4. Gates, parity + measure + touch proofs, screenshots, push, deploy check   DONE — parity 0 mismatches on Desktop Safari, Desktop Chrome, iPhone 16 Pro Max, Pixel 7 (65 offsets each); touch settle held/released; check + build green; shipped in the commit that carries this record
+- [x] 5. Work and About blank on the phone (`44c47c4` live): the compositor there dropped a finished animation's fill. One animation per column, keyframes generated per row in px, both ends the rest state, first row's range from 0 and last row's past the end; no `var()` in keyframes, no `none` slots. Proofs re-run (parity 0 mismatches ×4 devices, `robust.mjs`: every animation's ends equal rest or its range can't be left, touch, behaviour, cost, paths); pushed   DONE — same commit
 
 ## Slice detail — slice 1: the motion moves to CSS
 **Files:** `src/styles/global.css` (still-frame block), `src/scripts/still-frame.ts`
