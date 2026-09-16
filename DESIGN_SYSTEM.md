@@ -293,8 +293,10 @@ Rules:
   so a link opens on its row and Back still leaves the page. Below 1024px the response
   is a drawer along the foot of the frame. With reduced motion the rows swap at the
   midpoint with no rise. Each row arrives at rest, which is how the rule above still
-  holds. Without JavaScript the home page is the ordinary scrolling reference. Home page
-  only: a write-up is a long read and would spend its life scrolling inside the frame.
+  holds. The arrow in *1 of 5 · Work next* nudges four times and stops, and not at all
+  once the reader has scrolled: a hint that never gives up is a nag. Without JavaScript
+  the home page is the ordinary scrolling reference. Home page only: a write-up is a long
+  read and would spend its life scrolling inside the frame.
 - **A game opens in the side panel.** Over the response column, fading in; expand slides
   it over the whole frame; close fades it out and stops the game. The still frame holds
   its scroll while a game is open, so the arrow keys belong to the game.
@@ -400,8 +402,9 @@ one of these shapes or add a row to this table.
 | `/contact` | `POST /api/contact` (Say hello, the email, what to include; the console validates for real and hands the message to the mail app) → `GET /api/work/internal-erp?fields=problem,metrics` (the problem I solve, for the owner or office manager who is not hiring an engineer). | Full |
 | `/desk` | Help Desk mode: the whole portfolio re-served as a ticket queue. Own name, own mark, own light palette, no vendor branding. One static page, panels switched by hash; without JS the panels stack and it reads as a document. Chrome is played straight, content is not. | Bare, own router |
 | `/play/<slug>` | **The demo on its own, as a page you can send someone.** The game is the first and only thing on the first screen; the credit, the write-up link (*How it works*), the rest of the work and a Share button sit in a footer under it. Indexable, in the sitemap, and its social card is the project's real cover art. | Bare |
+| `/reference` | One row: `GET /api` (what this site answers, in both registers; every endpoint as a hairline row — its crumb, the page whose row it is, its description, its parameters with their allowed values and its source — rendered from `endpoints.ts`, the same list the console beside it returns). The rail's *Index* entry. | Full |
 | `/404` | One row: the requested path as a crumb, a short sentence, and the API's own `404 Not Found` body in the dark column. | Full |
-| `/api`, `/api/*` | Not pages: JSON, from the Worker. See §5.5. | — |
+| `/api`, `/api/*` | Not pages: JSON, from the Worker. See §5.5. The index has a page, `/reference`. | — |
 
 Recurring grammar inside pages:
 
@@ -427,8 +430,10 @@ Recurring grammar inside pages:
   toggle, *Get in touch*); the rail is the map, with each entry a page's plain name over
   its endpoint — Home over `GET /api/dylan`, About over `GET /api/experience` — so a
   Plain English reader and an engineer read the same list. *One project* sits indented
-  under Work and resolves `{id}` on a project page; *Index* (`GET /api`) sits under a
-  hairline. Below 1280px the rail is a strip of the five page names under the header, no
+  under Work and resolves `{id}` on a project page; *Index* (`GET /api`, the `/reference`
+  page) sits under a hairline. Every entry's name, method, path and page come from
+  `endpoints.ts`, so the rail, `GET /api` and `/reference` cannot disagree about what a
+  page is. Below 1280px the rail is a strip of the five page names under the header, no
   endpoints and no hamburger: five words fit a phone, and a hamburger for five is a tap
   the visitor should not have to make. Header labels shorten on a phone (`Dylan`,
   `Plain` / `Tech`) rather than hide.
@@ -512,7 +517,9 @@ request time so a query string means something: `GET /api/dylan?view=engineer`,
 `GET /api/experience?since=2022`, `GET /api/resume?format=pdf`,
 `GET /api/away-from-work?playable=true`, and one write, `POST /api/contact`. `GET /api`
 is the index and describes itself from `src/lib/endpoints.ts` — the same list every
-console on the site is rendered from.
+console on the site is rendered from, and the same list `/reference` renders as a page.
+Each entry in the index carries `page`, the page whose row that endpoint is; the index
+lists itself, last, with `/reference` as its page.
 
 Rules the endpoints keep:
 
@@ -845,6 +852,8 @@ reference, §11 still governs which facts may appear.
 | 2026-09-14 | **Room to breathe.** The header is 3.5rem (`--head-h`, one token the rail, the sticky console and every scroll margin measure from); the prose column's maximum is 48rem with 3.5rem of padding at desktop, so its text measure stays about where it was; the console's sections, bar and caps gained a quarter-rem each way; and the three-column layout waits for 1280px — at 1024px the rail and a 30rem response had left the prose about 180px of text, so 1024–1279 is two columns with a 24rem response and the rail as a strip. |
 | 2026-09-14 | **The home page becomes a still frame, and games open in a side panel.** Dylan's idea, mocked first (a claude.ai artifact) and decided in four answers: home page only; out, then in, with a rise; a response drawer on a phone; Back leaves the page. The frame is a sticky `.ref-main` inside a `.ref` given the scroll length, every row a layer in one place, the column grounds painted by the frame so a fading row never fades its background. A game opens over the response column the way a desktop app's side panel does — expand, ↗ its own page, ✕ — on every page where one is playable; the write-ups' inline islands became *Play* cards and the project page's *Play* button opens the panel instead of leaving. Island demos gained `keyboard`. Two traps found testing: a router listens for link clicks before a bubbling handler, so the panel catches Play in the capture phase; and below 1280px the scroll length stretched the rail strip's grid row and pushed the frame 2,300px down the page. |
 | 2026-09-15 | **The dark theme goes GitHub-neutral.** Dylan asked for the dark background to read like GitHub's. The navy grounds and hairlines became GitHub's dark neutrals — page `#0d1117`, response column `#010409`, raised fills and the console `#151b23`, hairlines `#21262d` / `#30363d` — keeping the split (response column darker than the prose, console lighter than the page). The same day the selected highlight (the active rail entry, the active register tab, selection) went from the purple wash `#272b58` to GitHub's selected grey `#262c36`: the purple read loud on near-black. Text colours, the accent, the badges (POST keeps its purple ground) and the light theme are unchanged; the contrast gate passes both themes. §3.1–3.2, §3.6 updated. |
+| 2026-09-15 | **The index becomes a page.** The rail's *Index* entry opened `GET /api` itself — the one link in the navigation that left the site: prettified in a browser with a JSON viewer, a wall of text in the rest, and no way back for a Plain English reader. `/reference` is now that list as a one-row reference page: prose in both registers, every endpoint as a hairline row with the page whose row it is, the console beside it the real `GET /api`. To keep the page, the rail and the index from disagreeing, each endpoint in `endpoints.ts` gained `page` (its label and address), the rail's entries are derived from it, the index's entries carry `page` as absolute URLs, and the index lists itself last. Rejected: content negotiation on `/api` (a page for a browser, JSON for curl) — one address is elegant, but it needs `Vary: Accept` on a five-minute cache, makes the console's `200 OK` for `GET /api` mean something the address bar does not, and puts HTML in a route §5.5 defines as JSON. The footer's `/api` link still opens the JSON, the way its RSS link opens the feed. |
+| 2026-09-15 | **The still frame's arrow stops nudging.** Dylan asked why the home page seemed to animate longer than the other pages; measured, the cross-page fade is the browser's 250ms default on every page and Home arrives no later. What was different: the arrow in *1 of 5 · Work next* bobbed forever, the only animation still running once a page had settled. It now runs four cycles and stops, and never runs once the reader has scrolled (`.still-read`, set by the frame on the first real scroll) — the Shotcall rule, applied to the frame. The scroll-driven row change (a 40% hold, then a 55%-of-frame fade) is unchanged: a feel decision Dylan has not made. |
 
 ## 10. Parked and open
 
@@ -921,3 +930,4 @@ Design section. It is indexed by GitHub search and reachable by URL, which is th
 | 2026-09-14 | Two themes and one navigation: §3.1–3.2 tables gain a Dark column and `--head-h`; §3.6 rewritten as *Two themes*; §3.7, §4 (the rail is the navigation), §5.2, §6.2, §7, §8.3 updated; three §9 rows. |
 | 2026-09-14 | The still frame and the game panel: §3.5 gains two rules, §4's `/` row, §6.1 *Where an island is played*, §8.2 two lines, one §9 row. |
 | 2026-09-15 | The dark theme's grounds, hairlines and selected highlight move to GitHub's dark neutrals: §3.1 table, §3.2, §3.6, one §9 row. |
+| 2026-09-15 | The index as a page and the arrow that stops: §3.5 one sentence, §4 a `/reference` row and the rail bullet, §5.5 `page` on index entries, two §9 rows. |

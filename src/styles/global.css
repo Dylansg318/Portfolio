@@ -567,6 +567,21 @@
   .ep-prose .chips { margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.4rem; }
   .ep-prose .chips li { padding: 0.2rem 0.55rem; border: 1px solid var(--border); border-radius: 4px; font-size: 0.8125rem; color: var(--ink-muted); background: var(--surface-raised); }
 
+  /* the endpoint list on /reference: one hairline row per endpoint, the
+     crumb it is, the page it is on, its parameters keyed in mono */
+  .eps { margin-top: 2rem; border-top: 1px solid var(--border); }
+  .eps li { padding-block: 1.25rem; border-bottom: 1px solid var(--border); }
+  .eps h3 { margin-top: 0.4rem; font-size: 1.0625rem; }
+  .eps h3 a { color: var(--ink); }
+  .eps h3 a:hover { color: var(--accent); text-decoration: none; }
+  .eps li > p:not(.crumb) { margin-top: 0.35rem; font-size: 0.9375rem; color: var(--ink-muted); max-width: 60ch; }
+  .eps dl { margin-top: 0.75rem; display: grid; grid-template-columns: 6rem minmax(0, 1fr); gap: 0.35rem 1rem; font-size: 0.875rem; }
+  .eps dt { color: var(--ink-faint); font-size: 0.8125rem; padding-top: 0.1rem; }
+  .eps dd { margin: 0; color: var(--ink-muted); max-width: 60ch; }
+  .eps dd.mono, .eps .opts { font-size: 0.8125rem; color: var(--ink); }
+  .eps .opts { display: block; margin-top: 0.15rem; }
+  .ep-prose p.t code.mono { font-size: 0.875em; color: var(--ink); }
+
   .subs { margin-top: 1.25rem; border-top: 1px solid var(--border); }
   .subs li { padding-block: 0.9rem; border-bottom: 1px solid var(--border); }
   .subs li > a { font-weight: 600; color: var(--ink); }
@@ -881,7 +896,12 @@
   .still-dots i { width: 0.45rem; height: 0.45rem; border-radius: 50%; background: var(--border-mid); transition: background-color var(--dur) var(--ease), transform var(--dur) var(--ease); }
   .still-dots i.on { background: var(--accent); transform: scale(1.25); }
   .still-next { display: inline-flex; align-items: center; gap: 0.4rem; }
-  .still-next svg { width: 0.9em; height: 0.9em; animation: still-nudge 1.8s var(--ease) infinite; }
+  /* The arrow nudges four times and stops, and not at all once the reader has
+     scrolled (`.still-read`, set by the frame): a hint that never gives up is
+     a nag. Each row change re-renders the arrow, so the class carries the
+     "understood" state, not the element. */
+  .still-next svg { width: 0.9em; height: 0.9em; animation: still-nudge 1.8s var(--ease) 4; }
+  .still-read .still-next svg { animation: none; }
   @keyframes still-nudge { 0%, 60%, 100% { transform: none; } 30% { transform: translateY(3px); } }
 
   /* the rail entry's stripe fills as its row is read */

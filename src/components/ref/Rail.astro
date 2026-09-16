@@ -1,5 +1,6 @@
 ---
 import Method from './Method.astro';
+import { endpoint } from '../../lib/endpoints';
 
 /**
  * The endpoint rail: the site's one navigation, in the API's own terms.
@@ -12,6 +13,10 @@ import Method from './Method.astro';
  * endpoints (the home page) passes anchors for those entries, and the small
  * script below moves the highlight as the reader scrolls. A project page
  * passes its own id so `{id}` reads resolved.
+ *
+ * Each entry's name, method, path and page come from the endpoint list, so
+ * the rail, `GET /api` and the /reference page cannot disagree about what a
+ * page is. Only the order and the indents are decided here.
  */
 interface Props {
   current?: string;
@@ -22,23 +27,26 @@ interface Props {
 }
 const { current, hrefs = {}, paths = {} } = Astro.props;
 
-type Item = {
+type Slot = {
   key: string;
-  label: string;
-  method: 'GET' | 'POST';
-  path: string;
-  href: string;
   /** Indented under the entry before it; not shown on the strip. */
   sub?: boolean;
+  /** The index, under a hairline; not shown on the strip. */
+  idx?: boolean;
 };
-const ITEMS: Item[] = [
-  { key: 'dylan', label: 'Home', method: 'GET', path: '/api/dylan', href: '/' },
-  { key: 'work', label: 'Work', method: 'GET', path: '/api/work', href: '/projects' },
-  { key: 'project', label: 'One project', method: 'GET', path: '/api/work/{id}', href: '/projects/internal-erp', sub: true },
-  { key: 'experience', label: 'About', method: 'GET', path: '/api/experience', href: '/about' },
-  { key: 'resume', label: 'Resume', method: 'GET', path: '/api/resume', href: '/resume' },
-  { key: 'contact', label: 'Contact', method: 'POST', path: '/api/contact', href: '/contact' },
+const ORDER: Slot[] = [
+  { key: 'dylan' },
+  { key: 'work' },
+  { key: 'project', sub: true },
+  { key: 'experience' },
+  { key: 'resume' },
+  { key: 'contact' },
+  { key: 'index', idx: true },
 ];
+const ITEMS = ORDER.map((slot) => {
+  const ep = endpoint(slot.key);
+  return { ...slot, label: ep.page.label, method: ep.method, path: ep.path, href: ep.page.href };
+});
 // On a project page the current entry is Work's child, so Work is "open":
 // lit on the strip, where the child is hidden; just bold in the column.
 const open = current === 'project' ? 'work' : undefined;
@@ -47,7 +55,7 @@ const open = current === 'project' ? 'work' : undefined;
   <p class="cap">Reference</p>
   <ol>
     {ITEMS.map((it) => (
-      <li class:list={{ sub: it.sub }}>
+      <li class:list={{ sub: it.sub, idx: it.idx }}>
         <a
           href={hrefs[it.key] ?? it.href}
           data-rail={it.key}
@@ -59,12 +67,6 @@ const open = current === 'project' ? 'work' : undefined;
         </a>
       </li>
     ))}
-    <li class="idx">
-      <a href="/api" data-rail="index" title="The index of every endpoint, as JSON">
-        <span class="lbl">Index</span>
-        <span class="ep-ref"><span class="m get">GET</span><span class="mono">/api</span></span>
-      </a>
-    </li>
   </ol>
 </nav>
 

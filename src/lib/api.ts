@@ -2,6 +2,7 @@ import { site } from './site';
 import { nameplate } from './loops';
 import { CATEGORIES, type Category } from './categories';
 import { getAllProjects, getProjects, getChildren, type Project } from './content';
+import { ENDPOINTS } from './endpoints';
 
 /**
  * The records behind `/api/*` — and behind every "Response" pane on the site.
@@ -313,6 +314,34 @@ export async function awayRecord(playable: boolean, fields?: string[]) {
   r.playable = playable;
   r.page = playable && game ? abs(`/play/${game.id}`) : abs('/projects/galaxy-defense');
   return pick(r, fields);
+}
+
+// ------------------------------------------------------------------- /api
+
+/** The index: every endpoint, its parameters and where its answer is read
+ *  from, so the API describes itself the way the pages do. Each entry carries
+ *  the page whose row it is, and the record's own page is `/reference`, the
+ *  same list rendered as a page. */
+export function indexRecord() {
+  return {
+    name: new URL(ORIGIN).host,
+    description:
+      'A read-only API over the same facts the site renders. Every record carries `page`, the address of the page it describes.',
+    endpoints: ENDPOINTS.map((e) => ({
+      method: e.method,
+      path: e.path,
+      description: e.description,
+      params: e.params.map((p) => ({
+        name: p.name,
+        description: p.description,
+        ...(p.options ? { one_of: p.options.map((o) => o.value).filter(Boolean) } : {}),
+      })),
+      source: e.source,
+      page: abs(e.page.href),
+    })),
+    fields: 'Any GET accepts ?fields=a,b to return a subset of keys; `page` always comes back.',
+    page: abs('/reference'),
+  };
 }
 
 // ---------------------------------------------------------------- responses
