@@ -86,7 +86,7 @@ export const ENDPOINTS: Endpoint[] = [
     key: 'work',
     method: 'GET',
     path: '/api/work',
-    description: 'Every top-level project, newest and most important first. Subsystems are reached through their parent.',
+    description: 'Every top-level project, newest and most important first. Subsystems are under their parent.',
     params: [
       {
         name: 'category',
@@ -112,7 +112,7 @@ export const ENDPOINTS: Endpoint[] = [
         // Filled in per page: the options are the live project ids.
         options: [],
         value: 'internal-erp',
-        description: 'A project id from GET /api/work, or a subsystem id such as internal-erp/repricing.',
+        description: 'A project id from GET /api/work, or a subsystem id like internal-erp/repricing.',
       },
       { ...FIELDS, placeholder: 'problem,unique,learned' },
     ],
@@ -146,7 +146,7 @@ export const ENDPOINTS: Endpoint[] = [
     key: 'resume',
     method: 'GET',
     path: '/api/resume',
-    description: 'The one-page résumé: summary, experience with bullets, projects, skills, education. The same facts the printed PDF carries.',
+    description: 'The one-page résumé: summary, experience with bullets, projects, skills, education. The same facts as the PDF.',
     params: [
       {
         name: 'format',
@@ -168,14 +168,14 @@ export const ENDPOINTS: Endpoint[] = [
     key: 'away',
     method: 'GET',
     path: '/api/away-from-work',
-    description: 'What I do when I am not at a keyboard, and the first thing I ever shipped, which is still playable.',
+    description: "What I do when I'm not at a keyboard, and the first thing I ever shipped. It still runs.",
     params: [
       {
         name: 'playable',
         type: 'checkbox',
         value: 'true',
         hint: 'open the game',
-        description: 'When true, `page` is the playable game rather than its write-up.',
+        description: 'When true, `page` is the playable game instead of its write-up.',
       },
       FIELDS,
     ],
@@ -193,7 +193,7 @@ export const ENDPOINTS: Endpoint[] = [
         name: 'message',
         type: 'textarea',
         value: '',
-        placeholder: 'What you are hiring for, timeline, remote / hybrid / on-site, a link to the role.',
+        placeholder: "What you're hiring for, timeline, remote / hybrid / on-site, a link to the role.",
         description: 'The message. Ten characters or more.',
       },
     ],
@@ -206,7 +206,7 @@ export const ENDPOINTS: Endpoint[] = [
     key: 'index',
     method: 'GET',
     path: '/api',
-    description: 'This list: every endpoint, its parameters, where its answer is read from and the page whose row it is.',
+    description: "This list: every endpoint, what it takes, where the answer comes from and which page it's on.",
     params: [],
     source: 'src/lib/endpoints.ts',
     page: { label: 'Index', href: '/reference' },
