@@ -24,17 +24,25 @@
  *     along the bottom of the frame.
  *   - While a game is open in the side panel the frame holds its scroll, so
  *     the arrow keys steer the game instead of changing rows.
- *   - A touch screen doesn't get the frame. Everything that moves here is set
- *     from scroll events, and iOS hands those to the page after the compositor
- *     has already scrolled, at its own cadence: the prose inside the frame
- *     moves a beat behind the finger and stutters. It isn't the work — in
- *     WebKit as an emulated iPhone 16 Pro Max the handler costs under 1ms a
- *     frame (2026-09-16); it's the delivery. `(pointer: fine)` is the gate, so
- *     a mouse or a trackpad gets the frame and a finger gets the page.
+ *   - Where the browser has scroll-driven animations and motion isn't
+ *     reduced, the compositor moves the rows, not this script (`.still-css`,
+ *     global.css). iOS hands scroll events to the page after it has already
+ *     scrolled, at its own cadence, so anything moved from them lags the
+ *     finger and stutters — it isn't the work (under 1ms a frame, measured
+ *     2026-09-16 in WebKit as an iPhone 16 Pro Max), it's the delivery. So
+ *     `measure()` writes each row's three ranges (in, scroll, out) as scroll
+ *     offsets in `animation-range`, plus its overflow in `--ov`, and the
+ *     keyframes do the rest; this script keeps the model, the settle, the
+ *     jumps, the address, the rail and the drawer. Without scroll-driven
+ *     animations it sets opacity and transform itself, as it always did —
+ *     but only for a mouse or a trackpad, or with reduced motion, where the
+ *     rows swap in a step and a beat of lag is invisible. A touch screen
+ *     without them gets the ordinary page.
+ *   - The settle waits for the finger to lift: a page that moves under a
+ *     finger that's holding still is a page that fights.
  *
- * Without JavaScript, on a touch screen, or in a window too short for a
- * frame, none of this runs and the home page is the ordinary scrolling
- * reference it was.
+ * Without JavaScript, or in a window too short for a frame, none of this
+ * runs and the home page is the ordinary scrolling reference it was.
  */
 
 const LABELS: Record<string, string> = {
@@ -88,8 +96,11 @@ function setup(): (() => void) | undefined {
   const narrow = window.matchMedia('(max-width: 1023px)');
   const strip = window.matchMedia('(max-width: 1279px)');
   const fine = window.matchMedia('(pointer: fine)');
+  const sda = typeof CSS !== 'undefined' && CSS.supports('animation-timeline: scroll()');
 
   let on = false;
+  /** This run's motion is the compositor's: ranges, not styles. */
+  let css = false;
   let seg: Seg[] = [];
   let total = 0;
   let hold = 0;
@@ -99,6 +110,7 @@ function setup(): (() => void) | undefined {
   let frame = 0;
   let settleTimer = 0;
   let settling = false;
+  let touching = false;
   let lastY = 0;
   let travel = 1;
 
@@ -126,7 +138,43 @@ function setup(): (() => void) | undefined {
     });
     total = start;
     ref!.style.setProperty('--still-h', `${stripH + h + total}px`);
+    if (css) ranges();
     render();
+  }
+
+  /**
+   * The CSS path: each row's motion as scroll offsets. The scroll at which the
+   * frame is at y=0 is `base`; every range is `base` plus a frame position.
+   * The prose fades out over the first 45% of the fade and the next row's in
+   * over the last 45%; the response trails on both sides (5–50%, 62–100%).
+   * The same numbers `render()` uses, so the two paths agree to the pixel.
+   */
+  function ranges() {
+    const base = ref!.getBoundingClientRect().top + window.scrollY - headH;
+    rows.forEach((r, i) => {
+      const s = seg[i]!;
+      // Both columns scroll over the taller one's overflow, each by its own,
+      // so they finish together — `u` in render().
+      const ov = Math.max(s.ovP, s.ovC);
+      const fadeAt = s.start + hold + ov;
+      const inAt = s.start - fade;
+      const scrollAt = s.start + hold / 2;
+      const last = i === rows.length - 1;
+      const write = (el: HTMLElement, own: number, inA: number, inB: number, outA: number, outB: number) => {
+        const names = [i === 0 ? 'none' : 'still-in', own > 0 ? 'still-scroll' : 'none', last ? 'none' : 'still-out'];
+        const at = (y: number) => `${Math.round(base + y)}px`;
+        const range = [
+          `${at(inAt + fade * inA)} ${at(inAt + fade * inB)}`,
+          `${at(scrollAt)} ${at(scrollAt + ov)}`,
+          `${at(fadeAt + fade * outA)} ${at(fadeAt + fade * outB)}`,
+        ];
+        el.style.setProperty('--ov', String(own));
+        el.style.setProperty('animation-name', names.join(', '));
+        el.style.setProperty('animation-range', range.join(', '));
+      };
+      write(r.prose, s.ovP, 0.55, 1, 0, 0.45);
+      write(r.stick, s.ovC, 0.62, 1, 0.05, 0.5);
+    });
   }
 
   function locate(y: number) {
@@ -141,10 +189,14 @@ function setup(): (() => void) | undefined {
   }
 
   function paintRow(r: Row, pOp: number, pDy: number, pOff: number, cOp: number, cDy: number, cOff: number) {
-    r.prose.style.opacity = String(pOp);
-    r.prose.style.transform = pDy || pOff ? `translateY(${pDy - pOff}px)` : '';
-    r.stick.style.opacity = String(cOp);
-    r.stick.style.transform = cDy || cOff ? `translateY(${cDy - cOff}px)` : '';
+    if (!css) {
+      r.prose.style.opacity = String(pOp);
+      r.prose.style.transform = pDy || pOff ? `translateY(${pDy - pOff}px)` : '';
+      r.stick.style.opacity = String(cOp);
+      r.stick.style.transform = cDy || cOff ? `translateY(${cDy - cOff}px)` : '';
+    }
+    // On the CSS path this lands a beat after the compositor's fade; inert is
+    // hit-through and out of the tab order, so the beat costs nothing visible.
     const hidden = pOp < 0.02 && cOp < 0.02;
     if (hidden !== r.el.hasAttribute('inert')) r.el.toggleAttribute('inert', hidden);
   }
@@ -217,8 +269,14 @@ function setup(): (() => void) | undefined {
     // The first real scroll is the sign the reader knows the frame moves;
     // the "next" arrow stops nudging from here on (global.css, .still-read).
     if (yNow > 24) main!.classList.add('still-read');
+    armSettle();
+  };
+
+  /** 170ms after the last scroll event, if the frame rests mid-fade, settle it. */
+  const armSettle = () => {
     window.clearTimeout(settleTimer);
-    if (settling || root.dataset.game === 'open') return;
+    // Not under a finger: the finger is still deciding. touchend re-arms.
+    if (settling || touching || root.dataset.game === 'open') return;
     settleTimer = window.setTimeout(() => {
       const y = position();
       if (y >= total) return;
@@ -232,6 +290,17 @@ function setup(): (() => void) | undefined {
       scrollToFrame(target, reduce.matches ? 'instant' : 'smooth');
       window.setTimeout(() => (settling = false), 650);
     }, 170);
+  };
+
+  const onTouchStart = () => {
+    touching = true;
+    window.clearTimeout(settleTimer);
+  };
+  // A flick's momentum keeps scroll events coming after touchend, and each
+  // one re-arms the timer, so the settle still waits for the page to stop.
+  const onTouchEnd = () => {
+    touching = false;
+    armSettle();
   };
 
   /** Scroll the document so the frame is `y` px in. */
@@ -333,18 +402,32 @@ function setup(): (() => void) | undefined {
     drawer?.setAttribute('aria-expanded', 'false');
     measure();
   };
+  const onPath = () => {
+    disable();
+    if (fits()) enable();
+  };
 
-  const fits = () => fine.matches && window.innerHeight >= MIN_FRAME_H;
+  // A touch screen gets the frame only when the compositor drives it, or when
+  // reduced motion makes the script's step swap the whole of the motion.
+  const fits = () => window.innerHeight >= MIN_FRAME_H && (fine.matches || sda || reduce.matches);
 
   function enable() {
     if (on) return measure();
     on = true;
+    css = sda && !reduce.matches;
     root.classList.add('still');
+    root.classList.toggle('still-css', css);
     rows.forEach((r) => {
       ro.observe(r.prose);
       ro.observe(r.code);
     });
+    // The ranges are scroll offsets, so anything above the frame changing
+    // height (the first-visit hint being dismissed) moves every one of them.
+    if (css) ro.observe(document.body);
     window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('touchstart', onTouchStart, { passive: true });
+    window.addEventListener('touchend', onTouchEnd, { passive: true });
+    window.addEventListener('touchcancel', onTouchEnd, { passive: true });
     document.addEventListener('click', onClick, true);
     window.addEventListener('keydown', onKey);
     window.addEventListener('hashchange', onHash);
@@ -360,12 +443,15 @@ function setup(): (() => void) | undefined {
   function disable() {
     if (!on) return;
     on = false;
-    root.classList.remove('still');
+    root.classList.remove('still', 'still-css');
     root.style.removeProperty('--still-top');
     root.style.overflow = '';
     ref!.style.removeProperty('--still-h');
     ro.disconnect();
     window.removeEventListener('scroll', onScroll);
+    window.removeEventListener('touchstart', onTouchStart);
+    window.removeEventListener('touchend', onTouchEnd);
+    window.removeEventListener('touchcancel', onTouchEnd);
     document.removeEventListener('click', onClick, true);
     window.removeEventListener('keydown', onKey);
     window.removeEventListener('hashchange', onHash);
@@ -376,22 +462,29 @@ function setup(): (() => void) | undefined {
     strip.removeEventListener('change', onBreakpoint);
     cancelAnimationFrame(frame);
     window.clearTimeout(settleTimer);
+    touching = false;
     main!.classList.remove('drawer-open', 'still-cut', 'still-read');
     rows.forEach((r) => {
       r.el.removeAttribute('inert');
       for (const el of [r.prose, r.stick]) {
         el.style.opacity = '';
         el.style.transform = '';
+        el.style.removeProperty('--ov');
+        el.style.removeProperty('animation-name');
+        el.style.removeProperty('animation-range');
       }
     });
     railLinks.forEach((a) => a.style.removeProperty('--read'));
     active = -1;
+    css = false;
   }
 
   const initialHash = location.hash;
   window.addEventListener('resize', onResize);
-  // A tablet that gains a trackpad, or loses one.
+  // A tablet that gains a trackpad, or loses one; reduced motion switched
+  // either way, which picks the path.
   fine.addEventListener('change', onResize);
+  reduce.addEventListener('change', onPath);
   if (fits()) enable();
 
   // A link to a row (/#work) opens on that row. After the router's own
@@ -405,6 +498,7 @@ function setup(): (() => void) | undefined {
   return () => {
     window.removeEventListener('resize', onResize);
     fine.removeEventListener('change', onResize);
+    reduce.removeEventListener('change', onPath);
     disable();
   };
 }
