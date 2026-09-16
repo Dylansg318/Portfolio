@@ -23,6 +23,7 @@ const reads = ENDPOINTS.filter((e) => e.method === 'GET').length;
 const writes = ENDPOINTS.length - reads;
 const words = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
 const count = (n: number) => words[n] ?? String(n);
+const cap = (w: string) => w.charAt(0).toUpperCase() + w.slice(1);
 ---
 <Base title="Index" description="Every endpoint of this site's API — what it answers, its parameters, and the page that shows the same thing in words.">
   <div class="ref">
@@ -30,29 +31,30 @@ const count = (n: number) => words[n] ?? String(n);
     <div class="ref-main">
       <Row id="index">
         <Crumb method="GET" path="/api" />
-        <h1 class="page">What this site answers.</h1>
+        <h1 class="page">Everything you can ask for.</h1>
         <p class="lead">
           <span class="only-plain">
-            Every page here is also an answer a program can ask for. This is the list of the
-            questions it takes, what each one gives back, and the page that says the same thing
-            in words.
+            Anything on this site you can also get as data, if you'd rather pull it into a
+            program than read it. This is the list of what you can ask for, what you get back,
+            and which page shows the same thing in words.
           </span>
           <span class="only-eng">
-            Every row on this site is an endpoint: the prose says it in words, the console beside
-            it shows the exact shape. This is the index — {count(reads)} reads and {count(writes)}{' '}
-            write, served by the Worker over the same facts the pages are built from.
+            {cap(count(ENDPOINTS.length))} endpoints, {count(reads)} reads and {count(writes)}{' '}
+            write. Each one is also a page here, built from the same data, so the page and the
+            answer can't disagree. Below is what each one takes and what it gives back.
           </span>
         </p>
         <p class="t">
           <span class="only-plain">
-            Anything you can read on a page here you can also get as data, and every answer says
-            which page it came from.
+            Every answer comes with the page it came from, so you can always go check it against
+            what's written there.
           </span>
           <span class="only-eng">
-            Every GET takes <code class="mono">?fields=a,b</code> and returns that subset;{' '}
-            <code class="mono">page</code> always comes back. Errors are bodies, not silence: a bad
-            parameter is a 400 that lists the real values, an unknown id a 404 with a hint, the wrong
-            method a 405. A 200 is cacheable for five minutes; nothing else is.
+            Add <code class="mono">?fields=a,b</code> to any GET if you only want part of the
+            record; <code class="mono">page</code> comes back either way. If something's wrong it
+            says so: a bad parameter is a 400 that lists what's allowed, an id that doesn't exist
+            is a 404 with a hint, the wrong method is a 405. A 200 gets cached for five minutes,
+            nothing else does.
           </span>
         </p>
 
@@ -92,7 +94,7 @@ const count = (n: number) => words[n] ?? String(n);
           id="index"
           endpoint="index"
           body={index}
-          frame="Live: the index describes itself from the same list every console on this site is rendered from. Send re-runs it."
+          frame="Live: this is the real index, the same list every console on the site is built from. Send runs it again."
         />
       </Row>
     </div>

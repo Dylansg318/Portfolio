@@ -326,7 +326,7 @@ export function indexRecord() {
   return {
     name: new URL(ORIGIN).host,
     description:
-      'A read-only API over the same facts the site renders. Every record carries `page`, the address of the page it describes.',
+      'Read-only, the same facts the site shows. Every record has `page`, the address of the page it came from.',
     endpoints: ENDPOINTS.map((e) => ({
       method: e.method,
       path: e.path,
@@ -339,7 +339,7 @@ export function indexRecord() {
       source: e.source,
       page: abs(e.page.href),
     })),
-    fields: 'Any GET accepts ?fields=a,b to return a subset of keys; `page` always comes back.',
+    fields: 'Add ?fields=a,b to any GET to get only those keys; `page` always comes back.',
     page: abs('/reference'),
   };
 }
