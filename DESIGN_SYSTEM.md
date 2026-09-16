@@ -274,7 +274,7 @@ captions 0.6875rem uppercase with `0.1em` tracking.
 |---|---|---|
 | `--dur-fast` | 120ms | Button press. |
 | `--dur` | 240ms | Colour, border and background transitions. |
-| `--dur-slow` | 600ms | The nameplate word morph; the help desk's reveals. |
+| `--dur-slow` | 600ms | The help desk's reveals. |
 | `--ease` / `--ease-out` | `cubic-bezier(0.16, 1, 0.3, 1)` | Everything. |
 
 Rules:
@@ -304,13 +304,26 @@ Rules:
   line, scaled to length), then the status line lands and, if the answer names a page,
   the page opens after 500ms. With reduced motion the whole answer appears at once and
   the page opens immediately.
-- **The nameplate morphs.** On the reading-mode switch the one-sentence summary rewrites
-  word by word (LCS diff; shared words stay put). It is the only text animation on the
-  site and it shows the two registers being the same fact.
+- **The nameplate retypes.** On the reading-mode switch the one-sentence summary is
+  erased back to where the two registers part ways (after *where I built*) and the other
+  register is typed in behind a caret — 8ms a character to erase, 12–18ms to type, a beat
+  after punctuation, 2.6–3.0s end to end. It is the only text animation on the site and it
+  shows the two registers being the same fact. It runs on the free tier: every character
+  of both tails is rendered up front in its final layout and only its opacity changes,
+  the caret is one element moved with a transform, and the paragraph's height is pinned
+  for the run. Nothing re-wraps. With reduced motion the tails swap outright.
 - **Reduced motion zeroes everything**: durations, iteration counts, scroll-timeline
   animations switched off outright. This matters most for the demos and games.
-- **No typewriter effects on prose.** The console's stream is a response arriving, not
-  copy being typed.
+- **No typewriter effects on prose, except the nameplate.** It is the one place copy is
+  being rewritten, and the rewrite is the point. The console's stream is a response
+  arriving, not copy being typed.
+- **Animate `opacity` and `transform`; nothing else per frame.** They are composited and
+  cost nothing. Colour and border transitions repaint one element, which is fine. Width,
+  height, `max-width`, `left`/`top`, margins and text changes re-lay out everything after
+  them on every frame — the old nameplate morph animated `max-width` on forty word boxes
+  at once and the paragraph re-wrapped sixty times a second, which is what the garbled
+  mid-flip text was. The game panel's expand (`left`, `max-width`) is the one exception
+  left: the panel genuinely gets wider, once, on a click.
 - **Cross-page View Transitions** are on for every page except `bare` ones. Every script
   that binds to the DOM listens for `astro:page-load`, because a bundled module runs
   once and top-level setup goes dead after the first soft navigation. Every script that
@@ -454,8 +467,8 @@ and the looking-for line. Components never hard-code these, and neither does the
 and the pages render each console's response by calling the same functions. When a fact
 changes it changes in one place and the page, the console and the endpoint all follow.
 
-`src/lib/loops.ts` holds the two-register nameplate sentence and the tokenizer the word
-morph runs on. Nothing on the home page is true only on the home page.
+`src/lib/loops.ts` holds the two-register nameplate sentence and the tokenizer the
+typewriter runs on. Nothing on the home page is true only on the home page.
 
 ### 5.2 Projects
 
@@ -856,6 +869,7 @@ reference, §11 still governs which facts may appear.
 | 2026-09-15 | **The dark theme goes GitHub-neutral.** Dylan asked for the dark background to read like GitHub's. The navy grounds and hairlines became GitHub's dark neutrals — page `#0d1117`, response column `#010409`, raised fills and the console `#151b23`, hairlines `#21262d` / `#30363d` — keeping the split (response column darker than the prose, console lighter than the page). The same day the selected highlight (the active rail entry, the active register tab, selection) went from the purple wash `#272b58` to GitHub's selected grey `#262c36`: the purple read loud on near-black. Text colours, the accent, the badges (POST keeps its purple ground) and the light theme are unchanged; the contrast gate passes both themes. §3.1–3.2, §3.6 updated. |
 | 2026-09-15 | **The index becomes a page.** The rail's *Index* entry opened `GET /api` itself — the one link in the navigation that left the site: prettified in a browser with a JSON viewer, a wall of text in the rest, and no way back for a Plain English reader. `/reference` is now that list as a one-row reference page: prose in both registers, every endpoint as a hairline row with the page whose row it is, the console beside it the real `GET /api`. To keep the page, the rail and the index from disagreeing, each endpoint in `endpoints.ts` gained `page` (its label and address), the rail's entries are derived from it, the index's entries carry `page` as absolute URLs, and the index lists itself last. Rejected: content negotiation on `/api` (a page for a browser, JSON for curl) — one address is elegant, but it needs `Vary: Accept` on a five-minute cache, makes the console's `200 OK` for `GET /api` mean something the address bar does not, and puts HTML in a route §5.5 defines as JSON. The footer's `/api` link still opens the JSON, the way its RSS link opens the feed. The first pass shipped in site voice — "the prose says it in words, the console shows the exact shape", "errors are bodies, not silence" — and was rewritten the same day in Dylan's language (the 2026-09-10 rules); §8.4 now says so for every page, new or edited, and the API's own descriptions lost their uncontracted forms on the way. |
 | 2026-09-15 | **The still frame's arrow stops nudging.** Dylan asked why the home page seemed to animate longer than the other pages; measured, the cross-page fade is the browser's 250ms default on every page and Home arrives no later. What was different: the arrow in *1 of 5 · Work next* bobbed forever, the only animation still running once a page had settled. It now runs four cycles and stops, and never runs once the reader has scrolled (`.still-read`, set by the frame on the first real scroll) — the Shotcall rule, applied to the frame. The scroll-driven row change (a 40% hold, then a 55%-of-frame fade) is unchanged: a feel decision Dylan has not made. |
+| 2026-09-15 | **The nameplate erases and retypes.** Dylan flagged the mode switch: mid-flip the sentence read *built andrunthe ERFthe company workinMo:Typland and* and he asked for it to erase, then type the other register in like a typewriter. The word morph animated `max-width` on every word box at once, so the paragraph re-wrapped on every frame for 600ms — the garble was live re-wrapping, not a diff bug. The replacement keeps the two registers' shared opening as ordinary text and renders each tail once, in full, one span per character; a flip hides the current tail's characters from the end and shows the other's from the start, behind a caret moved with a transform, with the paragraph's height pinned. Only `opacity` and `transform` change per frame. Flipping back mid-run continues from wherever the sentence is. This is the one exception to *no typewriter effects on prose*, recorded in §3.5 with the property rule it taught. Accepted: the tail's characters are separate spans, so kerning pairs inside it (*Ty*, *AV*) are not applied — invisible at body size in Source Sans. |
 
 ## 10. Parked and open
 
@@ -933,3 +947,4 @@ Design section. It is indexed by GitHub search and reachable by URL, which is th
 | 2026-09-14 | The still frame and the game panel: §3.5 gains two rules, §4's `/` row, §6.1 *Where an island is played*, §8.2 two lines, one §9 row. |
 | 2026-09-15 | The dark theme's grounds, hairlines and selected highlight move to GitHub's dark neutrals: §3.1 table, §3.2, §3.6, one §9 row. |
 | 2026-09-15 | The index as a page and the arrow that stops: §3.5 one sentence, §4 a `/reference` row and the rail bullet, §5.5 `page` on index entries, §8.4 every page in Dylan's language, two §9 rows. |
+| 2026-09-15 | The nameplate erases and retypes: §3.5 the morph rule rewritten, the typewriter exception, a new *animate opacity and transform* rule, the `--dur-slow` row; §5.1 one word; one §9 row. |

@@ -2,14 +2,16 @@ import { site } from './site';
 
 /** The nameplate sentence — the one line of employment the home page opens
  *  with and GET /api/dylan returns as `summary` — in two registers, plus the
- *  tokenizer the word-morph in Nameplate.astro runs on. */
+ *  tokenizer the typewriter in Nameplate.astro runs on. */
 
 /** One sentence of employment, in two registers. The first sentence is the
- *  same in both so it stays put when the switch flips and only the claim
- *  rewrites — same fact, two audiences, which is the thing being shown.
+ *  same in both so it stays put when the switch flips and only the claim is
+ *  erased and retyped — same fact, two audiences, which is the thing being
+ *  shown.
  *
- *  A segment with `href` is one link and one token; the morph never splits
- *  it, so the employer is a single link in both registers. */
+ *  A segment with `href` is one link and one token. It sits in the shared
+ *  opening, so the typewriter never has to type inside a link; the employer
+ *  is a single link in both registers. */
 export interface Segment {
   t: string;
   href?: string;
@@ -41,7 +43,8 @@ export const nameplate: Record<'plain' | 'eng', Segment[]> = {
 };
 
 /** A word, or a whole link, plus whether a space follows it. `post` lives on
- *  the token so a word can collapse to zero width and take its space with it. */
+ *  the token so the shared opening and the tail split at a word boundary
+ *  with the space on the right side of it. */
 export interface Token {
   w: string;
   href?: string;
