@@ -5,7 +5,6 @@ import Row from '../components/ref/Row.astro';
 import Crumb from '../components/ref/Crumb.astro';
 import Console from '../components/ref/Console.astro';
 import { site } from '../lib/site';
-import { projectById } from '../lib/api';
 
 // Deliberately a plain email page, not a form. POST /api/contact validates
 // for real and, until RESEND_API_KEY / CONTACT_TO are set, answers 503 with a
@@ -17,7 +16,6 @@ const contactAtRest = {
   subject: 'Hello from your portfolio',
   message: '(waiting for your message)',
 };
-const erp = await projectById('internal-erp', ['problem', 'metrics']);
 ---
 <Base title="Contact" description={`Get in touch with ${site.name} — email, GitHub, resume.`}>
   <div class="ref">
@@ -43,7 +41,7 @@ const erp = await projectById('internal-erp', ['problem', 'metrics']);
 
         <h2 class="mt">Useful to include</h2>
         <ul class="bullets">
-          <li>What you're working on, or what your business is stuck on</li>
+          <li>What you're working on, or a question about the work</li>
           <li>Which project or write-up it's about, if it's about one</li>
           <li>A link, if there's one that helps</li>
         </ul>
@@ -58,39 +56,6 @@ const erp = await projectById('internal-erp', ['problem', 'metrics']);
           body={contactAtRest}
           status={0}
           frame="Live: the route validates for real. Until mail delivery is configured it answers 503 with a mailto link, and Send opens it with your message in it."
-        />
-      </Row>
-
-      <!-- The non-technical visitor's path. An engineer knows what to do with a
-           write-up; an owner or office manager needs to hear, in their terms,
-           what kind of problem I take on and what happens after they write. -->
-      <Row id="business">
-        <h2>Running a business on spreadsheets and six logins?</h2>
-        <p class="t">
-          That's the problem I've spent the last year solving for a dental distributor: orders
-          from six websites that never agreed, prices updated by hand every morning, books that
-          had to be reconciled at the end of every shift, a warehouse on pen and paper. It now
-          runs in <a href="/projects/internal-erp">one system</a>, orders have roughly doubled,
-          and nobody was added to operations to handle it.
-        </p>
-        <p class="t">
-          If your company has a version of that, describe it in an email the way you would to a
-          colleague. I'll tell you straight whether it's a software problem, what I'd build
-          first, and what it'd take. No forms, no sales call.
-        </p>
-        <ul class="chips">
-          <li>Marketplace and storefront orders in one place</li>
-          <li>Pricing, inventory and shipping that update themselves</li>
-          <li>QuickBooks that agrees with the sales system</li>
-          <li>Barcodes, scanners and label printing on the floor</li>
-        </ul>
-        <Console
-          slot="code"
-          id="erp"
-          endpoint="project"
-          params={{ id: 'internal-erp', fields: 'problem,metrics' }}
-          options={{ id: [{ value: 'internal-erp', label: 'internal-erp' }] }}
-          body={erp}
         />
       </Row>
     </div>
