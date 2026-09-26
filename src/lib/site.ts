@@ -77,14 +77,14 @@ export const site = {
   ],
   statsAsOf: 'August 2026',
 
-  /** The résumé summary. Three sentences: what I do, what I'm strongest at,
-   *  what I'm looking for. Names the target role because a screener decides
-   *  in seconds whether this page is for the job they are filling. */
+  /** The résumé summary. Two sentences: what I do and what I'm strongest at.
+   *  No target role or availability — the whole site, résumé included, shows
+   *  the work without reading as a job search. */
   resumeSummary:
     'Software engineer who designed, built and runs the ERP a six-channel dental distributor ' +
     'operates on, as its only engineer. Strongest on integrations and data correctness: ' +
     'order pipelines, marketplace and carrier APIs, accounting sync, and the tests that ' +
-    'prove them. Looking for a backend or full-stack role, remote or in Northern Virginia.',
+    'prove them.',
 
   /** The three things a one-page résumé links to. The ERP is private, so the
    *  second entry is the public evidence — the sanitized production modules
@@ -270,9 +270,9 @@ export const site = {
     interests: ['cooking', 'a bit of music', "restaurants I haven't tried yet", 'one more side project'],
   },
 
-  /** The last row of the home page: an open door, not an ask. Availability
-   *  lives on the résumé only (`resumeSummary`), so the rest of the site shows
-   *  the work without reading as a job search. */
+  /** The last row of the home page: an open door, not an ask. No page states
+   *  availability or offers services, so the site shows the work without
+   *  reading as a job search or a pitch. */
   contactNote:
     "Questions about any of this, or working on something similar? I'm glad to talk about it.",
 

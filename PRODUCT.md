@@ -21,8 +21,8 @@ what an ERP is.
 
 The site is Dylan San Gabriel's professional home page. It shows his work — what he
 built, for whom, and what changed as a result — and gives one way to get in touch.
-It is a showcase, not a job search: availability appears only on the résumé
-(`site.resumeSummary`), never on the other pages, the API, or the help desk. Success is a
+It is a showcase, not a job search or a sales page: no page — the résumé included —
+states availability or a target role, and none offers services. Success is a
 reader who leaves knowing three things — he is the only engineer on the system a
 dental supply company runs its day on, he got there from retail and restaurant work,
 and how to reach him — and who believes all three because every claim can be checked.
