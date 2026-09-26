@@ -8,11 +8,10 @@ web
 
 ## Users
 
-A recruiter, hiring manager, or engineer deciding in under a minute whether to
-interview Dylan for a backend or full-stack role. They arrive from a résumé link, a
-LinkedIn profile, or a GitHub README, usually on a laptop, sometimes on a phone
-between meetings, and they are comparing him against other candidates they opened
-in adjacent tabs.
+An engineer, founder, or anyone else who wants to see what Dylan builds and how he
+thinks about it. They arrive from a LinkedIn profile, a GitHub README, or a shared
+link, usually on a laptop, sometimes on a phone, and decide in under a minute
+whether the work is worth reading.
 
 A second audience shares the same pages: a founder, a family member, or a former
 colleague who wants to know what he does now, in words that do not assume they know
@@ -20,8 +19,10 @@ what an ERP is.
 
 ## Product Purpose
 
-The site is Dylan San Gabriel's professional home page. It says what he built, for
-whom, and what changed as a result, and gives one way to get in touch. Success is a
+The site is Dylan San Gabriel's professional home page. It shows his work — what he
+built, for whom, and what changed as a result — and gives one way to get in touch.
+It is a showcase, not a job search: availability appears only on the résumé
+(`site.resumeSummary`), never on the other pages, the API, or the help desk. Success is a
 reader who leaves knowing three things — he is the only engineer on the system a
 dental supply company runs its day on, he got there from retail and restaurant work,
 and how to reach him — and who believes all three because every claim can be checked.

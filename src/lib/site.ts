@@ -29,9 +29,6 @@ export const site = {
     site: 'https://rmh3dental.com',
   },
 
-  /** What I'm open to, in four words. */
-  availability: 'Open to backend / full-stack roles',
-
   /** The one-line answer to "what do you mostly do", as the home page and
    *  GET /api/dylan give it. */
   mainly: { focus: 'Mostly backend', stack: ['TypeScript', 'Node', 'Postgres'] },
@@ -69,7 +66,7 @@ export const site = {
     code: 'https://github.com/Dylansg318/Portfolio/tree/main/code',
   },
 
-  /** The numbers a recruiter should see in the first ten seconds. Measured on
+  /** The numbers a reader should see in the first ten seconds. Measured on
    *  the production database on 2026-08-30; update the date when you update
    *  the numbers. */
   stats: [
@@ -116,7 +113,7 @@ export const site = {
     },
   ],
 
-  /** Skills grouped the way a hiring manager scans them. Order inside each row
+  /** Skills grouped the way an engineer scans them. Order inside each row
    *  is "most used first", not alphabetical. Every item is something I have
    *  shipped with, not something I have read about. */
   skills: [
@@ -146,7 +143,7 @@ export const site = {
     },
   ],
 
-  /** Reverse-chronological. `summary` is one sentence a recruiter can skim;
+  /** Reverse-chronological. `summary` is one sentence a reader can skim;
    *  `bullets` are for the résumé page — each one opens with what changed,
    *  carries a number where one exists, and fits in two printed lines. */
   experience: [
@@ -273,9 +270,11 @@ export const site = {
     interests: ['cooking', 'a bit of music', "restaurants I haven't tried yet", 'one more side project'],
   },
 
-  /** What I'm looking for, as the last row of the home page says it. */
-  lookingFor:
-    "A backend or full-stack role, remote or in Northern Virginia. If that's what you're hiring for, let me know.",
+  /** The last row of the home page: an open door, not an ask. Availability
+   *  lives on the résumé only (`resumeSummary`), so the rest of the site shows
+   *  the work without reading as a job search. */
+  contactNote:
+    "Questions about any of this, or working on something similar? I'm glad to talk about it.",
 
   /** How I work — three things, in my own words. */
   principles: [

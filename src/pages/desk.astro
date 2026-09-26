@@ -426,7 +426,6 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
             <div class="profile-body">
               <h1>{site.name}</h1>
               <p class="profile-role">{site.role} · {site.location}</p>
-              <p class="profile-pill">{site.availability}</p>
               <p class="profile-bio">
                 The only agent on this desk. I also built the desk itself, along with the
                 company systems these tickets describe.
@@ -909,10 +908,6 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
     font-weight: 800; letter-spacing: -0.02em; line-height: 1.1;
   }
   .profile-role { color: var(--dk-ink-mut); font-size: 0.85rem; margin: 0.25rem 0 0.6rem; }
-  .profile-pill {
-    display: inline-block; background: var(--dk-loz-ok-bg); color: var(--dk-loz-ok-ink);
-    font-size: 0.74rem; font-weight: 700; padding: 0.22rem 0.65rem; border-radius: 999px;
-  }
   .profile-bio { line-height: 1.6; margin: 0.8rem 0 0.95rem; max-width: 52ch; }
   .statband-people { margin-top: 1.3rem; }
   .skillgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 1.1rem 2rem; max-width: 58rem; }

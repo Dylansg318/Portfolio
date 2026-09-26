@@ -36,7 +36,7 @@ const canonicalPath = Astro.url.pathname
 const canonical = new URL(canonicalPath || '/', Astro.site);
 const ogUrl = ogImage ? new URL(ogImage, Astro.site) : new URL('/og/default.png', Astro.site);
 
-// Structured data so a recruiter's search — or an AI assistant's — resolves
+// Structured data so a search engine — or an AI assistant — resolves
 // this page to a person with a job title, not an anonymous website.
 const personLd = {
   '@context': 'https://schema.org',
@@ -49,7 +49,7 @@ const personLd = {
   worksFor: { '@type': 'Organization', name: 'RMH3 Dental Supply' },
   // CYDEO only. The SDET program was completed; GMU was four years of
   // coursework without a conferred degree, and `alumniOf` reads as a
-  // completion claim to the recruiters and parsers that consume this.
+  // completion claim to the people and parsers that consume this.
   alumniOf: [{ '@type': 'EducationalOrganization', name: 'CYDEO' }],
   sameAs: [site.links.github, site.links.linkedin].filter(Boolean),
 };

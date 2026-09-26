@@ -6,7 +6,7 @@
  * that links to the real write-up. Requesters are roles, not named people.
  *
  * Voice: sincere and consultative. The interactivity carries the creativity;
- * the copy stays professional — a recruiter skimming this should understand
+ * the copy stays professional — a reader skimming this should understand
  * the work, not decode a bit. Numbers must match src/lib/site.ts and the
  * write-ups; never invent a figure for flavor.
  */

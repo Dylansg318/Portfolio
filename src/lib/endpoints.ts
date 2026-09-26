@@ -193,7 +193,7 @@ export const ENDPOINTS: Endpoint[] = [
         name: 'message',
         type: 'textarea',
         value: '',
-        placeholder: "What you're hiring for, timeline, remote / hybrid / on-site, a link to the role.",
+        placeholder: "What you're working on, which project it's about, a link if one helps.",
         description: 'The message. Ten characters or more.',
       },
     ],

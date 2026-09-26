@@ -36,7 +36,7 @@ const { data } = project;
 
 // THE SHARE CARD IS A PICTURE OF THE THING.
 // The generated /og/projects/*.png card is title-and-blurb text on graphite,
-// which is right for a write-up a recruiter is about to read and wrong for a
+// which is right for a write-up someone is about to read and wrong for a
 // link someone posted saying "try this".
 //
 // Three tiers, best first. `shareCard` is art composed for this job — the game's
@@ -51,8 +51,8 @@ const card = art
   ? await getImage({ src: art, width: 1200, format: 'jpeg', quality: 82 })
   : undefined;
 
-// Plain English first: whoever opens a shared game link is a player, not a
-// hiring manager, and `plainBlurb` is the sentence written for them.
+// Plain English first: whoever opens a shared game link is a player, not an
+// engineer reading the write-up, and `plainBlurb` is the sentence written for them.
 const description = data.plainBlurb ?? data.blurb;
 ---
 
