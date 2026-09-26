@@ -14,7 +14,7 @@ import { experienceRecord, personRecord, projectById, resumeRecord } from '../li
  */
 const experience = experienceRecord();
 const before = await projectById('internal-erp', ['problem', 'unique']);
-const how = personRecord('plain', ['principles', 'open_to', 'looking_for']);
+const how = personRecord('plain', ['principles']);
 const toolkit = resumeRecord('json', ['skills', 'certifications']);
 const startYear = (start: string) => Number(start.slice(-4));
 ---
@@ -25,7 +25,7 @@ const startYear = (start: string) => Number(start.slice(-4));
       <Row id="path">
         <Crumb method="GET" path="/api/experience" />
         <h1 class="page">From the restaurant floor to the system the company runs on.</h1>
-        <!-- Short and specific. Recruiters and their screening tools both parse
+        <!-- Short and specific. Readers skim
              this, and one concrete number beats three adjectives. -->
         <p class="lead">
           I'm the engineer at {site.employer.name}. I designed, built and run{' '}
@@ -146,7 +146,7 @@ const startYear = (start: string) => Number(start.slice(-4));
           Cooking, mostly. I play a bit of music. And I'll drive further than I should for a
           restaurant I haven't tried yet.
         </p>
-        <Console slot="code" id="how" endpoint="dylan" params={{ view: 'plain', fields: 'principles,open_to,looking_for' }} body={how} />
+        <Console slot="code" id="how" endpoint="dylan" params={{ view: 'plain', fields: 'principles' }} body={how} />
       </Row>
 
       <!-- Skills. The one long list that earns its length — it is scanned, not read. -->
@@ -170,7 +170,6 @@ const startYear = (start: string) => Number(start.slice(-4));
         <dl class="facts">
           <dt class="mono">based_in</dt><dd>{site.location}</dd>
           <dt class="mono">timezone</dt><dd>{site.timezone}</dd>
-          <dt class="mono">open_to</dt><dd>Backend · full-stack · remote or Northern Virginia</dd>
           <dt class="mono">email</dt><dd><a href={`mailto:${site.email}`}>{site.email}</a></dd>
         </dl>
         <div class="actions">

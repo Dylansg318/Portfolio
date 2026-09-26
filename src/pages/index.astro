@@ -81,7 +81,6 @@ const excerptHtml = escape(excerpt)
           <dt class="mono">role</dt><dd>{site.role}</dd>
           <dt class="mono">location</dt><dd>{site.location} · {site.timezone}</dd>
           <dt class="mono">mostly</dt><dd>{site.mainly.focus} · {site.mainly.stack.join(', ')}</dd>
-          <dt class="mono">open_to</dt><dd>{site.availability}</dd>
           <dt class="mono">measured</dt><dd>{site.statsAsOf}</dd>
         </dl>
         <div class="actions">
@@ -189,9 +188,9 @@ const excerptHtml = escape(excerpt)
 
       <Row id="contact">
         <Crumb method="POST" path="/api/contact" />
-        <h2>What I'm looking for.</h2>
+        <h2>Get in touch.</h2>
         <p class="t">
-          {site.lookingFor} The console on the right sends me a message; email works too.
+          {site.contactNote} The console on the right sends me a message; email works too.
         </p>
         <div class="actions">
           <a href="/contact" class="btn btn-primary">Get in touch</a>

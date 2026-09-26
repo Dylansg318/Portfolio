@@ -92,8 +92,6 @@ export function personRecord(view: View = 'plain', fields?: string[]) {
       stack: site.mainly.stack,
       location: site.location,
       timezone: site.timezone,
-      open_to: site.availability,
-      looking_for: site.lookingFor,
       principles: site.principles.map((p) => ({ title: p.title, body: p.body })),
       links: {
         email: site.email,

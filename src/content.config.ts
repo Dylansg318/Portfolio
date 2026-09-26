@@ -76,8 +76,8 @@ const projectSchema = ({ image }: SchemaContext) =>
 
     /**
      * Where AI tooling fit in — and, just as important, where it didn't.
-     * Rendered in the same place on every project. Hiring managers in 2026
-     * assume AI was used; what they screen for is whether the author can say
+     * Rendered in the same place on every project. Readers in 2026
+     * assume AI was used; what they look for is whether the author can say
      * what they decided, verified and threw away. Optional, but every real
      * write-up here fills it in.
      */

@@ -76,7 +76,7 @@ the feature changes, not the principle.
 
 | | Plain English (default) | Engineer |
 |---|---|---|
-| Who it is for | A recruiter, a founder, a family member, a search engine | A hiring manager or engineer deciding whether to interview |
+| Who it is for | A founder, a family member, a search engine, anyone curious | An engineer who wants to see how the work was done |
 | What it answers | What the work did, for whom, and what changed | How it works, what was hard, what was decided and thrown away |
 | Vocabulary | Business terms: orders, stock, prices, the books, the truck | Stack, data shapes, invariants, failure modes, numbers with units |
 | Where it lives | `plainBlurb`, `<PlainOnly>` blocks, the plain nameplate sentence | `blurb`, `<EngOnly>` blocks, `problem`, `unique`, the engineer nameplate sentence |
@@ -416,10 +416,10 @@ one of these shapes or add a row to this table.
 
 | Page | Rows | Chrome |
 |---|---|---|
-| `/` | `GET /api/dylan` (the name, the two-register nameplate sentence, the facts list, See the work / Resume / About me) → `GET /api/work` (one at work, one for myself, one on the side, with an excerpt of a real hook beside the console) → `GET /api/experience` (the three jobs) → `GET /api/away-from-work` (the first program, *Play here* in the side panel; the help desk) → `POST /api/contact` (what I'm looking for; the console sends). Person first, then the work, then the path, then the rest of life, then how to reach me. With JavaScript the five rows are one still frame (§3.5), with where-you-are (dots, *2 of 5 · About next*) at the foot of the prose column and, below 1024px, the response drawer. | Full |
+| `/` | `GET /api/dylan` (the name, the two-register nameplate sentence, the facts list, See the work / Resume / About me) → `GET /api/work` (one at work, one for myself, one on the side, with an excerpt of a real hook beside the console) → `GET /api/experience` (the three jobs) → `GET /api/away-from-work` (the first program, *Play here* in the side panel; the help desk) → `POST /api/contact` (get in touch; the console sends). Person first, then the work, then the path, then the rest of life, then how to reach me. With JavaScript the five rows are one still frame (§3.5), with where-you-are (dots, *2 of 5 · About next*) at the foot of the prose column and, below 1024px, the response drawer. | Full |
 | `/projects` | `GET /api/work` (h1, category tabs bound to `?category=` and to the console's parameter, every top-level project as an item row with its thumbnail where one exists) → `GET /api/work/internal-erp?fields=subsystems` (Inside the ERP). | Full |
 | `/projects/<slug>` | Fixed order, every time: back link or breadcrumb → `GET /api/work/{id}` (status · date · role, `h1`, the two-register blurb, stack chips, Play / Source / External write-up, the metrics list, the cover) → `?fields=problem,unique,ai` (**The problem**, **What was unique**, **Where AI fit in**) → `?fields=subsystems` (**Inside it**, when there are parts) → the write-up body, with its own section map in the dark column → `?fields=learned` (**What I learned**, previous / next within the same set). | Full |
-| `/about` | `GET /api/experience` (the short version, the stops, the jobs bound to `?since=`, education) → `GET /api/work/internal-erp?fields=problem,unique` (What it ran on before, Who I work with) → `GET /api/dylan?fields=principles,open_to,looking_for` (How I work, Right now, Off the clock) → `GET /api/resume?fields=skills,certifications` (the toolkit, the facts, Get in touch). | Full |
+| `/about` | `GET /api/experience` (the short version, the stops, the jobs bound to `?since=`, education) → `GET /api/work/internal-erp?fields=problem,unique` (What it ran on before, Who I work with) → `GET /api/dylan?fields=principles` (How I work, Right now, Off the clock) → `GET /api/resume?fields=skills,certifications` (the toolkit, the facts, Get in touch). | Full |
 | `/resume` | One row: `GET /api/resume`. Rendered from `site.ts`; the print stylesheet hides the rail and the column and is the PDF — one page, US Letter, checked by `pdfinfo`. No phone, no street address, on the page or in the PDF. | Full, hidden in print |
 | `/contact` | `POST /api/contact` (Say hello, the email, what to include; the console validates for real and hands the message to the mail app) → `GET /api/work/internal-erp?fields=problem,metrics` (the problem I solve, for the owner or office manager who is not hiring an engineer). | Full |
 | `/desk` | Help Desk mode: the whole portfolio re-served as a ticket queue. Own name, own mark, own light palette, no vendor branding. One static page, panels switched by hash; without JS the panels stack and it reads as a document. Chrome is played straight, content is not. | Bare, own router |
@@ -847,8 +847,9 @@ follows:
   the shelf — never "a complete business system" or "production ownership".
 - **No adjectives about himself.** He never describes his own qualities. Headings state
   what a thing is ("One at work, one for myself, one on the side"), never what it proves.
-- **Plain courtesy, not brochure warmth.** His professional register is "If that's what
-  you're hiring for, let me know" — direct and brief. Not "Let's work together."
+- **Plain courtesy, not brochure warmth.** His professional register is "Questions about any
+  of this, or working on something similar? I'm glad to talk about it" — direct and
+  brief. Not "Let's work together."
 - **Honest hedges stay.** "Mostly backend", "about", "usually". A qualifier he would
   actually say is not weakness; deleting it to sound certain is the drift.
 
