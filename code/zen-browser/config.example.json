@@ -1,0 +1,28 @@
+{
+  "defaultContainer": "Work",
+  "aliases": {
+    "w": "Work",
+    "p": "Personal"
+  },
+  "idleCloseMinutes": 10,
+  "maxFootprintGB": 4,
+  "neverContainers": ["Banking"],
+  "neverSites": [
+    "paypal.com",
+    "venmo.com",
+    "stripe.com",
+    "squareup.com",
+    "americanexpress.com",
+    "chase.com",
+    "bankofamerica.com",
+    "wellsfargo.com",
+    "capitalone.com",
+    "citi.com",
+    "discover.com",
+    "adp.com",
+    "gusto.com",
+    "fidelity.com",
+    "schwab.com",
+    "vanguard.com"
+  ]
+}

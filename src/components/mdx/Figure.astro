@@ -8,8 +8,11 @@ interface Props {
   caption?: string;
   /** Let a diagram break out past the reading measure. */
   wide?: boolean;
+  /** A side-panel or phone capture: shown at the width it was taken, not
+   *  stretched to the column, so its text stays the size it was on screen. */
+  narrow?: boolean;
 }
-const { src, alt, caption, wide = false } = Astro.props;
+const { src, alt, caption, wide = false, narrow = false } = Astro.props;
 
 // Written out rather than spread: <Image>'s props are a union, and spreading an
 // object loses the overload that lets `widths` stand in for width/height.
@@ -17,7 +20,7 @@ const CLS = 'w-full rounded-md border border-border';
 const WIDTHS = [480, 800, 1200];
 const SIZES = '(max-width: 768px) 100vw, 800px';
 ---
-<figure class:list={['not-prose my-8', wide && 'lg:-mx-12']}>
+<figure class:list={['not-prose my-8', wide && 'lg:-mx-12', narrow && 'mx-auto max-w-[380px]']}>
   <Image src={src} alt={alt} class={CLS} widths={WIDTHS} sizes={SIZES} />
   {caption && <figcaption class="mt-2 text-sm text-ink-faint">{caption}</figcaption>}
 </figure>

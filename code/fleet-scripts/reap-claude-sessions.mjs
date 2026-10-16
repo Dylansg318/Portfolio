@@ -1,394 +1,510 @@
 #!/usr/bin/env node
 /**
- * reap-claude-sessions — say which spawned Claude tabs are safe to close, and close them.
+ * reap-claude-sessions — the CLOSING half of spawn-claude-sessions.
  *
- * WHY THIS EXISTS: `spawn-claude-sessions.mjs` opens one iTerm2 tab per slice and nothing
- * ever closes them. After the integrator merges a phase, the window holds a mix of tabs that
- * are (a) finished and merged, (b) still working, (c) waiting on a question, and (d) corpses
- * whose Claude process already exited — and they all look identical, because Claude Code
- * rewrites every tab's title to a conversation summary. Observed in practice: 5 open tabs,
- * one of which had no process on its tty at all.
+ * Closes each finished slice's iTerm2 tab AND removes its git worktree, in that
+ * order, with a safety check in front of both.
  *
- * There is a second, sharper cost. `worktree-audit --prune` refuses to remove a worktree with
- * a live process cwd'd inside it, so a tab left open on a merged slice permanently blocks the
- * cleanup of its own worktree (a full checkout — often around a gigabyte each with installed
- * dependencies). Reap runs BEFORE prune, not after.
+ *   node reap-claude-sessions.mjs --slices a,b,c --dry-run
+ *   node reap-claude-sessions.mjs --slices a,b,c
+ *   node reap-claude-sessions.mjs --all-merged [--into <branch>]
+ *   node reap-claude-sessions.mjs --watch --slices a,b   # started by the spawner
  *
- *   node reap-claude-sessions.mjs                 # report only (default)
- *   node reap-claude-sessions.mjs --close         # close only the provably-safe tabs
- *   node reap-claude-sessions.mjs --close --dry-run
- *   node reap-claude-sessions.mjs --close --all-merged   # also close merged-but-silent
- *   node reap-claude-sessions.mjs --json
+ * --into defaults to the repo's default branch (origin/HEAD).
  *
- * SAFE means every one of these holds, not a guess from the tab title:
- *   - it is not this tab (the caller is never reaped)
- *   - its Claude process is gone           OR
- *   - it sits in a .claude/worktrees/ slice whose tree is clean, whose branch content is on
- *     the integration branch (worktree-audit's per-file test, not the three-dot trap), which
- *     is not mid-turn, holds no coordination lock, and which broadcast a "done" message.
- * Anything else is KEPT and printed with the reason it was kept. A tab in the MAIN checkout is
- * never auto-closed while it has a process: those are hand-opened sessions, not spawned slices.
+ * --watch is the AUTOMATIC reap (2026-09-28: the orchestrator kept having to be asked whether it
+ * had reaped, even with a standing note telling it to reap unprompted). spawn-claude-sessions.mjs
+ * starts it, detached, for exactly the slices it opened. Every --interval-min (5) it fetches
+ * origin/<into>; a slice is reaped once it passes every check below (not this session, clean,
+ * merged, has commits of its own, not mid-turn) AND its worktree (HEAD + status) has not changed
+ * for --grace-min (10). There is no "done" message in this flow, so that quiet period is what
+ * stands in for one. It exits when none of its slices has a worktree left, or after --max-hours (72).
  *
- * SCROLLBACK IS LOST when a tab closes. --dry-run first if that matters.
+ * WHY THIS EXISTS. The parallelize flow used to end at "remove the worktree",
+ * which leaves the tab open on a directory that no longer exists. The session
+ * still registers as live, its shell is rooted in a deleted path, and the next
+ * person cannot tell a finished slice from a running one. Reaping is BOTH.
  *
- * Env: FLEET_REPO (default: git toplevel of this script's directory),
- *      FLEET_BASE_BRANCH (default "main").
+ * ORDER IS LOAD-BEARING: close the tab FIRST, then remove the worktree. Do it
+ * the other way and the session spends the gap rooted in a deleted directory.
+ * (Measured 2026-09-04: worktrees removed while three tabs were still open —
+ * every one of them became a shell in a path that no longer resolved.)
+ *
+ * ============================================================================
+ * THE TRAP THIS SCRIPT EXISTS TO NOT REPEAT — read before editing closeTab().
+ * ============================================================================
+ * `repeat with t in tabs of w` binds a POSITIONAL specifier ("tab 3 of window
+ * 1"), which AppleScript re-evaluates at every use. Collect three such refs,
+ * close the first, and the other two now point at DIFFERENT tabs, because the
+ * list renumbered under them.
+ *
+ * Measured 2026-09-04, closing three slice tabs at indices 3/4/5 of eight:
+ *   close "tab 3" -> hit the intended tab
+ *   close "tab 4" -> list had shifted; hit what was tab 5
+ *   close "tab 5" -> list had shifted twice; hit what was tab 7 —
+ *                    A LIVE UNRELATED SESSION, killed with 137 lines of
+ *                    uncommitted draft open in it.
+ * The intended tab 4 survived, having slid down to position 3.
+ *
+ * spawn-claude-sessions.mjs learned this for WINDOWS (it holds `window id N`
+ * rather than the loop variable). The same hazard exists one level down for
+ * TABS, and the fix here is the same shape: never hold a positional reference
+ * across a mutation. closeTab() re-resolves by TTY and closes exactly one tab
+ * per AppleScript invocation. Do not "optimise" it into a batch loop.
+ * ============================================================================
+ *
+ * IDENTITY IS THE `-w` FLAG, NOT THE TAB TITLE. Claude Code rewrites tab titles
+ * to rolling conversation summaries, so a title that reads "ci-floor-assertions"
+ * today may read anything tomorrow. The spawner launches each slice as
+ * `claude -w <slice> -n <slice> ...`, and that argv survives for the life of the
+ * process. We match on it, then map pid -> tty -> tab.
+ *
+ * BACKGROUND SESSIONS (2026-10-06). Slices start as background sessions by default now. Their
+ * process is `claude bg-spare …` with no tty and no `-w`, so the tab lookup above never sees one —
+ * and a merged, clean slice would read "no live tab" and have its worktree removed from under a
+ * running session. So a slice's session is also looked up in `claude agents --json --all` (by the
+ * id the spawner recorded, else by its worktree), judged by the same checks, and closed with
+ * `claude rm <id>`, which stops it and removes its worktree; `git worktree prune` follows. A list
+ * that can't be read decides nothing. Mechanics: ./lib/background-sessions.mjs.
  */
 
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
-import { createRequire } from 'node:module';
+import { existsSync, readFileSync } from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
-import process from 'node:process';
+import { agentIn, listBackground } from './lib/background-sessions.mjs';
 
-const require = createRequire(import.meta.url);
+const CLAUDE_BIN = process.env.CLAUDE_BIN || path.join(os.homedir(), '.local', 'bin', 'claude');
 
-const REPO = process.env.FLEET_REPO || (() => {
+const args = process.argv.slice(2);
+const has = (f) => args.includes(f);
+const val = (f, d = null) => {
+  const i = args.indexOf(f);
+  return i >= 0 && args[i + 1] ? args[i + 1] : d;
+};
+
+const DRY = has('--dry-run');
+const KEEP_BRANCHES = !has('--delete-branches');
+const WATCH = has('--watch');
+
+function git(cwd, ...a) {
+  return execFileSync('git', a, { cwd, encoding: 'utf8' }).trim();
+}
+
+function resolveRepo() {
   try {
-    return execFileSync('/usr/bin/git', ['rev-parse', '--show-toplevel'], {
-      cwd: path.dirname(new URL(import.meta.url).pathname), encoding: 'utf8',
-    }).trim();
+    return git(process.cwd(), 'rev-parse', '--show-toplevel');
   } catch {
-    return process.cwd();
+    console.error('error: run this from inside the git repo the slices worked on');
+    process.exit(1);
   }
-})();
-const BASE = `origin/${process.env.FLEET_BASE_BRANCH || 'main'}`;
-const SCRIPT_DIR = path.dirname(new URL(import.meta.url).pathname);
+}
 
-// OWNERSHIP. Safety evidence (clean tree, merged, announced done) looks exactly
-// the same for a slice belonging to someone else's run — which is how a reap
-// from one session once closed a finished slice from a DIFFERENT operator's
-// run. Nothing was lost (the commit was already on the integration branch) but
-// the scrollback was, and it was not that session's to close.
-//
-// spawn-claude-sessions.mjs now records who opened each slice. A slice this tab
-// did not spawn is reported FOREIGN and left alone unless --any-owner is passed.
-// A slice with NO record (spawned before this existed, or opened by hand) is
-// also FOREIGN — refusing to close is the safe direction when we cannot tell.
-const MY_TAB = (process.env.ITERM_SESSION_ID || '').split(':').pop() || '';
+const REPO = resolveRepo();
 
-function loadOwners(repo) {
+// The spawner's owner book lives in the MAIN checkout (the common git dir's parent), wherever this runs.
+function spawnBook() {
   try {
-    return JSON.parse(readFileSync(path.join(repo, '.claude', 'worktrees', '.spawn-owners.json'), 'utf8')) || {};
+    const main = path.dirname(git(REPO, 'rev-parse', '--path-format=absolute', '--git-common-dir'));
+    return JSON.parse(readFileSync(path.join(main, '.claude', 'worktrees', '.spawn-owners.json'), 'utf8')) || {};
   } catch {
     return {};
   }
 }
 
-const args = process.argv.slice(2);
-const CLOSE = args.includes('--close');
-const DRY = args.includes('--dry-run');
-const JSON_OUT = args.includes('--json');
-const ALL_MERGED = args.includes('--all-merged');
-const ANY_OWNER = args.includes('--any-owner');
-const HELP = args.includes('--help') || args.includes('-h');
-
-if (HELP) {
-  console.log(`
-reap-claude-sessions — which spawned Claude tabs are safe to close, and close them
-
-  (no flags)       report only
-  --close          close the SAFE tabs (SIGTERM the session, then close the iTerm2 tab)
-  --dry-run        with --close, print what would close and stop
-  --all-merged     also treat merged+clean+idle tabs as safe even if they never announced
-  --any-owner      also close slices spawned by a DIFFERENT tab (default: only this run's)
-  --json           machine-readable
-
-Run this BEFORE \`worktree-audit --prune\` — an open tab blocks its own worktree's removal.
-`);
-  process.exit(0);
-}
-
-/* ---------------------------------------------------------------- helpers */
-
-function sh(bin, argv, opts = {}) {
+// The integration branch a slice must be merged into before it is reaped. Defaults to the
+// repo's own default branch (origin/HEAD) — a hardcoded `working` made every slice in a
+// `main` repo REFUSE as "not merged". No origin/HEAD → ask rather than guess.
+function resolveInto() {
+  const given = val('--into');
+  if (given) return given;
   try {
-    return execFileSync(bin, argv, {
-      encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'], ...opts,
-    }).trim();
+    return execFileSync('git', ['symbolic-ref', '--short', 'refs/remotes/origin/HEAD'], {
+      cwd: REPO, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim().replace(/^origin\//, '');
   } catch {
-    return '';
+    console.error('error: cannot tell the integration branch (origin/HEAD is not set) — pass --into <branch>,');
+    console.error('       or set it once with: git remote set-head origin --auto');
+    process.exit(1);
   }
 }
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const INTO = resolveInto();
 
-/* ------------------------------------------------------- iTerm2 enumeration */
-
-// Tab titles are useless for identity — Claude Code rewrites them continuously. We key on the
-// session GUID and resolve everything else from the tty.
-const LIST_AS = `
-tell application "iTerm2"
-  set out to ""
-  set wi to 0
-  repeat with w in windows
-    set wi to wi + 1
-    set ti to 0
-    repeat with t in tabs of w
-      set ti to ti + 1
-      repeat with s in sessions of t
-        set nm to ""
-        try
-          set nm to (get name of s)
-        end try
-        set pr to "false"
-        try
-          set pr to (get is processing of s) as string
-        end try
-        set out to out & (id of s) & "|~|" & (tty of s) & "|~|" & pr & "|~|" & wi & "|~|" & ti & "|~|" & nm & linefeed
-      end repeat
-    end repeat
-  end repeat
-  return out
-end tell`;
-
-function itermSessions() {
-  const raw = sh('/usr/bin/osascript', ['-e', LIST_AS]);
-  if (!raw) return [];
-  return raw.split('\n').filter((l) => l.includes('|~|')).map((line) => {
-    const [id, tty, processing, wi, ti, ...rest] = line.split('|~|');
-    return {
-      id,
-      tty,
-      processing: processing === 'true',
-      window: Number(wi),
-      tab: Number(ti),
-      title: rest.join('|~|'),
-    };
-  });
+/** All registered worktrees: [{ path, branch, locked }] */
+function worktrees() {
+  const out = git(REPO, 'worktree', 'list', '--porcelain');
+  const list = [];
+  let cur = {};
+  for (const line of out.split('\n')) {
+    if (line.startsWith('worktree ')) {
+      if (cur.path) list.push(cur);
+      cur = { path: line.slice(9), locked: false, branch: null };
+    } else if (line.startsWith('branch ')) {
+      cur.branch = line.slice(7).replace('refs/heads/', '');
+    } else if (line === 'locked' || line.startsWith('locked ')) {
+      cur.locked = true;
+    }
+  }
+  if (cur.path) list.push(cur);
+  return list;
 }
 
-/* --------------------------------------------------- process / cwd resolution */
-
-// ONE ps pass. Per-tty `ps -t` is unreliable on macOS once a tty is released — it errors with
-// "No such file or directory" for a tty iTerm2 still lists, which reads as a crash rather than
-// the correct answer ("that session is dead").
-function claudePidByTty() {
-  const out = sh('/bin/ps', ['-A', '-o', 'pid=,tty=,command=']);
-  const map = new Map();
+/**
+ * Every running Claude session: [{ pid, tty, slice|null }].
+ *
+ * `slice` comes from the `-w` flag the spawner passes, which is the reliable
+ * marker — it sits at the front of argv (well before the prompt text, so `ps`
+ * truncation cannot eat it) and nothing rewrites it. But a session that entered
+ * its worktree MID-FLIGHT (the EnterWorktree tool, rather than `claude -w`) has
+ * no such flag, so `slice` is null for those and they are matched by working
+ * directory instead — see sessionFor(). Without that fallback the reaper reports
+ * "no live tab", removes the worktree anyway, and recreates the exact stranded-
+ * tab bug this script exists to prevent.
+ */
+function claudeSessions() {
+  const out = execFileSync('ps', ['-eo', 'pid=,tty=,command='], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  const found = [];
   for (const line of out.split('\n')) {
-    const m = line.trim().match(/^(\d+)\s+(\S+)\s+(.*)$/);
+    const m = line.match(/^\s*(\d+)\s+(\S+)\s+(.*)$/);
     if (!m) continue;
     const [, pid, tty, cmd] = m;
-    if (tty === '??' || tty === '?') continue;
-    // The spawner runs the real binary; MCP servers and npm exec children share the tty.
-    const first = cmd.split(/\s+/)[0];
-    if (!/(^|\/)claude$/.test(first)) continue;
-    if (!map.has(tty)) map.set(tty, Number(pid));
+    if (!/\/claude(\s|$)/.test(cmd)) continue;
+    if (tty === '??' || tty === '-') continue; // no controlling terminal = no tab
+    const w = cmd.match(/\s-w\s+(\S+)/) || cmd.match(/\s--worktree\s+(\S+)/);
+    found.push({
+      pid: Number(pid),
+      tty: tty.startsWith('/dev/') ? tty : `/dev/${tty}`,
+      slice: w ? w[1] : null,
+    });
   }
-  return map;
+  return found;
 }
 
+/**
+ * Is `pid` an ancestor of this process? i.e. are we running INSIDE that session?
+ *
+ * Load-bearing: the reaper is normally invoked BY a Claude session, and that
+ * session may itself sit in a merged, clean worktree — so `--all-merged` would
+ * otherwise close the tab it is currently running in, killing itself mid-sweep
+ * and leaving the remaining slices unreaped. Verified 2026-09-04: a dry run
+ * matched the calling session's own tab, whose TITLE read "Book negative balance
+ * model" (a rolling summary of its conversation) while its cwd proved what it
+ * actually was.
+ */
+function isSelfAncestor(pid) {
+  let cur = process.pid;
+  for (let hop = 0; hop < 40 && cur > 1; hop++) {
+    if (cur === pid) return true;
+    try {
+      cur = Number(execFileSync('ps', ['-o', 'ppid=', '-p', String(cur)], { encoding: 'utf8' }).trim());
+    } catch {
+      return false;
+    }
+    if (!Number.isFinite(cur)) return false;
+  }
+  return false;
+}
+
+/** A process's current working directory, or null. */
 function cwdOf(pid) {
-  const out = sh('/usr/sbin/lsof', ['-a', '-d', 'cwd', '-Fn', '-p', String(pid)]);
-  const line = out.split('\n').find((l) => l.startsWith('n'));
-  return line ? line.slice(1) : '';
-}
-
-/* ------------------------------------------------------------ worktree state */
-
-// Reuse worktree-audit rather than re-deriving "is this branch on the base" — it owns the
-// per-file content test and the three-dot trap it documents.
-function auditByPath() {
-  const raw = sh('/usr/bin/env', ['node', path.join(SCRIPT_DIR, 'worktree-audit.mjs'), '--json'], { cwd: REPO });
-  const map = new Map();
-  if (!raw) return map;
-  let rows;
-  try { rows = JSON.parse(raw); } catch { return map; }
-  for (const r of rows) map.set(path.resolve(r.path), r);
-  return map;
-}
-
-/* ----------------------------------------------------------------- coord state */
-
-// OPTIONAL session-coordination layer. In the source repo, hooks register every
-// live session in a small registry (`.claude/hooks/lib/coord-core.cjs`) with git
-// locks and peer broadcasts; the reaper uses it to see mid-git-op locks and
-// "done" announcements. When the module is absent, everything degrades to empty
-// — the reaper then relies on worktree/process evidence alone.
-function coordState() {
-  const empty = { sessions: [], locks: [], broadcasts: [] };
   try {
-    const C = require(path.join(REPO, '.claude', 'hooks', 'lib', 'coord-core.cjs'));
-    const base = C.root(REPO);
-    if (!base) return empty;
-    return { sessions: C.sessions(base), locks: C.locks(base), broadcasts: C.allBroadcasts(base) };
+    const out = execFileSync('lsof', ['-a', '-d', 'cwd', '-p', String(pid), '-Fn'], { encoding: 'utf8' });
+    const line = out.split('\n').find((l) => l.startsWith('n'));
+    return line ? line.slice(1) : null;
   } catch {
-    return empty;
+    return null;
   }
 }
 
-const DONE_RE = /\b(done|ready to merge|complete[d]?|finished)\b/i;
+/**
+ * Every session a slice could be running in: `{ tabs, agents, book }` — tabs from `ps`, background
+ * sessions from `claude agents --json --all` (exited ones included: `claude rm` clears them too).
+ * Throws when the background list can't be read.
+ */
+function liveSessions() {
+  return { tabs: claudeSessions(), agents: listBackground(CLAUDE_BIN, { all: true }), book: spawnBook() };
+}
 
-/* ------------------------------------------------------------------ classify */
+const alive = (pid) => { try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; } };
 
-function classify() {
-  const selfGuid = (process.env.ITERM_SESSION_ID || '').split(':').pop() || '';
-  const tabs = itermSessions();
-  const pids = claudePidByTty();
-  const audit = auditByPath();
-  const coord = coordState();
+/**
+ * The session for a worktree: a tab by `-w` name first, then a tab by cwd, then a background
+ * session (its recorded id, else one working in the worktree).
+ * Never guesses from the tab title — Claude Code rewrites those to rolling
+ * conversation summaries, so a title is not identity.
+ */
+function sessionFor(live, slice, wtPath) {
+  const byFlag = live.tabs.find((s) => s.slice === slice);
+  if (byFlag) return byFlag;
+  const byCwd = live.tabs.find((s) => s.slice === null && cwdOf(s.pid) === wtPath);
+  if (byCwd) return byCwd;
+  const ag = agentIn(live.agents, wtPath, live.book[slice]?.bg);
+  if (!ag) return null;
+  const up = Boolean(ag.pid) && alive(ag.pid);
+  return { kind: 'background', id: ag.id, sessionId: ag.sessionId, pid: up ? ag.pid : null, busy: up && (ag.status === 'busy' || ag.state === 'working') };
+}
 
-  const rows = [];
-  for (const t of tabs) {
-    const ttyName = t.tty.replace(/^\/dev\//, '');
-    const pid = pids.get(ttyName) || null;
-    const row = {
-      id: t.id, tty: t.tty, pid, window: t.window, tab: t.tab, title: t.title,
-      processing: t.processing, cwd: '', worktree: '', slice: '', branch: '',
-      verdict: '', dirty: 0, safe: false, state: '', why: '',
+/**
+ * Close exactly ONE tab, resolved by tty at the moment of closing.
+ * See the trap note at the top: one tab per invocation, never a batch.
+ */
+function closeTab(tty) {
+  const scpt = `
+    on run argv
+      set target to item 1 of argv
+      tell application "iTerm2"
+        repeat with w in windows
+          repeat with t in tabs of w
+            repeat with s in sessions of t
+              if (tty of s) is equal to target then
+                close t
+                return "closed"
+              end if
+            end repeat
+          end repeat
+        end repeat
+      end tell
+      return "not-found"
+    end run`;
+  return execFileSync('/usr/bin/osascript', ['-', tty], { input: scpt, encoding: 'utf8' }).trim();
+}
+
+/** Is the session on this tty mid-turn? iTerm2's own flag; unknown reads as not busy. */
+function isProcessing(tty) {
+  const scpt = `
+    on run argv
+      set target to item 1 of argv
+      tell application "iTerm2"
+        repeat with w in windows
+          repeat with t in tabs of w
+            repeat with s in sessions of t
+              if (tty of s) is equal to target then return (get is processing of s) as string
+            end repeat
+          end repeat
+        end repeat
+      end tell
+      return "unknown"
+    end run`;
+  try {
+    return execFileSync('/usr/bin/osascript', ['-', tty], { input: scpt, encoding: 'utf8' }).trim() === 'true';
+  } catch {
+    return false;
+  }
+}
+
+/** A worktree is safe to remove only if nothing is uncommitted in it. */
+function isClean(wtPath) {
+  try {
+    return git(wtPath, 'status', '--porcelain') === '';
+  } catch {
+    return false;
+  }
+}
+
+/** Its branch must already be contained in the integration branch. */
+function isMerged(branch) {
+  if (!branch) return false;
+  try {
+    git(REPO, 'merge-base', '--is-ancestor', branch, `origin/${INTO}`);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * "Merged" is vacuous for a branch with no commits of its own: a slice that has only just
+ * started (or is still planning) sits AT its base, so it is an ancestor of the integration
+ * branch and reads as merged — and reaping it closes a live session mid-work. Measured
+ * 2026-09-24: a busy `race-room` slice with 0 commits came back "would reap".
+ * The branch reflog tells the two apart — a finished slice has `commit:` entries, a fresh
+ * one only "branch: Created from …". No reflog at all (disabled/expired) = unknown → the
+ * old behaviour (allow), since the clean-tree and merged checks still stand.
+ */
+function hasOwnCommits(branch) {
+  let log;
+  try {
+    log = execFileSync('git', ['reflog', 'show', '--format=%gs', `refs/heads/${branch}`], {
+      cwd: REPO, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'],
+    });
+  } catch {
+    return true;
+  }
+  const entries = log.split('\n').filter(Boolean);
+  if (!entries.length) return true;
+  return entries.some((e) => /^(commit|cherry-pick|revert)\b/.test(e));
+}
+
+/** Why a slice may not be reaped right now, or null when it may. */
+function refusal(slice, wt, live) {
+  const sess = sessionFor(live, slice, wt.path);
+  const self = sess && ((sess.pid && isSelfAncestor(sess.pid))
+    || (sess.kind === 'background' && sess.sessionId && sess.sessionId === process.env.CLAUDE_CODE_SESSION_ID));
+  if (self) return 'this is the session running the reaper — close it yourself';
+  if (!isClean(wt.path)) return 'worktree has uncommitted or untracked files';
+  if (!isMerged(wt.branch)) return `branch ${wt.branch} is not merged into origin/${INTO}`;
+  if (!hasOwnCommits(wt.branch)) return `branch ${wt.branch} has no commits of its own — still starting, or abandoned; remove it by hand if abandoned`;
+  if (sess && (sess.kind === 'background' ? sess.busy : isProcessing(sess.tty))) return 'mid-turn right now';
+  return null;
+}
+
+/**
+ * A background slice's close: `claude rm` stops it and removes its worktree (and local branch) when
+ * Claude Code judges that safe; anything it leaves is removed as a tab slice's would be, then
+ * `git worktree prune` drops the admin folder `claude rm` once left behind.
+ */
+function reapBackground(slice, wt, sess) {
+  if (DRY) return { slice, action: 'would reap', why: `claude rm ${sess.id} (background session${sess.pid ? `, pid ${sess.pid}` : ', exited'}), which removes ${wt.path}` };
+  try {
+    execFileSync(CLAUDE_BIN, ['rm', sess.id], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 120_000 });
+  } catch (err) {
+    return { slice, action: 'REFUSE', why: `claude rm ${sess.id} failed: ${String(err.stderr || err.message).trim().split('\n').pop()}` };
+  }
+  if (existsSync(wt.path)) {
+    try {
+      if (wt.locked) git(REPO, 'worktree', 'unlock', wt.path);
+      git(REPO, 'worktree', 'remove', wt.path);
+    } catch (err) {
+      return { slice, action: 'PARTIAL', why: `session removed, but worktree remove failed: ${err.message}` };
+    }
+  }
+  try { git(REPO, 'worktree', 'prune'); } catch { /* best effort */ }
+  let branch = 'deleted its branch (merged)';
+  try { git(REPO, 'rev-parse', '--verify', '--quiet', `refs/heads/${wt.branch}`); branch = `kept branch ${wt.branch}`; } catch { /* gone with claude rm */ }
+  return { slice, action: 'reaped', why: `claude rm ${sess.id}, removed ${wt.path}, ${branch}` };
+}
+
+/** Close the slice's tab, then remove its worktree — the order is load-bearing (header). */
+function reapOne(slice, wts, live) {
+  const wt = wts.find((w) => path.basename(w.path) === slice);
+  if (!wt) return { slice, action: 'SKIP', why: 'no worktree registered by that name' };
+  const why = refusal(slice, wt, live);
+  if (why) return { slice, action: 'REFUSE', why };
+  const sess = sessionFor(live, slice, wt.path);
+  if (sess?.kind === 'background') return reapBackground(slice, wt, sess);
+
+  if (DRY) {
+    return {
+      slice,
+      action: 'would reap',
+      why: `${sess ? `close tab ${sess.tty} (pid ${sess.pid}), ` : 'no live tab, '}remove ${wt.path}`,
     };
-
-    if (selfGuid && t.id === selfGuid) {
-      Object.assign(row, { state: 'SELF', why: 'this tab — never reaped' });
-      rows.push(row); continue;
-    }
-    if (!pid) {
-      Object.assign(row, { state: 'EXITED', safe: true, why: 'no Claude process on its tty — a dead tab' });
-      rows.push(row); continue;
-    }
-
-    row.cwd = cwdOf(pid);
-    row.worktree = row.cwd ? (sh('/usr/bin/git', ['rev-parse', '--show-toplevel'], { cwd: row.cwd }) || row.cwd) : '';
-    const isMain = row.worktree && path.resolve(row.worktree) === path.resolve(REPO);
-    row.slice = !row.worktree || isMain ? '' : path.basename(row.worktree);
-
-    if (t.processing) {
-      Object.assign(row, { state: 'BUSY', why: 'mid-turn right now' });
-      rows.push(row); continue;
-    }
-    if (!row.worktree || isMain) {
-      Object.assign(row, { state: 'MAIN', why: 'hand-opened session in the main checkout' });
-      rows.push(row); continue;
-    }
-
-    const a = audit.get(path.resolve(row.worktree));
-    if (!a) {
-      Object.assign(row, { state: 'UNKNOWN', why: 'worktree not in the audit — inspect by hand' });
-      rows.push(row); continue;
-    }
-    row.branch = a.branch;
-    row.verdict = a.verdict;
-    row.dirty = a.dirty;
-
-    if (a.dirty > 0) {
-      Object.assign(row, { state: 'UNCOMMITTED', why: `${a.dirty} uncommitted file(s)` });
-      rows.push(row); continue;
-    }
-    if (a.verdict === 'stranded' || a.verdict === 'partial') {
-      Object.assign(row, { state: 'UNMERGED', why: `work is ${a.verdict} — not on ${BASE}` });
-      rows.push(row); continue;
-    }
-
-    const sess = coord.sessions.find((s) => s.claude_pid === pid)
-      || coord.sessions.find((s) => path.resolve(s.worktree || s.cwd || '') === path.resolve(row.worktree));
-    const lock = sess && coord.locks.find((l) => l.owner === sess.id);
-    if (lock) {
-      Object.assign(row, { state: 'HOLDS-LOCK', why: `holds ${lock.resource} — mid git op` });
-      rows.push(row); continue;
-    }
-
-    const announced = coord.broadcasts.some((b) =>
-      ((sess && b.id === sess.id) || (b.cwd && path.resolve(b.cwd) === path.resolve(row.worktree)))
-      && DONE_RE.test(b.text || ''));
-
-    // Whose slice is this? Checked AFTER the done-ness evidence so the report
-    // still tells you a foreign slice is finished — it just won't close it.
-    const owners = loadOwners(REPO);
-    const rec = owners[row.slice];
-    const mine = ANY_OWNER || (rec && MY_TAB && rec.owner === MY_TAB);
-    row.owner = rec ? rec.owner : '';
-
-    if (announced && !mine) {
-      Object.assign(row, { state: 'FOREIGN', why: rec
-        ? `done, but spawned by another tab (${rec.owner}) — use --any-owner to close it`
-        : 'done, but no spawn record — not this run\'s to close; use --any-owner' });
-    } else if (announced) {
-      Object.assign(row, { state: 'DONE', safe: true, why: `announced done, tree clean, work on ${BASE}` });
-    } else if (ALL_MERGED && mine) {
-      Object.assign(row, { state: 'DONE', safe: true, why: 'merged + clean + idle (--all-merged; never announced)' });
-    } else {
-      Object.assign(row, { state: 'PROBABLY-DONE', why: 'merged + clean + idle, but never announced — check the tab, or use --all-merged' });
-    }
-    rows.push(row);
   }
-  return rows;
+
+  // Tab first, worktree second — never leave a session rooted in a deleted dir.
+  let tab = 'no live tab';
+  if (sess) {
+    try {
+      // SIGTERM before closing the tab so Claude runs its SessionEnd hook and
+      // deregisters from any session-coordination registry. Closing the tab
+      // outright leaves a stale "live session" entry behind — which is the
+      // same confusion a half-reap causes, just in a different list.
+      try {
+        process.kill(sess.pid, 'SIGTERM');
+        execFileSync('/bin/sleep', ['1']);
+      } catch { /* already gone */ }
+      tab = `${closeTab(sess.tty)} ${sess.tty}`;
+    } catch (err) {
+      return { slice, action: 'REFUSE', why: `could not close tab: ${err.message}` };
+    }
+  }
+
+  try {
+    if (wt.locked) git(REPO, 'worktree', 'unlock', wt.path);
+    // No --force: git refuses on dirt, which is the last line of defence.
+    git(REPO, 'worktree', 'remove', wt.path);
+  } catch (err) {
+    return { slice, action: 'PARTIAL', why: `tab ${tab}, but worktree remove failed: ${err.message}` };
+  }
+
+  if (!KEEP_BRANCHES) git(REPO, 'branch', '-d', wt.branch);
+  return { slice, action: 'reaped', why: `${tab}, removed ${wt.path}, kept branch ${wt.branch}` };
 }
 
-/* --------------------------------------------------------------------- close */
-
-const CLOSE_AS = (id) => `
-tell application "iTerm2"
-  set target to missing value
-  repeat with w in windows
-    repeat with t in tabs of w
-      repeat with s in sessions of t
-        if (id of s) is "${id}" then set target to s
-      end repeat
-    end repeat
-  end repeat
-  if target is not missing value then close target
-end tell`;
-
-async function closeRows(rows) {
-  let ok = 0;
-  for (const r of rows) {
-    // SIGTERM first so Claude runs its SessionEnd hook and deregisters from the coordination
-    // registry; killing the tab out from under it would strand its lock and its registry entry.
-    if (r.pid) {
-      try { process.kill(r.pid, 'SIGTERM'); } catch {}
-      for (let i = 0; i < 20; i++) {
-        await sleep(400);
-        try { process.kill(r.pid, 0); } catch { break; }
-      }
-    }
-    sh('/usr/bin/osascript', ['-e', CLOSE_AS(r.id)]);
-    ok++;
-    console.log(`  closed  w${r.window}t${r.tab}  ${r.slice || '(main)'}  [${r.state}]`);
-  }
-  return ok;
-}
-
-/* ---------------------------------------------------------------------- main */
-
-const PAD = (s, n) => String(s ?? '').padEnd(n);
-
-async function main() {
-  if (process.env.TERM_PROGRAM !== 'iTerm.app' && !process.env.ITERM_SESSION_ID) {
-    console.error('reap-claude-sessions: not running under iTerm2 — nothing to enumerate.');
+function main() {
+  const wts = worktrees();
+  let live;
+  try {
+    live = liveSessions();
+  } catch (err) {
+    console.error(`reap-claude-sessions: ${err.message} — nothing was decided; try again in a minute.`);
     process.exit(1);
   }
 
-  const rows = classify();
-  if (JSON_OUT) { console.log(JSON.stringify(rows, null, 2)); return; }
-
-  const safe = rows.filter((r) => r.safe);
-  const keep = rows.filter((r) => !r.safe);
-
-  console.log(`\n${rows.length} Claude tab(s) open    safe to close: ${safe.length}    keep: ${keep.length}\n`);
-  console.log(`  ${PAD('TAB', 7)}${PAD('STATE', 15)}${PAD('SLICE', 34)}WHY`);
-  for (const r of rows) {
-    console.log(`  ${PAD(`w${r.window}t${r.tab}`, 7)}${PAD(r.state, 15)}${PAD(r.slice || '(main checkout)', 34)}${r.why}`);
+  let slices;
+  if (has('--all-merged')) {
+    slices = wts
+      .filter((w) => w.path !== REPO && isMerged(w.branch) && hasOwnCommits(w.branch) && isClean(w.path))
+      .map((w) => path.basename(w.path));
+  } else {
+    const raw = val('--slices');
+    if (!raw) {
+      console.error('usage: reap-claude-sessions.mjs --slices a,b,c [--dry-run]');
+      console.error('       reap-claude-sessions.mjs --all-merged [--into <branch>]   (default: origin/HEAD)');
+      console.error('       reap-claude-sessions.mjs --watch --slices a,b [--interval-min 5 --grace-min 10 --max-hours 72]');
+      process.exit(1);
+    }
+    slices = raw.split(',').map((s) => s.trim()).filter(Boolean);
   }
-  console.log('');
 
-  if (!CLOSE) {
-    console.log(safe.length
-      ? `Re-run with --close to close the ${safe.length} safe tab(s). Scrollback is lost.\n` +
-        `Then run \`node worktree-audit.mjs --prune\` — an open tab blocks its own worktree's removal.`
-      : 'Nothing safe to close right now.');
+  if (!slices.length) {
+    console.log('nothing to reap.');
     return;
   }
-  if (!safe.length) { console.log('Nothing safe to close.'); return; }
-  if (DRY) {
-    console.log('--dry-run: would close');
-    for (const r of safe) console.log(`  w${r.window}t${r.tab}  ${r.slice || '(main)'}  [${r.state}]  pid=${r.pid || '-'}`);
-    return;
+
+  const results = slices.map((slice) => reapOne(slice, wts, live));
+  const pad = Math.max(...results.map((r) => r.slice.length));
+  for (const r of results) {
+    console.log(`${r.slice.padEnd(pad)}  ${r.action.padEnd(10)}  ${r.why}`);
   }
-  console.log(`closing ${safe.length} tab(s):`);
-  const n = await closeRows(safe);
-  console.log(`\nclosed ${n}. What is still open is still in progress.`);
-  console.log('Next: `node worktree-audit.mjs --prune` to reclaim the freed worktrees.');
+
+  const bad = results.filter((r) => r.action === 'REFUSE' || r.action === 'PARTIAL');
+  if (bad.length) process.exitCode = 1;
 }
 
-main().catch((e) => { console.error(e.stack); process.exit(1); });
+/** The automatic reap: see the header. Logs one line per decision to stdout (the spawner's log file). */
+async function watch() {
+  const slices = String(val('--slices') || '').split(',').map((x) => x.trim()).filter(Boolean);
+  if (!slices.length) { console.error('--watch needs --slices a,b'); process.exit(1); }
+  const intervalMs = Number(val('--interval-min', '5')) * 60_000;
+  const graceMs = Number(val('--grace-min', '10')) * 60_000;
+  const deadline = Date.now() + Number(val('--max-hours', '72')) * 3_600_000;
+  const stamp = () => new Date().toISOString();
+  const fingerprint = (wt) => {
+    try { return `${git(wt.path, 'rev-parse', 'HEAD')}|${git(wt.path, 'status', '--porcelain')}`; } catch { return null; }
+  };
+  const quiet = new Map(); // slice -> { fp, at }: first tick it passed every check with this fingerprint
+  console.log(`${stamp()} watching ${slices.join(', ')} in ${REPO} (into origin/${INTO}) — every ${intervalMs / 60_000} min, quiet ${graceMs / 60_000} min`);
+  for (;;) {
+    await new Promise((r) => setTimeout(r, intervalMs));
+    try { git(REPO, 'fetch', '--quiet', 'origin', INTO); } catch { /* offline: judge on what we have */ }
+    const wts = worktrees();
+    let live;
+    try {
+      live = liveSessions();
+    } catch (err) {
+      // A tick that can't see the background sessions decides nothing — one may be running in a slice.
+      console.log(`${stamp()} skipped this tick — ${err.message}`);
+      if (Date.now() > deadline) { console.log(`${stamp()} --max-hours reached; reap by hand`); return; }
+      continue;
+    }
+    const left = slices.filter((slice) => wts.some((w) => path.basename(w.path) === slice));
+    for (const slice of left) {
+      const wt = wts.find((w) => path.basename(w.path) === slice);
+      if (refusal(slice, wt, live)) { quiet.delete(slice); continue; }
+      const fp = fingerprint(wt);
+      const q = quiet.get(slice);
+      if (!q || q.fp !== fp) { quiet.set(slice, { fp, at: Date.now() }); continue; }
+      if (Date.now() - q.at < graceMs) continue;
+      const r = reapOne(slice, wts, live);
+      console.log(`${stamp()} ${r.slice}  ${r.action}  ${r.why}`);
+    }
+    const still = slices.filter((slice) => worktrees().some((w) => path.basename(w.path) === slice));
+    if (!still.length) { console.log(`${stamp()} every slice reaped — watch over`); return; }
+    if (Date.now() > deadline) { console.log(`${stamp()} --max-hours reached; still open: ${still.join(', ')} — reap by hand`); return; }
+  }
+}
+
+if (WATCH) watch().catch((e) => { console.error(e.stack); process.exit(1); });
+else main();

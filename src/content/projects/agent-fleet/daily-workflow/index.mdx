@@ -39,6 +39,8 @@ aiNote: >-
   window), a second model reviewing risky work, and any panel code that moves the keyboard.
 ---
 
+import sessionsShot from './sessions-panel.png';
+
 <PlainOnly>
 
 ## The story
@@ -67,6 +69,13 @@ forgotten for five weeks.
 And nothing gets called done until I've seen it work.
 
 </PlainOnly>
+
+<Figure
+  src={sessionsShot}
+  narrow
+  alt="The Sessions panel in iTerm2's side panel: three parallel runs, each a card with its colour chip and a count of sessions newly finished, rows spinning while a session works, green checks on the ones finished since last opened, and times like Running 20m. Session names and status lines are blanked out."
+  caption="The Sessions panel on 2026-10-16 with three runs going. Nothing was waiting on me at that moment, so the amber Needs you card isn't showing. Names and status lines are blanked out."
+/>
 
 <EngOnly>
 
@@ -156,6 +165,13 @@ typed:
   needs two taps" bug through on 2026-10-09.
 - **A page fetcher in headless Chrome** for vendor docs that hang for anything that isn't
   a browser: 130 runs.
+- **A second browser with my everyday logins.** Some sites are signed in only in Zen, so
+  Claude gets a headless copy of one Zen container's cookies (never a bank's or a payment
+  site's), or works in my own open Zen while I've turned that on: 931 calls in its first
+  nine days.
+- **An account switcher** for the Claude accounts I sign in with: a profile per account
+  with its own login, the same skills and settings in each, and every account's usage in
+  one list.
 - **A code index** for "what calls this" and "what breaks if I change it": 593 calls, in
   place of rounds of greps.
 - **Notes between sessions** on the same repo, for a file I'm mid-rewrite on or a bug that
@@ -163,8 +179,8 @@ typed:
 - **Small hooks**: the Dock icon bounces and the tab turns blue when a session finishes or
   asks something, and each tab is named after its prompt.
 
-Both panels and the script behind them are in
-[`code/iterm-panels`](https://github.com/Dylansg318/Portfolio/tree/main/code/iterm-panels),
-MIT licensed.
+The panels, the spawner, the account switcher and the Zen browser server are in
+[`code/`](https://github.com/Dylansg318/Portfolio/tree/main/code), MIT licensed:
+`iterm-panels`, `fleet-scripts`, `account-switcher` and `zen-browser`.
 
 </EngOnly>

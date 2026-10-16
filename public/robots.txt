@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://portfolio.dylansg0318.workers.dev/sitemap-index.xml

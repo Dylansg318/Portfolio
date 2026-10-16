@@ -103,7 +103,7 @@ export const site = {
     {
       title: 'Production code excerpts',
       href: 'https://github.com/Dylansg318/Portfolio/tree/main/code',
-      stack: 'GitHub · 13 modules with tests and READMEs',
+      stack: 'GitHub · 16 modules, each with a README',
       blurb:
         'Sanitized production modules: GS1 parsing, a ZPL renderer, carrier-invoice parsers, a device agent, session locks.',
     },
@@ -112,7 +112,7 @@ export const site = {
       href: '/projects/agent-fleet',
       stack: 'Claude Code, Git hooks',
       blurb:
-        'Locks, hooks and consequence-triggered review that let 5–10 coding agents share one repository safely.',
+        'Locks, hooks and a merge-back check that let 5–10 coding agents share one repository safely.',
     },
   ],
 
@@ -166,7 +166,7 @@ export const site = {
         'Put barcodes and scanners on a pen-and-paper warehouse: GS1 parsing, a browser camera scanner, a JSON-to-ZPL label renderer and a self-updating Windows print agent with crash-loop rollback.',
         'Parsed a year of UPS and FedEx invoices into the ERP and surfaced about $26K a year in avoidable address-correction, re-weigh, printer-rental and late fees.',
         'Reconcile the ERP against QuickBooks at line level and settle each discrepancy once in a claims ledger; 2,721 automated tests and ~180 checkpointed scheduled jobs keep app and books in agreement through redeploys.',
-        'Run 5–10 parallel Claude Code sessions on one repository behind file locks, hooks that block unrecoverable git operations, and second-model review of consequential changes.',
+        'Run 5–10 parallel Claude Code sessions on one repository behind file locks, hooks that block unrecoverable git operations, and a merge-back check that closes every parallel run.',
       ],
     },
     {

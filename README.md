@@ -6,7 +6,7 @@ deployed to Cloudflare Workers.
 **Live:** <https://portfolio.dylansg0318.workers.dev>
 
 Two things live in here. `src/` is the site itself. [`code/`](code/) is a
-separate tree of fourteen sanitized excerpts from the production ERP and the
+separate tree of sixteen sanitized excerpts from the production ERP and the
 agent-fleet tooling the write-ups describe — barcode grammar, thermal-print
 layout, a self-updating device agent, carrier-invoice parsers, the session-lock
 layer. Readable excerpts, not installable packages; each folder has its own

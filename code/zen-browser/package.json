@@ -1,0 +1,10 @@
+{
+  "name": "zen-browser-mcp",
+  "private": true,
+  "type": "module",
+  "description": "Playwright MCP driving a headless copy of Zen (Firefox) with your Zen logins, one container at a time.",
+  "dependencies": {
+    "@playwright/mcp": "0.0.83",
+    "@modelcontextprotocol/sdk": "^1.29.0"
+  }
+}
