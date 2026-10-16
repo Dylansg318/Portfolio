@@ -17,9 +17,10 @@ source project's harness.
 | Folder | What it is |
 |---|---|
 | [`session-lock/`](session-lock/) | File-lock coordination for 5–8 concurrent AI coding sessions sharing one git checkout: O_EXCL atomic locks keyed on the real sharing boundary (`git rev-parse --git-path index`), PID-liveness + TTL steal, guard hooks that block the unrecoverable git operations — and fail *open* by design. |
-| [`fleet-scripts/`](fleet-scripts/) | Spawn one terminal tab per work slice (each agent in its own git worktree), reap finished sessions, and audit worktrees for finished-but-unmerged work — including the `git diff A...B` three-dot trap that let finished features rot unmerged. |
+| [`fleet-scripts/`](fleet-scripts/) | Spawn one terminal tab per work slice (each agent in its own git worktree), reap finished sessions, and audit worktrees for finished-but-unmerged work — including the `git diff A...B` three-dot trap that let finished features rot unmerged. The September 2026 version; the spawner in use now starts background sessions by default. |
+| [`iterm-panels/`](iterm-panels/) | Two iTerm2 side panels: every Claude Code session on the machine with the ones waiting on you on top, opened with a click; and a clipboard history that shows pictures as pictures and hides anything that looks like a key. |
 | [`ai-context-tools/`](ai-context-tools/) | Keep an AI agent's persistent memory index *generated* from per-file frontmatter (no index/file drift, no silent truncation), plus a read-only SQLite-graph visualizer that renders a codebase's module architecture as one interactive map. |
-| [`agent-configs/`](agent-configs/) | The transferable core of a multi-model review discipline: a second *model* (not a second pass) reviews before work whose mistakes are expensive to find or undo — triggered by consequence, never by diff size. |
+| [`agent-configs/`](agent-configs/) | The review agents of a multi-model review discipline — a second *model* (not a second pass) reviewing work whose mistakes are expensive to find or undo, triggered by consequence, never by diff size — kept as they ran until the practice was retired on 2026-09-25. Plus the change-record planning format, still in use. |
 
 ## Warehouse, printing and scanning
 

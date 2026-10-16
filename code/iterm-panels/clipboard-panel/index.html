@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clipboard</title>
+<style>
+  /* The Sessions panel's tokens (../session-panel/index.html), so the two panels read as one
+     toolbelt. Colour only where it is a signal; none is needed here. */
+  :root {
+    --bg: #eef1f6; --surface: #ffffff; --surface2: #f4f6f9; --surface3: #eaeef4;
+    --text: #0b1220; --text3: #465366; --text4: #5b6675;
+    --border: #c9d0db; --border2: #d8dee7; --border3: #aeb7c6; --field-line: #7d889a;
+    --brand: #1d47a8; --amber: #b45309; --amber-bg: #fdeed0; --amber-border: #eec163; --red: #b91c1c;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0a0e14; --surface: #161b22; --surface2: #1c2128; --surface3: #21262d;
+      --text: #e6edf3; --text3: #b1bac4; --text4: #8b949e;
+      --border: #3a424c; --border2: #2a3038; --border3: #4f5866; --field-line: #6e7681;
+      --brand: #7c9df2; --amber: #f59e0b; --amber-bg: rgba(245, 158, 11, .1); --amber-border: rgba(245, 158, 11, .25); --red: #f87171;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0a0e14; --surface: #161b22; --surface2: #1c2128; --surface3: #21262d;
+    --text: #e6edf3; --text3: #b1bac4; --text4: #8b949e;
+    --border: #3a424c; --border2: #2a3038; --border3: #4f5866; --field-line: #6e7681;
+    --brand: #7c9df2; --amber: #f59e0b; --amber-bg: rgba(245, 158, 11, .1); --amber-border: rgba(245, 158, 11, .25); --red: #f87171;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); color: var(--text); font: 13px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; }
+  button, input, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+
+  .top { flex: none; display: flex; flex-direction: column; gap: 6px; padding: 8px; }
+  .top input, .top textarea { width: 100%; background: var(--surface); border: 1px solid var(--field-line); border-radius: 6px; padding: 4px 8px; }
+  .top textarea { resize: vertical; height: 46px; min-height: 30px; max-height: 60vh; }
+  #notice { flex: none; }
+  .notice { margin: 0 8px 8px; padding: 6px 10px; border-radius: 9px; background: var(--amber-bg); border: 1px solid var(--amber-border); color: var(--amber); font-size: 12px; }
+  /* Pages are cut to fit this box, so it only scrolls when a single item is taller than the panel. */
+  #list { flex: 1; min-height: 0; overflow-y: auto; }
+  #measure { position: absolute; left: -10000px; top: 0; visibility: hidden; }
+
+  .card { margin: 0 8px 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; overflow: hidden; }
+  .band { display: flex; padding: 6px 12px; background: var(--surface2); border-bottom: 1px solid var(--border2); font-size: 12px; font-weight: 600; }
+  .band .n { margin-left: auto; color: var(--text4); font-weight: 400; }
+
+  .row {
+    display: grid; grid-template-columns: 32px minmax(0, 1fr); column-gap: 10px; row-gap: 2px;
+    grid-template-areas: "tile name" "tile meta"; align-items: start;
+    padding: 7px 12px; cursor: pointer; border-top: 1px solid var(--border2);
+  }
+  .band + .row { border-top: none; }
+  .row:hover { background: var(--surface3); }
+  .row.busy { opacity: .5; pointer-events: none; }
+  .tile { grid-area: tile; width: 32px; height: 32px; padding: 0; border-radius: 6px; background: var(--surface2); border: 1px solid var(--border2); display: flex; align-items: center; justify-content: center; color: var(--text4); overflow: hidden; }
+  .tile img { width: 100%; height: 100%; object-fit: cover; object-position: top left; }
+  /* Pictures are the items that look alike, so theirs is big enough to tell two screenshots apart. */
+  .row.pic { grid-template-columns: 64px minmax(0, 1fr); }
+  .row.pic .tile { width: 64px; height: 48px; cursor: zoom-in; }
+  .row.pic .tile:hover { border-color: var(--brand); }
+  .name { grid-area: name; overflow: hidden; overflow-wrap: anywhere; white-space: pre-line; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .name.mono { font: 12px/1.4 ui-monospace, "SF Mono", Menlo, monospace; }
+  .name.hidden { color: var(--text3); }
+  .meta { grid-area: meta; font-size: 12px; color: var(--text4); display: flex; gap: 6px; align-items: baseline; min-width: 0; }
+  .meta .what { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .meta .when { white-space: nowrap; margin-left: auto; }
+  .meta .done { color: var(--text); font-weight: 600; }
+  .act { border: none; background: none; padding: 0 2px; color: var(--text4); cursor: pointer; font-size: 12px; white-space: nowrap; }
+  .act.hover { display: none; }
+  .row:hover .act.hover, .row:focus-within .act.hover { display: inline; }
+  .row:hover .when, .row:focus-within .when { display: none; }
+  .meta .act:first-of-type { margin-left: auto; }
+  .act:hover { color: var(--text); }
+  .act.x:hover { color: var(--red); }
+
+  .foot { flex: none; display: flex; align-items: center; gap: 4px; padding: 0 8px 8px; font-size: 12px; color: var(--text4); }
+  .foot button { border-radius: 9px; padding: 2px 10px; background: var(--surface); border: 1px solid var(--border3); cursor: pointer; font-weight: 600; }
+  .foot button:hover:not(:disabled) { background: var(--surface3); }
+  .foot button:disabled { opacity: .4; cursor: default; }
+  .foot #clear { margin-left: auto; }
+  .empty { margin: 16px 8px; color: var(--text4); font-size: 12px; text-align: center; }
+
+  /* A picture, bigger: the whole panel, dark behind it in either theme. Click anywhere or Esc to close. */
+  #viewer { position: fixed; inset: 0; z-index: 10; display: flex; flex-direction: column; gap: 8px; padding: 8px; background: rgba(5, 8, 12, .92); color: #e6edf3; cursor: zoom-out; }
+  #viewer[hidden] { display: none; }
+  #viewer img { flex: 1; min-height: 0; width: 100%; object-fit: contain; }
+  #viewer .vbar { flex: none; display: flex; align-items: center; gap: 8px; font-size: 12px; }
+  #viewer button { border-radius: 9px; padding: 2px 10px; background: #161b22; border: 1px solid #4f5866; color: #e6edf3; cursor: pointer; font-weight: 600; }
+  #viewer button:hover { background: #21262d; }
+  #viewer #vopen { margin-left: auto; }
+</style>
+</head>
+<body>
+<div class="top">
+  <textarea id="notes" placeholder="Notes" aria-label="Notes" spellcheck="true"></textarea>
+  <input id="q" type="search" placeholder="Search" aria-label="Search what you copied" autocomplete="off">
+</div>
+<div id="notice"></div>
+<main id="list"></main>
+<div id="measure" aria-hidden="true"></div>
+<div class="foot" id="foot" hidden>
+  <span id="count" title="The list is cleared when the panel restarts; notes stay"></span>
+  <button type="button" id="newer" aria-label="Newer">‹</button>
+  <button type="button" id="older" aria-label="Older">›</button>
+  <button type="button" id="clear">Clear</button>
+</div>
+<div id="viewer" hidden>
+  <img id="vimg" alt="The copied picture, bigger">
+  <div class="vbar"><span id="vsize"></span><button type="button" id="vopen">Open in Preview</button><button type="button" id="vclose">Close</button></div>
+</div>
+
+<script>
+  const KEY = '__PANEL_KEY__';
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const num = (n) => n.toLocaleString('en-US');
+  const ICON = {
+    text: '<path d="M5 7h14M5 12h14M5 17h9"/>',
+    file: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/>',
+    secret: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+  };
+  const icon = (k) => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[k]}</svg>`;
+
+  let items = [];
+  let version = null;
+  let notesVersion = null;
+  let notesBusy = false;     // typed but not saved yet: don't let a poll write over it
+  let notesTimer = null;
+  let pageVersion = null;
+  let lastDrawn = '';
+  let page = 0;
+  const shown = new Set();   // hidden keys the person chose to see
+  const busy = new Set();
+  const done = new Map();    // id → "Pasted" / "Copied", shown for a moment
+
+  async function call(path, body) {
+    const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Panel-Key': KEY }, body: JSON.stringify(body || {}) });
+    return r.json().catch(() => ({ ok: false, message: `HTTP ${r.status}` }));
+  }
+  function notice(text) { $('notice').innerHTML = text ? `<div class="notice">${esc(text)}</div>` : ''; }
+
+  async function tick() {
+    try {
+      const r = await fetch(`/api/clips?v=${version ?? ''}&nv=${notesVersion ?? ''}`, { cache: 'no-store', headers: { 'X-Panel-Key': KEY } });
+      if (r.status === 403) return location.reload();  // the panel restarted with a new key; the page carries it
+      const state = await r.json();
+      if (state.page && pageVersion && state.page !== pageVersion && !notesBusy) return location.reload();
+      pageVersion = pageVersion || state.page;
+      if (state.items) items = state.items;
+      version = state.v;
+      // Notes another panel saved show here, unless this one is being typed in.
+      if (state.notes !== undefined && !notesBusy && document.activeElement !== $('notes')) {
+        $('notes').value = state.notes;
+        notesVersion = state.nv;
+      }
+      notice(state.error ? `Not reading the clipboard — ${state.error}` : '');
+    } catch {
+      notice('List paused — panel service restarting');
+      return;
+    }
+    draw();
+  }
+
+  async function saveNotes() {
+    clearTimeout(notesTimer);
+    const res = await call('/api/notes', { text: $('notes').value });
+    if (res.ok) { notesVersion = res.nv; notesBusy = false; }
+    else notice(`Notes not saved — ${res.message || res.error}`);
+  }
+  $('notes').addEventListener('input', () => { notesBusy = true; clearTimeout(notesTimer); notesTimer = setTimeout(saveNotes, 400); });
+  $('notes').addEventListener('blur', () => { if (notesBusy) saveNotes(); });
+
+  function ago(at) {
+    const s = Date.now() / 1000 - at;
+    if (s < 60) return 'now';
+    if (s < 3600) return `${Math.floor(s / 60)}m`;
+    const d = new Date(at * 1000);
+    const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    return day(at) === 'Today' ? time : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' + time;
+  }
+  function day(at) {
+    const d = new Date(at * 1000);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    if (d >= today) return 'Today';
+    return d >= today - 864e5 ? 'Yesterday' : 'Earlier';
+  }
+  const isPath = (t) => /^[~/][^\n]*$/.test(t) && t.length < 1024;
+  const base = (p) => p.replace(/\/+$/, '').split('/').pop() || p;
+  const home = (p) => p.replace(/^\/Users\/[^/]+/, '~');
+
+  // One item: a picture shows itself, a path shows its name, a key stays hidden until asked.
+  // `measuring` draws it without loading the picture — the tile is the same size either way.
+  function row(it, measuring) {
+    const open = shown.has(it.id);
+    let tile = `<span class="tile">${icon('text')}</span>`, name, cls = '', what, title = '';
+    if (it.kind === 'image') {
+      tile = `<button type="button" class="tile" data-view="${esc(it.id)}" aria-label="Look at the picture bigger" title="Look at it bigger">${measuring ? '' : `<img src="/img/${esc(it.id)}?k=${KEY}" alt="">`}</button>`;
+      name = 'Picture';
+      what = `${num(it.w)} × ${num(it.h)}`;
+    } else if (it.kind === 'file') {
+      const paths = it.text.split('\n');
+      tile = `<span class="tile">${icon('file')}</span>`;
+      name = paths.map(base).join(', ');
+      what = paths.length > 1 ? `${paths.length} files` : home(paths[0].replace(/\/[^/]*$/, '')) || 'File';
+      title = paths.map(home).join('\n');
+    } else if (it.secret && !open) {
+      tile = `<span class="tile">${icon('secret')}</span>`;
+      name = 'Hidden — looks like a key';
+      cls = 'hidden';
+      what = `${num(it.chars)} characters`;
+    } else if (isPath(it.text)) {
+      tile = `<span class="tile">${icon('file')}</span>`;
+      name = base(it.text);
+      what = home(it.text.replace(/\/[^/]*$/, '')) || '/';
+      title = home(it.text);
+    } else {
+      name = it.text.replace(/[ \t]+/g, ' ').replace(/\n\s*\n+/g, '\n').trim();
+      cls = it.secret ? 'mono' : '';
+      what = it.lines > 1 ? `${num(it.lines)} lines` : `${num(it.chars)} characters`;
+      title = it.text.slice(0, 1500) + (it.chars > 1500 ? `\n… ${num(it.chars - 1500)} more characters` : '');
+    }
+    const flash = done.get(it.id);
+    const reveal = it.secret ? `<button type="button" class="act" data-reveal="${esc(it.id)}">${open ? 'Hide' : 'Show'}</button>` : '';
+    return `
+      <div class="row ${it.kind === 'image' ? 'pic' : ''} ${busy.has(it.id) ? 'busy' : ''}" role="button" tabindex="0" data-id="${esc(it.id)}" title="${esc(title)}">
+        ${tile}
+        <span class="name ${cls}">${esc(name)}</span>
+        <span class="meta">
+          ${flash ? `<span class="done">${esc(flash)}</span>` : `<span class="what">${esc(what)}</span>`}
+          ${reveal}
+          <button type="button" class="act hover" data-copy="${esc(it.id)}">Copy</button>
+          <button type="button" class="act hover x" data-remove="${esc(it.id)}" aria-label="Remove from the list">×</button>
+          <span class="when">${esc(ago(it.at))}</span>
+        </span>
+      </div>`;
+  }
+
+  function matches(it, q) {
+    if (!q) return true;
+    if (it.kind === 'image') return 'picture'.includes(q);
+    return it.text.toLowerCase().includes(q);
+  }
+
+  // Cuts the list into pages that fit the panel: each item drawn once off-screen and measured,
+  // plus a day's band whenever a page starts or the day changes.
+  function paginate(list) {
+    const room = $('list').clientHeight;
+    $('measure').style.width = `${$('list').clientWidth}px`;
+    $('measure').innerHTML = `<section class="card"><div class="band">Today</div>${list.map((it) => row(it, true)).join('')}</section>`;
+    const card = $('measure').firstElementChild;
+    const band = card.firstElementChild.offsetHeight + 2 + 8;  // the band, its card's border, the gap under the card
+    const heights = [...card.querySelectorAll('.row')].map((r) => r.offsetHeight + 1);
+    $('measure').innerHTML = '';
+    const pages = [[]];
+    let used = 0, lastDay = null;
+    list.forEach((it, i) => {
+      const d = day(it.at);
+      const cur = pages[pages.length - 1];
+      let add = heights[i] + (!cur.length || d !== lastDay ? band : 0);
+      if (cur.length && used + add > room) { pages.push([]); used = 0; add = heights[i] + band; }
+      pages[pages.length - 1].push(it);
+      used += add;
+      lastDay = d;
+    });
+    return pages;
+  }
+
+  function draw() {
+    const q = $('q').value.trim().toLowerCase();
+    const minute = Math.floor(Date.now() / 60e3);  // keeps "4m" honest
+    const key = JSON.stringify([version, q, [...shown], [...busy], [...done], minute, page, $('list').clientWidth, $('list').clientHeight]);
+    if (key === lastDrawn) return;
+    lastDrawn = key;
+    const list = items.filter((it) => matches(it, q));
+    const pages = paginate(list);
+    page = Math.min(page, pages.length - 1);
+    const here = pages[page];
+    const groups = ['Today', 'Yesterday', 'Earlier'].map((d) => [d, here.filter((it) => day(it.at) === d)]).filter(([, g]) => g.length);
+    $('list').innerHTML = groups.map(([d, g]) => `<section class="card"><div class="band">${d}</div>${g.map((it) => row(it)).join('')}</section>`).join('')
+      || `<div class="empty">${q ? 'Nothing copied matches' : 'Nothing copied yet'}</div>`;
+    const first = pages.slice(0, page).reduce((n, p) => n + p.length, 0);
+    const noun = list.length === 1 ? 'item' : 'items';
+    $('count').textContent = pages.length > 1 ? `${num(first + 1)}–${num(first + here.length)} of ${num(list.length)}` : `${num(list.length)} ${noun}`;
+    $('newer').hidden = $('older').hidden = pages.length < 2;
+    $('newer').disabled = page === 0;
+    $('older').disabled = page >= pages.length - 1;
+    $('foot').hidden = !items.length;
+  }
+
+  function flash(id, word) {
+    done.set(id, word); draw();
+    setTimeout(() => { done.delete(id); draw(); }, 1200);
+  }
+
+  async function act(id, path, word) {
+    if (busy.has(id)) return;
+    busy.add(id); draw();
+    try {
+      const res = await call(path, { id });
+      if (!res.ok) notice(`Not done — ${res.message || res.error}`);
+      else if (word) flash(id, word);
+    } finally { busy.delete(id); version = null; tick(); }
+  }
+
+  function view(id) {
+    const it = items.find((i) => i.id === id);
+    if (!it) return;
+    $('vimg').src = `/img/${id}?k=${KEY}`;
+    $('vsize').textContent = `${num(it.w)} × ${num(it.h)}`;
+    $('viewer').dataset.id = id;
+    $('viewer').hidden = false;
+    $('vclose').focus();
+  }
+  function unview() { $('viewer').hidden = true; $('vimg').removeAttribute('src'); }
+
+  $('list').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (b?.dataset.view) return view(b.dataset.view);
+    if (b?.dataset.reveal) { shown.has(b.dataset.reveal) ? shown.delete(b.dataset.reveal) : shown.add(b.dataset.reveal); return draw(); }
+    if (b?.dataset.copy) return act(b.dataset.copy, '/api/copy', 'Copied');
+    if (b?.dataset.remove) return act(b.dataset.remove, '/api/remove');
+    const r = e.target.closest('.row[data-id]');
+    if (r) act(r.dataset.id, '/api/paste', 'Pasted');
+  });
+  $('list').addEventListener('keydown', (e) => {
+    const r = e.target.closest('.row[data-id]');
+    if (r && e.target === r && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); act(r.dataset.id, '/api/paste', 'Pasted'); }
+  });
+  $('viewer').addEventListener('click', async (e) => {
+    if (!e.target.closest('#vopen')) return unview();
+    const res = await call('/api/preview', { id: $('viewer').dataset.id });
+    if (!res.ok) notice(`Not opened — ${res.message || res.error}`);
+    unview();
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('viewer').hidden) unview(); });
+  $('q').addEventListener('input', () => { page = 0; draw(); });
+  $('newer').addEventListener('click', () => { page -= 1; draw(); });
+  $('older').addEventListener('click', () => { page += 1; draw(); });
+  $('clear').addEventListener('click', async () => {
+    if (!confirm(`Clear all ${items.length} items from the list?\nWhat is on the clipboard now stays there, and so do the notes.`)) return;
+    await call('/api/clear');
+    page = 0; version = null; tick();
+  });
+  new ResizeObserver(() => draw()).observe($('list'));  // the panel or the notes box changed height
+  // The notes box keeps the height it was dragged to (this panel only; the default is two lines).
+  try { const h = localStorage.getItem('clip.notesHeight'); if (h) $('notes').style.height = h; } catch { /* storage blocked */ }
+  new ResizeObserver(() => { try { localStorage.setItem('clip.notesHeight', $('notes').style.height); } catch { /* storage blocked */ } }).observe($('notes'));
+
+  tick();
+  setInterval(tick, 1000);
+</script>
+</body>
+</html>

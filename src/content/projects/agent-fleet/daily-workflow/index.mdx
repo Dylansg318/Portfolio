@@ -1,0 +1,170 @@
+---
+title: One task per session, a dozen at a time
+blurb: The daily loop behind the fleet, one task per session, background sessions watched from one side panel, and a merge-back check that closes every run.
+plainBlurb: How a normal day goes. Each AI helper gets one job, one list on the side of my screen shows which ones need me, and every split-up job ends with a check that all of it came back.
+date: 2026-10-16
+parent: agent-fleet
+status: live
+role: sole engineer · daily use
+stack: [Claude Code, Python, Node.js, iTerm2, launchd]
+
+links:
+  source: https://github.com/Dylansg318/Portfolio/tree/main/code/iterm-panels
+
+problem: >-
+  With ten or more coding sessions running at once, the hard part moved from writing
+  code to keeping track of it: which session is waiting on me, what was this one asked
+  to do, and did the finished work actually merge. Long sessions also cost more on every
+  turn, because each turn re-reads the whole conversation. Over 405 sessions in two weeks
+  of September, the 53% that passed 300K tokens of context used 89% of all the tokens.
+
+unique: >-
+  Splitting work is cheaper as well as faster. Measured across real sessions, not a
+  controlled test, about 400 turns of work cost $68 as one long session and $43 spread
+  over four short ones at list prices, because each short session carries a quarter of
+  the context. So every habit here pushes the same way: one task per session, background
+  sessions instead of tabs, one list that puts the session waiting on me at the top, and
+  a merge-back check that ends every run.
+
+learned:
+  - Starting a session is nearly free; keeping one alive is what costs. A 67K-token start is about 0.1% of a median session's re-reads, and 97.7% of every token spent in August was the conversation being re-read on each turn (727 transcripts, 30 days).
+  - A 26-slice run that made all its worktrees at the same moment ran 68 checkout workers on 18 cores, about ten minutes a checkout, and 9 sessions died mid-checkout while the orchestrator counted 26 running. Worktrees are now made one at a time, and a slice only counts as started once its session registers.
+  - In that same run only 8 of 199 files were edited by two sessions, and all 8 were shared files nobody owned. Each brief now names the files its session owns, and the others ask the owner instead of editing.
+
+aiNote: >-
+  Claude wrote both panels and most of this tooling, from my notes on what got in the way
+  during the day, like four pasted screenshots showing up as four identical file paths. I
+  decided what each panel shows and in what order, and tested them by using them all day.
+  What I threw out: a terminal tab per session (three runs once piled 25 tabs into one
+  window), a second model reviewing risky work, and any panel code that moves the keyboard.
+---
+
+<PlainOnly>
+
+## The story
+
+Most days I've got ten or more AI helpers working at once, each on its own job. The hard
+part stopped being the work. It became keeping track: which one is stuck waiting for me,
+what was this one asked to do, and did the finished work actually get put back together.
+
+So each helper gets one job and nothing else. A helper rereads the whole conversation
+every time it answers, so a long conversation gets slower and costs more with every
+message. When I measured two weeks of mine in September, just over half of them ran long,
+and those used 89% of the total.
+
+I watch them all from one list on the side of my screen. The ones that need an answer sit
+at the top in amber, the ones working spin, and the finished ones get a check. One click
+opens a helper. Another starts a new one, and I can drop a screenshot in with the request.
+
+Next to it is my clipboard history. It shows screenshots as pictures instead of file
+names, and it hides anything that looks like a password until I ask.
+
+When a big job is split across several helpers, each works in its own copy of the project
+so they can't trip over each other. The last step is always the same: check that every
+piece made it back in. Before that check existed, two finished pieces of work sat
+forgotten for five weeks.
+
+And nothing gets called done until I've seen it work.
+
+</PlainOnly>
+
+<EngOnly>
+
+## One task per session
+
+Every turn re-reads the conversation so far, so a session's cost grows with its length,
+not with what it does. In August, 97.7% of every token was that re-read; fresh input and
+output together were under half a percent. Measured again in September over 405 sessions:
+a median of 271 turns, and the 53% that passed 300K tokens of context used 89% of the
+tokens.
+
+So a new task gets a new session. When a long session drifts into a second task, it stops
+and writes a handoff: what's done, what's owed, the branch, and the last verification
+command with its result. Two failed corrections on the same thing is the other stop sign,
+since by then the context is mostly failed attempts. A big lookup goes to a subagent, so
+the file dumps never enter the main conversation.
+
+## Handing out work
+
+A small job starts from the New session box at the top of the Sessions panel: a sentence,
+a folder, sometimes a pasted screenshot. It runs as a background session (`claude --bg`),
+so it doesn't take a tab.
+
+A job with independent parts gets a parallel run. Each slice gets a written brief, its own
+git worktree and its own branch, and the spawner starts them as background sessions. Two
+rules came from one 26-slice run. Worktrees are made one at a time, because 26 checkouts
+of a 21,000-file repo at once ran 68 checkout workers on 18 cores. And each brief carries
+an `Owns:` list, because the only files two slices both edited were shared ones nobody
+owned.
+
+Before any of that, a change with a real design decision gets a short back-and-forth that
+ends in a change record: the decision, what's in and out of scope, and the commands that
+will prove it worked, in 60 to 90 lines. A change I can describe in one sentence skips all
+of it.
+
+## Watching a dozen at once
+
+The Sessions panel lives in iTerm2's side panel and redraws every 2.5 seconds. Needs you
+is on top: every session that stopped to ask, with its question and its options. Then one
+card per parallel run with its orchestrator first, then Working and Finished. A session
+whose status line hasn't changed in 30 minutes turns amber, unless it's inside a command
+with a known deadline, like waiting on a deploy. A click opens it in one shared tab that
+switches sessions, the way Claude Code's agent view does. In its first day and a half it
+opened a session 274 times.
+
+The panel doesn't work any of this out itself. A small Node script reads Claude Code's own
+files (the live registry, the transcripts, each background session's job file) and the
+panel draws what it prints. The same script answers `board --waiting` in a terminal, so the
+two can't disagree.
+
+## The clipboard
+
+iTerm2's paste history showed four pasted screenshots as four identical `/var/folders/…`
+paths, and a copied API key in plain text. The Clipboard panel replaced it: pictures as
+thumbnails, files by name, anything that looks like a key hidden until I click Show, and
+nothing a password manager marks private is ever kept. Clicking an item pastes it into the
+tab in front, and a picture pastes as the path of its saved copy, which is how a session
+gets a screenshot. A notes box on top holds whatever I need in front of me for the day.
+
+## Checking the work
+
+Nothing is "done", "fixed" or "passing" without the output behind it: the project's real
+gates (the same commands CI runs), a query against the data, or the page itself. The
+testing browser runs headless, because a window that pops up takes my screen and breaks
+the test the moment I touch it. When a site needs me to log in, a separate window opens for
+that one step, and the headless browser carries on signed in.
+
+## Closing a run
+
+A run isn't finished when every slice says done. It's finished when every slice's branch
+is merged, the gates pass on the integration branch, and the slice sessions and worktrees
+are gone. That check exists because two pieces of finished, tested work once sat unmerged
+for five weeks. Every task also ends with the lines added and removed, so growth shows up
+where I'll see it.
+
+## The rest of the kit
+
+Counted from the last 30 days of transcripts, so this is what the sessions ran, not what I
+typed:
+
+- **A read-only connection to the ERP's database**, the most-used tool here at 20,016
+  calls. It's how "verify before you assert" actually gets done.
+- **A headless test browser** signed in as its own test user, so my logins never pass
+  through a session: 9,482 browser calls. The skill that drives it to test a page was
+  called 238 times, more than any other.
+- **A real iPhone Safari** in the Xcode Simulator, because desktop WebKit let a "search
+  needs two taps" bug through on 2026-10-09.
+- **A page fetcher in headless Chrome** for vendor docs that hang for anything that isn't
+  a browser: 130 runs.
+- **A code index** for "what calls this" and "what breaks if I change it": 593 calls, in
+  place of rounds of greps.
+- **Notes between sessions** on the same repo, for a file I'm mid-rewrite on or a bug that
+  crosses areas: 117 sent, on top of the commits and pushes that announce themselves.
+- **Small hooks**: the Dock icon bounces and the tab turns blue when a session finishes or
+  asks something, and each tab is named after its prompt.
+
+Both panels and the script behind them are in
+[`code/iterm-panels`](https://github.com/Dylansg318/Portfolio/tree/main/code/iterm-panels),
+MIT licensed.
+
+</EngOnly>

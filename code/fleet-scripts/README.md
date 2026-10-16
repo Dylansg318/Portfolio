@@ -1,5 +1,11 @@
 # fleet-scripts — parallel AI-session orchestration on macOS/iTerm2
 
+> **The September 2026 version.** Since 2026-10-06 the spawner in daily use starts each
+> slice as a background session (`claude --bg -w <slice>`) by default, with iTerm2 tabs
+> behind a `--tabs` flag, and the sessions are watched from one list instead of tab by tab
+> (see [`../iterm-panels/`](../iterm-panels/)). The worktree, briefing, ownership and
+> merge-back reasoning below is unchanged.
+
 Three scripts that run a small "fleet" of Claude Code sessions in parallel on one
 machine — one iTerm2 tab per work slice, each session fully briefed and isolated in
 its own git worktree — and then clean up after the fleet without destroying anyone's

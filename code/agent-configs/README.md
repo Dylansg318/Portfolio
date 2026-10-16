@@ -2,6 +2,15 @@
 
 Extracted from a private production ERP's agent setup; project-specific trip-wires rewritten as generic examples.
 
+> **Retired 2026-09-25.** The review requirement below was shrinking for six weeks before
+> it went. On 2026-08-14 it changed from diff size to consequence, after a 3m38s deep review
+> held up a map-rendering fix that could be reverted in one prompt. On 2026-09-11 it stopped
+> blocking pushes, after usage limits on the reviewer models stalled two sessions in the
+> same hour. On 2026-09-25 the requirement was dropped. What checks the work now is the
+> verification contract in §3: a command whose output nobody chose. The agents are kept
+> as they ran, and still run when someone asks for a review. The change-record format in
+> §3 is still how every plan is written.
+
 These are working agent definitions and skills from a Claude Code setup that runs
 a real production system — a codebase where an unreviewed mistake can move money,
 corrupt a ledger, or write bad data to a vendor's API. They encode three ideas

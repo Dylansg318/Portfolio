@@ -1,6 +1,6 @@
 ---
 title: Running a dozen AI coding sessions on one repo
-blurb: How I use AI coding agents at scale without vibe-coding, auto-loading rules, hooks that block the dangerous operations, and review triggered by consequence.
+blurb: How I use AI coding agents at scale without vibe-coding, auto-loading rules, hooks that block the dangerous operations, and proof before calling it done.
 plainBlurb: I use AI helpers to write much of the code, like a chef running a fast kitchen. This is the system of rules and checks that keeps the plates right.
 date: 2026-08-10
 featured: 70
@@ -21,26 +21,25 @@ unique: >-
   operations that can't be undone: broad git adds, skipping the pre-commit gate,
   full-tree test runs. A coordination layer registers every live session and locks the
   shared git index while another session is mid-commit. Rule files auto-load when a
-  session touches a matching path. And second-model review is triggered by consequence,
-  not diff size: a 20-line ledger change gets reviewed, a 500-line UI change ships on
-  sight.
+  session touches a matching path. And nothing is called done on reasoning alone: the
+  query, the endpoint's response or the rendered page comes first.
 
 learned:
-  - A gate that can't fail hasn't passed. Early reviews were rubber stamps. The fix was a different model with a different vantage point, and treating "looks fine" as a failed review.
+  - "A gate that can't fail hasn't passed. Early reviews were rubber stamps. A second model helped for a while, but what held up was a check whose output nobody chose: a query, a test run, a screenshot."
+  - Second-model review went from triggered by diff size, to triggered by what a mistake would cost (2026-08-14), to not blocking a push (2026-09-11), to retired (2026-09-25). Each step followed a cost I could point to, like a three-and-a-half-minute review holding a fix that could be undone in one prompt.
   - The model isn't the risk, the process is. Every incident in the ledger came from a missing constraint, not a bad suggestion, and every one became a hook or a rule the same day.
   - Documentation is the multiplier. The 300-plus operating docs are what let a fresh session be useful in its first minute instead of its first hour, and what make my own decisions readable to me six months later.
 
 aiNote: >-
   This one is about the AI. Honest framing: agents write most of the code in the ERP.
-  I write the rules, decide the architecture, pick what gets reviewed, and verify the
-  result with queries, curl and screenshots before anything is called done. What follows
+  I write the rules, decide the architecture, and verify the result with queries, curl
+  and screenshots before anything is called done. What follows
   is the system that makes that division of labour safe rather than reckless.
 
 metrics:
   - { label: commits in 6 months, value: "14K" }
   - { label: parallel sessions, value: "10+" }
   - { label: operating docs, value: "300+" }
-  - { label: models cross-reviewing, value: "2" }
 ---
 
 <PlainOnly>
@@ -55,9 +54,11 @@ produce you're not an engineer, you're a spectator.
 So the real work is the kitchen, not the cooking. I decide what gets built and how it
 should behave. Written house rules load on their own so every helper knows things like
 "never let a website overwrite the product catalog." The dangerous actions aren't
-discouraged, they're blocked, the way a fryer has a guard rail. Anything touching money
-or the books gets a second set of eyes before it runs. And nothing gets called done until
-I've watched it work: run the numbers, clicked the buttons, seen the result.
+discouraged, they're blocked, the way a fryer has a guard rail. For a while a second AI
+checked anything touching money or the books before it ran. I dropped that in late
+September: it held up fixes that could be undone in a minute, and it stalled work when
+that AI hit its usage limit. What stayed is the rule that nothing gets called done until I've
+watched it work: run the numbers, clicked the buttons, seen the result.
 
 Every time something went wrong, it became a new guard rail the same day. The helpers
 make me fast, the rules keep it safe, and I own everything that ships.
@@ -107,13 +108,19 @@ ledger is public inside the repo — every incident, its cost, and the constrain
 produced — and reading it is how a new session, or a new engineer, learns why the rules
 are shaped the way they are.
 
-## Review by consequence
+## The review I retired
 
-Reviewing everything trains everyone to skim. So a second-model review is triggered by
-what a mistake would cost, not by how many lines changed. Money, books, bulk writes to
-production data, writes to a vendor's API, migrations, permissions, and anything that can
-be silently wrong get reviewed before executing, by a different model than the one that
-wrote it. UI, copy, layout and read-only reports ship on sight.
+Until late September a second model reviewed work before it ran. At first the trigger was
+the size of the change. On 2026-08-14 it became what a mistake would cost: money, the
+books, bulk writes to production data, writes to a vendor's API, migrations, permissions,
+and anything that could be silently wrong. That came after a 3m38s deep review held up a
+map-rendering fix that could've been reverted in one prompt. On 2026-09-11 the review
+stopped blocking pushes, after usage limits on the reviewer models stalled two sessions in
+the same hour. On 2026-09-25 I retired it: "we'll do it ourselves if needed."
+
+What catches mistakes now is the next rule. The review agents still exist and run when I
+ask for one. Their configs are in the [tooling write-up](/projects/agent-fleet/tooling),
+kept the way they ran.
 
 ## Verify before you assert
 
