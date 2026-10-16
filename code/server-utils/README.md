@@ -37,6 +37,10 @@ sharp edge:
 - **Functions whose effects survive ROLLBACK** (`setval`, file/network I/O,
   advisory locks, backend termination) are rejected because a dry-run
   *executes* the statement before rolling it back.
+- **Blocked function names match as prefixes.** `_` is a word character, so a
+  whole-word match on `pg_sleep` let `pg_sleep_for` through. `query_to_xml` and
+  `cursor_to_xml` are blocked outright: they run SQL handed to them as a string,
+  where no name list can see it.
 - **Unicode-escaped names are rejected.** Postgres reads `U&"\0075sers"` as a
   table called `users`, and a word match on the raw text never sees it. The
   first version missed this; a read-through caught it.
