@@ -39,7 +39,9 @@ your real tabs, and only while you've turned remote control on.
 
 ## What it touches
 
-A tool that copies your cookies should say exactly what it does with them.
+A tool that copies your cookies should say exactly what it does with them. It reads only
+your own Zen profile on your own Mac, for your own automation, and sends nothing anywhere:
+the copies stay on the machine and are deleted when the browser closes.
 
 - **Copied, each time the headless browser opens:** the cookies in `cookies.sqlite`, the
   session-only cookies in `sessionstore-backups/recovery.jsonlz4`, and `cert_override.txt`

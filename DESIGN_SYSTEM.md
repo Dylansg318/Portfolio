@@ -604,12 +604,18 @@ A screenshot sits on the white prose column, so:
   game canvas — ships as it is.
 - **Frame it for a 41rem column.** It renders at the prose measure on the project page
   and in a 13rem column on a list; a capture that only reads at full width reads nowhere.
-- **Redact in the browser before capture**, with a CSS blur on the leaf elements whose
-  text matches the other legal entities, then screenshot. Blurring in the page survives
-  re-capture and cannot miss an occurrence that scrolled; boxes drawn on a PNG can.
-- **Never ship**: a customer name, a price, a vendor identifier, a storefront name that is
-  not already public, or a page whose job is revenue or margin (the channel P&L page is
-  off the site for that reason, not because of what happened to be on it that day).
+- **Redact in the browser before capture**, then screenshot. Redacting in the page
+  survives re-capture and cannot miss an occurrence that scrolled; boxes drawn on a PNG
+  can. A name with only a few possible answers (the other storefront, a supplier) is
+  replaced with neutral text, "Storefront B" or "Vendor zone", because short blurred text
+  can be matched by rendering each guess. Blur is for text with thousands of possible
+  answers, like product names. Match on an element's whole text, not on single text nodes:
+  a name split across two spans gets past a text-node pass.
+- **Never ship**: a customer name, a cost or a margin, a vendor identifier, a storefront
+  name that is not already public, room names beyond the storage areas, or a page or panel
+  whose job is revenue or margin (the channel P&L page is off the site for that reason,
+  not because of what happened to be on it that day). A marketplace's public list price is
+  fine; it's what the repricer log is about.
 - **`coverAlt` describes the picture as evidence**: what the screen is, what it shows,
   the numbers visible in it. It is the caption a screen reader gets and the description
   a reviewer skims.
@@ -885,6 +891,7 @@ reference, §11 still governs which facts may appear.
 | 2026-09-15 | **The nameplate erases and retypes.** Dylan flagged the mode switch: mid-flip the sentence read *built andrunthe ERFthe company workinMo:Typland and* and he asked for it to erase, then type the other register in like a typewriter. The word morph animated `max-width` on every word box at once, so the paragraph re-wrapped on every frame for 600ms — the garble was live re-wrapping, not a diff bug. The replacement keeps the two registers' shared opening as ordinary text and renders each tail once, in full, one span per character; a flip hides the current tail's characters from the end and shows the other's from the start, behind a caret moved with a transform, with the paragraph's height pinned. Only `opacity` and `transform` change per frame. Flipping back mid-run continues from wherever the sentence is. This is the one exception to *no typewriter effects on prose*, recorded in §3.5 with the property rule it taught. Accepted: the tail's characters are separate spans, so kerning pairs inside it (*Ty*, *AV*) are not applied — invisible at body size in Source Sans. |
 | 2026-10-16 | **The daily workflow gets its own page, and the code gets a license.** A second sub-page under the agent fleet, `agent-fleet/daily-workflow`, tells a working day in order: one task per session, background sessions, the Sessions and Clipboard side panels, checking, closing a run, and the most-used tools from 30 days of transcripts, each with the number or failure behind it. The two panels and the session reader they share are published as `code/iterm-panels/`, copied out clean like the rest of `code/`. The fleet pages, the toolbox READMEs and the ERP's AI note stop describing second-model review as current: it was retired on 2026-09-25, and the fleet page now tells it as a practice with three dated steps and an end. The repository gains an MIT `LICENSE` for the code only; the writing, screenshots, résumé and game art stay unlicensed, which the README says. Left alone, for Dylan to decide: the résumé still names consequence-triggered review in `site.ts` (`resumeProjects`, the last ERP bullet), and changing it means regenerating the PDF. |
 | 2026-10-16 | **Two more tools published, the spawner brought up to date, and the résumé follows.** `code/account-switcher/` (a Claude Code profile per account, every account's usage in one list) and `code/zen-browser/` (browser tools inside Zen with the person's own logins) are copied out clean; the public switcher leaves out the command that picked the account with the most usage left, since published it reads as a way around usage limits. `code/fleet-scripts/` now carries the spawner in daily use: background sessions by default, worktrees made one at a time, an `Owns:` list per brief, a startup check, with the 26-slice run's numbers in its README. The daily-workflow page gains a capture of the Sessions panel, every name and status line replaced and blurred in the browser before capture, and `Figure` gains `narrow` so a side-panel capture shows at the width it was taken. The résumé's last ERP bullet and the fleet project line drop consequence-triggered review for the merge-back check, and the excerpt line counts sixteen modules; the PDF was regenerated and is still one page. `public/robots.txt` names the sitemap. |
+| 2026-10-16 | **Checked before the site goes to Google.** An audit read the site, the repo and its history the way a stranger who searched Dylan's name would. What it changed: the published write guard in `code/server-utils/` uses generic table names and no longer says where the agent's key is kept, and it now refuses Unicode-escaped names (`U&"\0075sers"` reads as `users` to Postgres and slips past a word match; the ERP got the same fix). `code/device-agent/` uses generic routes and headers, so its README's "endpoints sanitized" is true. The account switcher no longer reads a login token or calls Anthropic: `list` shows the usage Claude Code last saved, with its age. The QuickBooks story says "about nine times" instead of the receivables in dollars. All three ERP screenshots were retaken on the current screens: the floor plan names only the storage areas, the second storefront reads "Storefront B" instead of a blur, and the dashboard's sales-by-manufacturer table is left out. §6.2 says why: a blurred name with few possible answers can be guessed. |
 
 ## 10. Parked and open
 
@@ -968,3 +975,4 @@ Design section. It is indexed by GitHub search and reachable by URL, which is th
 | 2026-09-16 | One animation per column after the phone dropped the fill: §3.5 one sentence, the §7 row, one §9 row. |
 | 2026-10-16 | §5.4 counts fourteen excerpts; one §9 row. |
 | 2026-10-16 | §5.4 counts sixteen excerpts; one §9 row. |
+| 2026-10-16 | Replace, don't blur, a name with few possible answers: §6.2 the redaction and never-ship bullets; one §9 row. |

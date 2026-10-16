@@ -37,6 +37,9 @@ sharp edge:
 - **Functions whose effects survive ROLLBACK** (`setval`, file/network I/O,
   advisory locks, backend termination) are rejected because a dry-run
   *executes* the statement before rolling it back.
+- **Unicode-escaped names are rejected.** Postgres reads `U&"\0075sers"` as a
+  table called `users`, and a word match on the raw text never sees it. The
+  first version missed this; a read-through caught it.
 
 ## savepoint.js — why catching a DB error in JS doesn't un-abort the transaction
 
@@ -166,8 +169,8 @@ character and reads as broken.
   internal job/function names were genericized.
 - `secretCrypto.ts` — the default cipher binding was renamed to a generic
   `SECRET_CIPHER_KEY` env var (upstream binds vendor-specific listener keys).
-- `writeQueryGuard.ts` / `logCapture.ts` — endpoint paths and the audit-table
-  name were genericized; logic unchanged.
+- `writeQueryGuard.ts` / `logCapture.ts` — endpoint paths and table names were
+  genericized; logic unchanged.
 - `abcClassify.ts` — consumer references point at "the replenishment SQL" and
   "the cycle-count scheduler" instead of internal file paths; the measured
   numbers are real.

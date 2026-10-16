@@ -9,10 +9,12 @@ status: live
 role: sole engineer
 cover: ./repricer-dashboard.png
 coverAlt: >-
-  The repricer dashboard: buy-box winning, sibling-hold, losing and unwinnable
-  counts, push success rates, a breakdown of why the engine isn't undercutting,
-  per-storefront buy-box share, and the safety rails including a 15% margin
-  floor. A second storefront's name is blurred.
+  The repricer dashboard: 81.2% of 3,790 Net32 listings held by one of our two
+  storefronts, a per-storefront table of held, held by the other store, losing
+  and unwinnable, a 30-day win-rate chart ending at 82.3%, push success rates, the
+  counts that need a person (566 under the 12% margin floor), the next auto run
+  and the safety rails. The second storefront is shown as Storefront B, and the
+  table of sales by manufacturer is left out.
 stack: [TypeScript, Node.js, PostgreSQL, Python, Flask, Web scraping, Net32 API]
 
 problem: >-
@@ -124,8 +126,8 @@ Those are judgment calls; the engine's job is to make them visible, not make the
 
 <Figure
   src={logShot}
-  alt="The repricing log: 8,413 pushes over seven days, each row showing the product, the old and new price, the percentage change, the trigger source and the reason the engine moved."
-  caption="Seven days of the log — 8,413 pushes across 169 pages. Each row carries the reason it moved, including the cases the engine declined to chase: 'deferred_sibling_reserve: primary twin has a fresh 12h window — holding this account's down-move in reserve to retake if re-undercut'. Product names and the second storefront's name are blurred."
+  alt="The repricing log: 9,236 attempts over seven days (5,812 pushed, 1,903 skipped, 1,506 deferred), each row showing the product code, the storefront, the old and new price, the percentage change, the trigger source, the status and the reason in words."
+  caption="Seven days of the log — 9,236 attempts across 185 pages. Each row says why it moved or why it didn't, including the cases the engine declined to chase: 'Held in reserve · our other store has the window'. Product names are blurred, and the second storefront is shown as Storefront B."
   wide
 />
 
