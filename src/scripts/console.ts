@@ -179,7 +179,7 @@ function mount(el: HTMLElement) {
     });
   });
   el.addEventListener('console:refresh', refresh);
-  // Another script on the page (the work index's tabs) may set a parameter.
+  // Another script on the page (the /projects or /about list) may set a parameter.
   el.addEventListener('console:set', (e) => {
     const d = (e as CustomEvent<Params>).detail ?? {};
     for (const i of inputs) if (i.name in d) i.value = d[i.name];

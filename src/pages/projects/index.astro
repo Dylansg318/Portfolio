@@ -13,8 +13,8 @@ import { PROJECT_CATEGORIES, projectList } from '../../lib/api';
 const projects = await getSection('projects');
 // The shelves are the categories with something filed under them, in the
 // order src/lib/categories.ts declares — not the stack, which grew one chip
-// per library until the row was a keyword cloud. Each is a tab and a heading
-// over its own projects; an empty shelf gets neither.
+// per library until the row was a keyword cloud. Each is a heading over its
+// own projects and an entry in the side menu; an empty shelf gets neither.
 const shelves = PROJECT_CATEGORIES.map((category) => ({
   category,
   projects: projects.filter((p) => p.data.category === category),
@@ -33,17 +33,6 @@ const list = await projectList();
           Each one says what the problem was, what was non-obvious about the approach, and what
           came out of it, in the same places every time, so you can compare them.
         </p>
-
-        {shelves.length > 1 && (
-          <nav class="cats" aria-label="Filter by kind of project">
-            <ul role="group">
-              <li><button type="button" data-filter="all" aria-pressed="true">All</button></li>
-              {shelves.map(({ category }) => (
-                <li><button type="button" data-filter={category} aria-pressed="false">{categoryLabel[category]}</button></li>
-              ))}
-            </ul>
-          </nav>
-        )}
 
         {shelves.map(({ category, projects }) => (
           <section class="shelf" data-shelf={category}>
@@ -84,21 +73,19 @@ const list = await projectList();
 </Base>
 
 <script>
-  // The tabs, the ?category= in the address, and the console's `category`
-  // parameter are one control in three places. Any of them changing moves
-  // the other two, and the side menu marks the shelf that's showing.
-  // Vanilla — no framework runtime on the index page.
+  // `category` in three places — the address, the console's parameter, and
+  // the list — kept as one, the way `since` is on /about. The side menu's
+  // shelf links set it and it marks the one showing. Vanilla — no framework
+  // runtime on the index page.
   document.addEventListener('astro:page-load', () => {
-    const buttons = [...document.querySelectorAll<HTMLButtonElement>('[data-filter]')];
-    if (buttons.length === 0) return;
     const shelves = [...document.querySelectorAll<HTMLElement>('[data-shelf]')];
+    if (shelves.length === 0) return;
     const side = [...document.querySelectorAll<HTMLAnchorElement>('.side a[href^="/projects"]:not([href^="/projects/"])')];
     const consoleEl = document.querySelector<HTMLElement>('.cx[data-key="projects"]');
-    const known = new Set(buttons.map((b) => b.dataset.filter!));
+    const known = new Set(shelves.map((s) => s.dataset.shelf!));
 
     const apply = (filter: string, { push = true, tellConsole = true } = {}) => {
       const f = known.has(filter) ? filter : 'all';
-      buttons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filter === f)));
       shelves.forEach((s) => (s.hidden = f !== 'all' && s.dataset.shelf !== f));
       const mark = f === 'all' ? '/projects' : `/projects?category=${f}`;
       side.forEach((a) => (a.getAttribute('href') === mark ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
@@ -110,8 +97,6 @@ const list = await projectList();
       }
       if (tellConsole) consoleEl?.dispatchEvent(new CustomEvent('console:set', { detail: { category: f === 'all' ? '' : f } }));
     };
-
-    buttons.forEach((btn) => btn.addEventListener('click', () => apply(btn.dataset.filter!)));
 
     // A Send on the /api/projects console with a category filters the list.
     const onSent = (e: Event) => {

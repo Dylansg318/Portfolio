@@ -1,17 +1,18 @@
 /**
  * The shelves the projects sit on. `work` is what I built at my job and is
- * its own top tab, /work; every other shelf is a tab on /projects.
+ * its own top tab, /work; every other shelf is a heading on /projects.
  *
  * The index used to filter by `stack`, which grew one chip per library until
  * the row was forty tags long and nobody could use it — a reader does not come
  * to a portfolio of eight projects looking for "Gherkin". A category is what
- * the thing IS, not what it was built with, so the row stays as short as the
- * number of kinds of work here and only grows when a new kind does.
+ * the thing IS, not what it was built with, so there are only as many shelves
+ * as kinds of work here, and one more only when a new kind does.
  *
  * The order here is the order the shelves appear in, on /projects, in its API
  * and in the side menu. To add one: append to CATEGORIES, give it a label, and
- * file a project under it. The schema takes the id from this list, so a typo in frontmatter fails
- * the build, and a category with nothing filed under it never renders a tab.
+ * file a project under it. The schema takes the id from this list, so a typo
+ * in frontmatter fails the build, and a category with nothing filed under it
+ * never renders a heading or a menu entry.
  *
  * This module imports nothing so `content.config.ts` can import it — the
  * content layer cannot load `astro:content`, which is why the labels do not
@@ -21,7 +22,8 @@ export const CATEGORIES = ['work', 'tool', 'game', 'course'] as const;
 
 export type Category = (typeof CATEGORIES)[number];
 
-/** The tab text. Plural where the shelf holds things, singular for the mass noun. */
+/** The shelf's name, on its heading and in the side menu. Plural where the
+ *  shelf holds things, singular for the mass noun. */
 export const categoryLabel: Record<Category, string> = {
   work: 'Work',
   tool: 'Tools',
