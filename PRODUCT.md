@@ -8,8 +8,10 @@ web
 
 ## Users
 
-A recruiter, hiring manager, or engineer deciding in under a minute whether to
-interview Dylan for a backend or full-stack role. They arrive from a résumé link, a
+A recruiter, hiring manager, founder or engineer who came across his work and is
+deciding in under a minute whether to reach out about a software or product
+engineering role. He isn't job hunting, so the site shows the work and leaves the
+door open rather than asking. They arrive from a résumé link, a
 LinkedIn profile, or a GitHub README, usually on a laptop, sometimes on a phone
 between meetings, and they are comparing him against other candidates they opened
 in adjacent tabs.

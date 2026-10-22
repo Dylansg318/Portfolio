@@ -29,12 +29,14 @@ export const site = {
     site: 'https://rmh3dental.com',
   },
 
-  /** What I'm open to, in four words. */
-  availability: 'Open to backend / full-stack roles',
+  /** What I'm open to. I'm not job hunting, so this is an open door, not an
+   *  ask — and it stays off the top of the home page (DESIGN_SYSTEM §9,
+   *  2026-10-22). */
+  availability: 'Happy to talk about engineering roles',
 
-  /** The one-line answer to "what do you mostly do", as the home page and
-   *  GET /api/dylan give it. */
-  mainly: { focus: 'Mostly backend', stack: ['TypeScript', 'Node', 'Postgres'] },
+  /** What I mostly work in, as the home page and GET /api/dylan give it. No
+   *  "backend" or "full-stack" label: the work is both, and the stack says so. */
+  stack: ['TypeScript', 'Node', 'Postgres', 'React'],
 
   /** Professional contact. The contact form is the primary route; this is the
    *  fallback for people who prefer their own mail client.
@@ -81,13 +83,13 @@ export const site = {
   statsAsOf: 'August 2026',
 
   /** The résumé summary. Three sentences: what I do, what I'm strongest at,
-   *  what I'm looking for. Names the target role because a screener decides
-   *  in seconds whether this page is for the job they are filling. */
+   *  what I'm open to. Names the kind of role because a screener decides in
+   *  seconds whether this page is for the job they are filling. */
   resumeSummary:
     'Software engineer who designed, built and runs the ERP a six-channel dental distributor ' +
     'operates on, as its only engineer. Strongest on integrations and data correctness: ' +
     'order pipelines, marketplace and carrier APIs, accounting sync, and the tests that ' +
-    'prove them. Looking for a backend or full-stack role, remote or in Northern Virginia.',
+    'prove them. Open to software and product engineering roles, remote or in Northern Virginia.',
 
   /** The three things a one-page résumé links to. The ERP is private, so the
    *  second entry is the public evidence — the sanitized production modules
@@ -273,9 +275,9 @@ export const site = {
     interests: ['cooking', 'a bit of music', "restaurants I haven't tried yet", 'one more side project'],
   },
 
-  /** What I'm looking for, as the last row of the home page says it. */
+  /** The invitation on the last row of the home page. */
   lookingFor:
-    "A backend or full-stack role, remote or in Northern Virginia. If that's what you're hiring for, let me know.",
+    "If you're building something like this, or hiring for it, let me know.",
 
   /** How I work — three things, in my own words. */
   principles: [
