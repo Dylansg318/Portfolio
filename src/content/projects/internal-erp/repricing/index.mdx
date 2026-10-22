@@ -10,12 +10,14 @@ status: live
 role: sole engineer
 cover: ./repricer-dashboard.png
 coverAlt: >-
-  The repricer dashboard: 81.2% of 3,790 Net32 listings held by one of our two
-  storefronts, a per-storefront table of held, held by the other store, losing
-  and unwinnable, a 30-day win-rate chart ending at 82.3%, push success rates, the
-  counts that need a person (566 under the 12% margin floor), the next auto run
-  and the safety rails. The second storefront is shown as Storefront B, and the
-  table of sales by manufacturer is left out.
+  The repricer overview, filled with made-up data: 81.2% of 3,790 Net32 listings
+  held by one of our two storefronts, a per-storefront table of held, held by the
+  other store, losing and unwinnable, a 30-day win-rate chart ending at 82.3%,
+  the health checks, the counts that need a person (566 under the 12% margin
+  floor, 267 where the floor blocks the box), the next auto run and the safety
+  rails. The screen is real; every count and price on it is invented, the second
+  storefront is shown as Storefront B, and the table of sales by manufacturer is
+  left out.
 stack: [TypeScript, Node.js, PostgreSQL, Python, Flask, Web scraping, Net32 API]
 
 problem: >-
@@ -51,6 +53,7 @@ metrics:
   - { label: pricing engines, value: "1" }
 ---
 
+import deskShot from './repricer-desk.png';
 import logShot from './repricer-log.png';
 
 <PlainOnly>
@@ -123,12 +126,26 @@ Those are judgment calls; the engine's job is to make them visible, not make the
 
 </EngOnly>
 
+## Every listing on one page
+
+<Figure
+  src={deskShot}
+  alt="The price desk, filled with made-up data: a summary ring at 40% held (512 winning, 1,986 losing, 824 held by our other store), then a row per listing with the product, units sold in the last 12 months, the market drawn as a line of sellers, our price with its markup after the fee, and the status in words, like '$4.47 under Bayview Dental Supply'. The selected row's panel shows the authorized, lowest-price and fastest-shipping winners, the price tiers with a suggested tier to accept or decline, the run time, and the Push button."
+  caption="On the market line, grey dots are the other sellers, ringed when they hold the box; the blue bar is our price now and the green arrow the new one; red is where we'd lose money after Net32's fee. The screen is real; the products, sellers, prices and counts are made up."
+  wide
+/>
+
+The price desk is where a person works prices by hand. Each row puts the market on one
+line next to our price and says why the listing is winning or losing. Picking a row
+opens its price tiers, the new tiers the engine suggests for a person to accept or
+decline, and every seller on the page.
+
 ## Every push, with its reason
 
 <Figure
   src={logShot}
-  alt="The repricing log: 9,236 attempts over seven days (5,812 pushed, 1,903 skipped, 1,506 deferred), each row showing the product code, the storefront, the old and new price, the percentage change, the trigger source, the status and the reason in words."
-  caption="Seven days of the log — 9,236 attempts across 185 pages. Each row says why it moved or why it didn't, including the cases the engine declined to chase: 'Held in reserve · our other store has the window'. Product names are blurred, and the second storefront is shown as Storefront B."
+  alt="The repricing log, filled with made-up data: 9,236 attempts over seven days (5,812 pushed, 1,903 skipped, 1,506 deferred), each row showing the product code and name, the storefront, the old and new price, the percentage change, the trigger source, the status and the reason in words."
+  caption="Seven days of the log. Each row says why it moved or why it didn't, including the cases the engine declined to chase: 'Held · our other store just dropped', 'Raise held · within 12h of the last raise'. The screen is real; the products, prices and counts are made up, and the second storefront is shown as Storefront B."
   wide
 />
 
