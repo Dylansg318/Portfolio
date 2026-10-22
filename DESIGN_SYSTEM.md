@@ -190,7 +190,7 @@ Widths: below 1024px the response stacks under its prose and the header's tabs a
 strip under the bar; from 1024px prose and response sit side by side with the response
 at 24rem, so the prose keeps about sixty characters on a laptop, and the tabs move into
 the bar; from 1280px the response widens to 30rem, the prose sits centred in what is
-left, and inside Work a 15rem side menu takes the left edge; from 1536px the response
+left, and inside Work and Projects a 15rem side menu takes the left edge; from 1536px the response
 is 36rem.
 
 | Token | Light | Dark | Role |
@@ -260,7 +260,7 @@ captions 0.6875rem uppercase with `0.1em` tracking.
 |---|---|---|
 | `--container-reading` | `48rem` | The prose column's maximum width, padding included (3.5rem a side from 1280px). |
 | `--container-wide` | `80rem` | The reading-mode hint's shell; nothing else is boxed — the grid is full-bleed. |
-| `.ref` / `.side` / `.ep` / `.ep-prose` / `.ep-code` | The grid, the Work side menu, one row, its prose, its response | The page grammar in CSS. Every reference page is `.ref` → rows; inside Work it is `.ref` → `.side` + rows, the side menu a 15rem sticky column from 1280px and absent below it. The site's one navigation is the header's tabs (§4). |
+| `.ref` / `.side` / `.ep` / `.ep-prose` / `.ep-code` | The grid, the side menu, one row, its prose, its response | The page grammar in CSS. Every reference page is `.ref` → rows; inside Work and Projects it is `.ref` → `.side` + rows, the side menu a 15rem sticky column from 1280px and absent below it. The site's one navigation is the header's tabs (§4). |
 | `--bar-h` / `--strip-h` / `--head-h` | `3.5rem` / `2.75rem` / both below 1024px, the bar alone from 1024px | The header's bar, the tab strip it grows below 1024px, and its whole height. The side menu, the sticky console, the still frame and every anchor's scroll margin are measured from `--head-h`, so it changes in one place. |
 | `.cx` | radius 8px, 1px `--code-line`, `--code-surface` | The try-it console. Bar (method, path, languages) → parameters → request → Send → response. |
 | `.ep-code .panel` | same surface as `.cx` | Anything else on the dark side: an excerpt, the write-up's map, a static response. Scoped to the column — the help desk has a `.panel` of its own. |
@@ -410,8 +410,8 @@ Slack. A demo's `/play` page uses its composed `shareCard` instead (§6).
 
 Every reference page is the same object: the header with its **tabs** (the site's one
 navigation, the way an API's docs do it — Work, Projects, About, Resume, then the API
-reference and Contact), then **rows**; inside Work a **side menu** lists the section's
-pages beside them. A row is one
+reference and Contact), then **rows**; inside Work and Projects a **side menu** lists the
+tab's pages beside them. A row is one
 endpoint: prose on the left, a try-it console on the right rendered with that endpoint's
 real response, and the prose never says a fact the console does not carry. New pages pick
 one of these shapes or add a row to this table.
@@ -420,8 +420,8 @@ one of these shapes or add a row to this table.
 |---|---|---|
 | `/` | `GET /api/dylan` (the name, the two-register nameplate sentence, the facts list, See the work / Resume / About me) → `GET /api/work` (two at work, one on the side, All work and All projects, with an excerpt of a real hook beside the console) → `GET /api/experience` (the three jobs) → `GET /api/away-from-work` (the first program, *Play here* in the side panel; the help desk) → `POST /api/contact` (what I'm looking for; the console sends). Person first, then the work, then the path, then the rest of life, then how to reach me. With JavaScript the five rows are one still frame (§3.5), with where-you-are (dots, *2 of 5 · About next*) at the foot of the prose column and, below 1024px, the response drawer. | Full |
 | `/work` | What I built at my job. `GET /api/work` (h1, the ERP and the AI coding sessions as item rows) → one `GET /api/work/{id}?fields=subsystems` row per piece of work with parts, listing them (below 1280px this is how they're found; from 1280px the side menu lists them too). | Full, side menu |
-| `/projects` | Everything else. `GET /api/projects` (h1, category tabs — Tools, Games, Course — bound to `?category=` and to the console's parameter, every top-level project as an item row with its thumbnail where one exists). | Full |
-| `/work/<slug>`, `/projects/<slug>` | One route, `/[section]/[...slug]`; the section is the project's tab (`sectionOf`, a part sits with its parent), and `hrefOf` is the one place an address is built. Fixed order, every time: back link, or for a part a breadcrumb of short names (Work / The ERP / Repricing) → `GET /api/{section}/{id}` (status · date · role, `h1`, the two-register blurb, stack chips, Play / Source / External write-up, the metrics list, the cover) → `?fields=problem,unique,ai` (**The problem**, **What was unique**, **Where AI fit in**) → `?fields=subsystems` (**Inside it**, when there are parts) → the write-up body, with its own section map in the dark column → `?fields=learned` (**What I learned**, previous / next within the same set — a part's siblings, or the other projects under the same tab). | Full; under Work, the side menu with this page marked |
+| `/projects` | Everything else. `GET /api/projects` (h1, shelf tabs — Tools, Games, Course — bound to `?category=`, to the console's parameter and to the side menu, then each shelf as an `h2` over its projects as item rows, a thumbnail where one exists). | Full, side menu |
+| `/work/<slug>`, `/projects/<slug>` | One route, `/[section]/[...slug]`; the section is the project's tab (`sectionOf`, a part sits with its parent), and `hrefOf` is the one place an address is built. Fixed order, every time: back link, or for a part a breadcrumb of short names (Work / The ERP / Repricing) → `GET /api/{section}/{id}` (status · date · role, `h1`, the two-register blurb, stack chips, Play / Source / External write-up, the metrics list, the cover) → `?fields=problem,unique,ai` (**The problem**, **What was unique**, **Where AI fit in**) → `?fields=subsystems` (**Inside it**, when there are parts) → the write-up body, with its own section map in the dark column → `?fields=learned` (**What I learned**, previous / next within the same set — a part's siblings, or the other projects under the same tab). | Full, the side menu with this page marked |
 | `/about` | `GET /api/experience` (the short version, the stops, the jobs bound to `?since=`, education) → `GET /api/work/internal-erp?fields=problem,unique` (What it ran on before, Who I work with) → `GET /api/dylan?fields=principles,open_to,looking_for` (How I work, Right now, Off the clock) → `GET /api/resume?fields=skills,certifications` (the toolkit, the facts, Get in touch). | Full |
 | `/resume` | One row: `GET /api/resume`. Rendered from `site.ts`; the print stylesheet hides the header and the column and is the PDF — one page, US Letter, checked by `pdfinfo`. No phone, no street address, on the page or in the PDF. | Full, hidden in print |
 | `/contact` | `POST /api/contact` (Say hello, the email, what to include; the console validates for real and hands the message to the mail app) → `GET /api/work/internal-erp?fields=problem,metrics` (the problem I solve, for the owner or office manager who is not hiring an engineer). | Full |
@@ -437,8 +437,9 @@ Recurring grammar inside pages:
   the switch says; the response beside it is always the exact shape. A reader never has
   to flip a switch to see the other register — the site's oldest rule, now structural.
 - **A parameter is one control in three places.** The tabs on `/projects`, the
-  `?category=` in the address and the console's `category` select are one state; the
-  same for `?since=` on `/about`. Any of them changing moves the other two.
+  `?category=` in the address and the console's `category` select are one state, and the
+  side menu marks the shelf that's showing; the same for `?since=` on `/about`. Any of
+  them changing moves the other two.
 - **`fields` shows up when a row is about a subset.** The full record's console has no
   `fields` box; the contract row's console has `fields=problem,unique,ai` filled in. The
   parameter is real everywhere and visible only where it is doing something.
@@ -454,15 +455,16 @@ Recurring grammar inside pages:
   reference* and the one filled button, *Contact*. Each label and address comes from
   `endpoints.ts`, so the header, `GET /api` and `/reference` cannot disagree about what
   a page is called. The current tab is accent text over an accent underline. A side
-  menu exists only inside Work, because only Work has pages with parts: Overview, then
-  each piece of work and its parts by their `short` names, the current page marked. It
-  is a second level, not a second map of the same pages: two maps of one set of pages
+  menu exists inside Work and Projects, the two tabs that hold more than one page:
+  Overview, then each group with its pages by their `short` names — a piece of work and
+  its parts, or a shelf and its projects — the current page marked. It is a second
+  level, not a second map of the same pages: two maps of one set of pages
   (header links beside the rail, until 2026-09-14) were what a first look couldn't parse.
   Below 1024px the tabs are a strip under the bar, no hamburger: five words fit a 360px
   phone, so under 640px Contact joins the strip and *API reference* moves to the footer.
   Header labels shorten on a phone (`Dylan`, `Plain` / `Tech`) rather than hide.
-- **Every heading level is real.** `h1` once, `h2` per row and per contract section,
-  `h3` for items. The crumb is a `p`; nothing is a fake heading.
+- **Every heading level is real.** `h1` once, `h2` per row, per contract section and per shelf
+  on `/projects`, `h3` for items. The crumb is a `p`; nothing is a fake heading.
 
 ---
 
@@ -486,10 +488,12 @@ typewriter runs on. Nothing on the home page is true only on the home page.
 Frontmatter is enforced by the schema in `src/content.config.ts`; every field has a
 comment there saying what it is for. The parts that shape the site:
 
-- **`featured`** orders listings (higher first, then date). Current bands: the ERP 100,
-  its subsystems 90 / 80 / 75 / 65 / 60 / 0, agent fleet 70, second brain 50, receipt splitter
-  40, ERP test automation 30, Galaxy Defense 25, this site 10. A new project picks a slot
-  in that order; the home page's three are curated by hand for breadth (one at work, one
+- **`featured`** orders a shelf (higher first, then date). Listings go shelf by shelf
+  first, in the order `lib/categories.ts` declares, so `/projects` reads Tools, Games,
+  Course and its API and previous/next walk the same order (`byRank`). Current bands: the
+  ERP 100, its subsystems 90 / 80 / 75 / 65 / 60 / 0, agent fleet 70; second brain 50,
+  receipt splitter 40, this site 10; Shotcall 27, Galaxy Defense 25; ERP test automation
+  30. A new project picks a slot on its shelf; the home page's three are curated by hand for breadth (one at work, one
   for myself, one on the side), not taken from the top of this order. Subsystem ranks
   share the number line with top-level ones but never the same listing, so a tie between
   the two is harmless — a collision is only confusing to read here.
@@ -687,8 +691,8 @@ The reasoning for each lives as a comment next to the code. This table is the in
 2. Frontmatter: `title` in the house shape (§2.3), `blurb` ≤160 in Engineer register,
    `plainBlurb` ≤200 in business words, `role`, `status`, `category` (what it *is*:
    `work` puts it under /work, `tool`, `game`, `course` under /projects — a new kind is
-   one line in `lib/categories.ts`), `short` if it sits under Work (its name in the side
-   menu and the breadcrumb), `stack`
+   one line in `lib/categories.ts`), `short` if the title is longer than the side menu fits (its name
+   in the side menu and the breadcrumb), `stack`
    most-used first, `featured` in the current band order (§5.2), `date`.
 3. The contract: `problem`, `unique`, `learned` (with a number or a specific failure),
    `aiNote` (what was decided, verified, thrown away).
@@ -902,6 +906,7 @@ reference, §11 still governs which facts may appear.
 | 2026-10-16 | **Checked before the site goes to Google.** An audit read the site, the repo and its history the way a stranger who searched Dylan's name would. What it changed: the published write guard in `code/server-utils/` uses generic table names and no longer says where the agent's key is kept, and it now refuses Unicode-escaped names (`U&"\0075sers"` reads as `users` to Postgres and slips past a word match; the ERP got the same fix). `code/device-agent/` uses generic routes and headers, so its README's "endpoints sanitized" is true. The account switcher no longer reads a login token or calls Anthropic: `list` shows the usage Claude Code last saved, with its age. The QuickBooks story says "about nine times" instead of the receivables in dollars. All three ERP screenshots were retaken on the current screens: the floor plan names only the storage areas, the second storefront reads "Storefront B" instead of a blur, and the dashboard's sales-by-manufacturer table is left out. §6.2 says why: a blurred name with few possible answers can be guessed. |
 | 2026-10-22 | **An open door, not a job search.** Dylan isn't job hunting; the site is there to show the work and draw interest. The home page's facts list drops `open_to`, so nothing above the fold asks for anything; `availability` reads "Happy to talk about engineering roles" where it still appears (the desk pill, `GET /api/dylan`); the last row is headed *Get in touch.* and invites rather than asks. The target is software or product engineering, not "backend or full-stack": the ERP commits split about evenly between server and screens, so `mainly.focus` ("Mostly backend") is gone and `site.stack` lists React beside TypeScript, Node and Postgres. The résumé summary's last sentence follows and the PDF was regenerated. The four stats were left at their August figures for Dylan to decide. |
 | 2026-10-22 | **Tabs across the top; the rail goes.** Picked from an audit and a canvas of three options: the API-docs layout, with the name (home), then Work · Projects · About · Resume as tabs, and *API reference* and the one filled *Contact* button on the right. "Work" had meant three things — the rail entry that opened `/projects`, a filter tab on that page, the home page's row — and on the home page the rail's entries jumped within the page while everywhere else they opened pages. Now Work is what I built at my job (the ERP and the AI coding sessions, at `/work`, with a side menu of their parts from 1280px, by a new `short` name) and Projects is everything else (tools, games, and the CYDEO course on a new Course shelf). Write-ups live at `/work/<slug>` or `/projects/<slug>` from one route, `hrefOf` builds every address, and the ten old `/projects/…` work addresses 301 to the new ones in one hop. The API follows: `GET /api/work` lists work only, `GET /api/projects?category=` the rest, and each `{id}` endpoint answers its own tab's ids, with a 404 that names the other. Below 1024px the tabs are a strip under the bar that fits a 360px phone without fading or scrolling. Separately, the résumé PDF's two project links pointed at `localhost:4399`, the print server; they are absolute now and the PDF was regenerated. |
+| 2026-10-22 | **Projects goes shelf by shelf, with a side menu.** Dylan asked for better order and a way to see which projects are there. The list interleaved its shelves — two tools, the 2024 course, a 2020 game, a 2026 game, then a tool — because `featured` was one number line across all of them, and only Work had a menu. Now `byRank` sorts by shelf first, in the order `lib/categories.ts` declares, then `featured`, then date, so the page, `GET /api/projects` and previous/next walk one order; each shelf is an `h2` over its projects; Shotcall moves ahead of Galaxy Defense, the live game first. `WorkMenu` becomes `SideMenu` and shows in both tabs: in Projects each shelf links to its filtered list (`?category=`, marked while the filter is on) with its projects under it by a new `short` name. The rule that only a tab with parts gets a side menu is replaced: any tab that holds more than one page gets one. |
 
 ## 10. Parked and open
 
@@ -988,3 +993,4 @@ Design section. It is indexed by GitHub search and reachable by URL, which is th
 | 2026-10-16 | Replace, don't blur, a name with few possible answers: §6.2 the redaction and never-ship bullets; one §9 row. |
 | 2026-10-22 | The target role and the open door: one §9 row. |
 | 2026-10-22 | The header's tabs and the Work side menu replace the endpoint rail: §3.1, §3.2, §3.4, §4, §5.3, §5.5, §8.1 rewritten, one §9 row. |
+| 2026-10-22 | Projects shelf by shelf, with a side menu: §3.1, §3.4, §4, §5.2, §8.1 updated, one §9 row. |

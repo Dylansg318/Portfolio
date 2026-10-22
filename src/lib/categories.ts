@@ -8,8 +8,9 @@
  * the thing IS, not what it was built with, so the row stays as short as the
  * number of kinds of work here and only grows when a new kind does.
  *
- * To add one: append to CATEGORIES, give it a label, and file a project under
- * it. The schema takes the id from this list, so a typo in frontmatter fails
+ * The order here is the order the shelves appear in, on /projects, in its API
+ * and in the side menu. To add one: append to CATEGORIES, give it a label, and
+ * file a project under it. The schema takes the id from this list, so a typo in frontmatter fails
  * the build, and a category with nothing filed under it never renders a tab.
  *
  * This module imports nothing so `content.config.ts` can import it — the

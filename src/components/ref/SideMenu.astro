@@ -1,0 +1,53 @@
+---
+import { getChildren, getSection, hrefOf, type Project, type Section } from '../../lib/content';
+import { categoryLabel } from '../../lib/categories';
+import { PROJECT_CATEGORIES } from '../../lib/api';
+import { endpoint } from '../../lib/endpoints';
+
+/**
+ * The side menu inside a tab, the way an API's docs list the pages of the
+ * section you're in: an overview, then each group with its pages under it.
+ * In Work a group is a piece of work and its parts; in Projects it is a shelf
+ * (Tools, Games, Course) and what's on it, so every project is one click from
+ * any page in the tab. A column from 1280px; below that the index pages list
+ * the same things themselves and the back link leads up.
+ *
+ * `current` is the page's own address, so the entry for it is marked. A
+ * shelf links to the list filtered to it; /projects marks it while that
+ * filter is on.
+ */
+interface Props {
+  section: Section;
+  current: string;
+}
+const { section, current } = Astro.props;
+
+const tab = endpoint(section).page;
+const pages = await getSection(section);
+const name = (p: Project) => p.data.short ?? p.data.title;
+const groups =
+  section === 'work'
+    ? await Promise.all(
+        pages.map(async (p) => ({
+          href: hrefOf(p),
+          label: name(p),
+          items: (await getChildren(p.id)).map((c) => ({ href: hrefOf(c, p), label: name(c) })),
+        })),
+      )
+    : PROJECT_CATEGORIES.map((c) => ({
+        href: `${tab.href}?category=${c}`,
+        label: categoryLabel[c],
+        items: pages.filter((p) => p.data.category === c).map((p) => ({ href: hrefOf(p), label: name(p) })),
+      })).filter((g) => g.items.length > 0);
+const here = (href: string) => (href === current ? 'page' : undefined);
+---
+<nav class="side" aria-label={tab.label}>
+  <p class="cap">{tab.label}</p>
+  <a href={tab.href} aria-current={here(tab.href)}>Overview</a>
+  {groups.map((g) => (
+    <>
+      <a href={g.href} class="top" aria-current={here(g.href)}>{g.label}</a>
+      {g.items.map((c) => <a href={c.href} class="sub" aria-current={here(c.href)}>{c.label}</a>)}
+    </>
+  ))}
+</nav>

@@ -1,5 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
+import SideMenu from '../../components/ref/SideMenu.astro';
 import Row from '../../components/ref/Row.astro';
 import Crumb from '../../components/ref/Crumb.astro';
 import Console from '../../components/ref/Console.astro';
@@ -10,15 +11,20 @@ import { PROJECT_CATEGORIES, projectList } from '../../lib/api';
 
 // Everything that isn't work; the ERP and the AI sessions are on /work.
 const projects = await getSection('projects');
-// The tabs are the categories with something filed under them, in the order
-// src/lib/categories.ts declares — not the stack, which grew one chip per
-// library until the row was a keyword cloud. An empty shelf gets no tab.
-const categories = PROJECT_CATEGORIES.filter((c) => projects.some((p) => p.data.category === c));
+// The shelves are the categories with something filed under them, in the
+// order src/lib/categories.ts declares — not the stack, which grew one chip
+// per library until the row was a keyword cloud. Each is a tab and a heading
+// over its own projects; an empty shelf gets neither.
+const shelves = PROJECT_CATEGORIES.map((category) => ({
+  category,
+  projects: projects.filter((p) => p.data.category === category),
+})).filter((s) => s.projects.length > 0);
 
 const list = await projectList();
 ---
 <Base title="Projects" description="What I've built on my own time, written up: the problem, what was non-obvious, and what came out of it.">
   <div class="ref">
+    <SideMenu section="projects" current="/projects" />
     <div class="ref-main">
       <Row id="projects">
         <Crumb method="GET" path="/api/projects" />
@@ -28,43 +34,47 @@ const list = await projectList();
           came out of it, in the same places every time, so you can compare them.
         </p>
 
-        {categories.length > 1 && (
+        {shelves.length > 1 && (
           <nav class="cats" aria-label="Filter by kind of project">
             <ul role="group">
               <li><button type="button" data-filter="all" aria-pressed="true">All</button></li>
-              {categories.map((category) => (
+              {shelves.map(({ category }) => (
                 <li><button type="button" data-filter={category} aria-pressed="false">{categoryLabel[category]}</button></li>
               ))}
             </ul>
           </nav>
         )}
 
-        <div class="items" id="project-list">
-          {projects.map((project) => {
-            const { data } = project;
-            return (
-              <article class:list={['item', data.cover && 'has-pic']} data-category={data.category}>
-                <div>
-                  <h3><a href={hrefOf(project)}>{data.title}</a></h3>
-                  <p class="status">
-                    {statusLabel[data.status]} · {data.date.getFullYear()}{data.role && ` · ${data.role}`}
-                  </p>
-                  <p class="t">
-                    <span class="only-plain">{data.plainBlurb ?? data.blurb}</span>
-                    <span class="only-eng">{data.blurb}</span>
-                  </p>
-                  <p class="more"><a href={hrefOf(project)} class="c-link">Read the project <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a></p>
-                </div>
-                {data.cover && (
-                  <div class:list={['pic', data.cover.width === data.cover.height && 'sq']}>
-                    <Cover cover={data.cover} alt={data.coverAlt ?? ''} widths={[320, 640]} sizes="(max-width: 640px) 100vw, 208px" />
-                  </div>
-                )}
-              </article>
-            );
-          })}
-        </div>
-        <p id="project-empty" class="t" hidden>Nothing filed under this category yet.</p>
+        {shelves.map(({ category, projects }) => (
+          <section class="shelf" data-shelf={category}>
+            <h2 class="mt">{categoryLabel[category]}</h2>
+            <div class="items">
+              {projects.map((project) => {
+                const { data } = project;
+                return (
+                  <article class:list={['item', data.cover && 'has-pic']}>
+                    <div>
+                      <h3><a href={hrefOf(project)}>{data.title}</a></h3>
+                      <p class="status">
+                        {statusLabel[data.status]} · {data.date.getFullYear()}{data.role && ` · ${data.role}`}
+                      </p>
+                      <p class="t">
+                        <span class="only-plain">{data.plainBlurb ?? data.blurb}</span>
+                        <span class="only-eng">{data.blurb}</span>
+                      </p>
+                      <p class="more"><a href={hrefOf(project)} class="c-link">Read the project <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a></p>
+                    </div>
+                    {data.cover && (
+                      <div class:list={['pic', data.cover.width === data.cover.height && 'sq']}>
+                        <Cover cover={data.cover} alt={data.coverAlt ?? ''} widths={[320, 640]} sizes="(max-width: 640px) 100vw, 208px" />
+                      </div>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        ))}
 
         <Console slot="code" id="projects" endpoint="projects" body={list} />
       </Row>
@@ -76,25 +86,22 @@ const list = await projectList();
 <script>
   // The tabs, the ?category= in the address, and the console's `category`
   // parameter are one control in three places. Any of them changing moves
-  // the other two. Vanilla — no framework runtime on the index page.
+  // the other two, and the side menu marks the shelf that's showing.
+  // Vanilla — no framework runtime on the index page.
   document.addEventListener('astro:page-load', () => {
     const buttons = [...document.querySelectorAll<HTMLButtonElement>('[data-filter]')];
     if (buttons.length === 0) return;
-    const cards = [...document.querySelectorAll<HTMLElement>('#project-list > [data-category]')];
-    const empty = document.getElementById('project-empty');
+    const shelves = [...document.querySelectorAll<HTMLElement>('[data-shelf]')];
+    const side = [...document.querySelectorAll<HTMLAnchorElement>('.side a[href^="/projects"]:not([href^="/projects/"])')];
     const consoleEl = document.querySelector<HTMLElement>('.cx[data-key="projects"]');
     const known = new Set(buttons.map((b) => b.dataset.filter!));
 
     const apply = (filter: string, { push = true, tellConsole = true } = {}) => {
       const f = known.has(filter) ? filter : 'all';
       buttons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filter === f)));
-      let shown = 0;
-      cards.forEach((card) => {
-        const match = f === 'all' || card.dataset.category === f;
-        card.hidden = !match;
-        if (match) shown++;
-      });
-      if (empty) empty.hidden = shown > 0;
+      shelves.forEach((s) => (s.hidden = f !== 'all' && s.dataset.shelf !== f));
+      const mark = f === 'all' ? '/projects' : `/projects?category=${f}`;
+      side.forEach((a) => (a.getAttribute('href') === mark ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
       if (push) {
         const url = new URL(location.href);
         if (f === 'all') url.searchParams.delete('category');

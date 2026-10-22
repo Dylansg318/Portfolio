@@ -292,11 +292,11 @@
   .m.get { background: var(--get-bg); color: var(--get); }
   .m.post { background: var(--post-bg); color: var(--post); }
 
-  /* ---- the reference grid: rows, and the Work side menu -----------------
+  /* ---- the reference grid: rows, and the side menu ----------------------
      The site's navigation is the header's tabs. A page is a stack of rows;
-     inside Work, where pages have parts, a side menu sits beside the rows as
-     a 15rem sticky column from 1280px (WorkMenu.astro) and is left out
-     below that, where the page lists its parts itself. ---- */
+     inside Work and Projects a side menu sits beside the rows as a 15rem
+     sticky column from 1280px (SideMenu.astro) and is left out below that,
+     where the index pages list the same things themselves. ---- */
   .ref {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -552,6 +552,8 @@
   .skills dd { margin: 0; color: var(--ink); }
 
   .cats { margin-top: 1.5rem; }
+  /* A shelf on /projects: its heading sits on its first project's hairline. */
+  .shelf .items { margin-top: 1rem; }
   .cats ul { display: flex; flex-wrap: wrap; gap: 0.25rem; border-bottom: 1px solid var(--border); }
   .cats a, .cats button {
     display: inline-block;

@@ -1,5 +1,6 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
 import type { ProjectData } from '../content.config';
+import { CATEGORIES } from './categories';
 
 /**
  * Astro's generated `CollectionEntry` types `data` as `any` in this project
@@ -20,11 +21,20 @@ export type Project = Omit<CollectionEntry<'projects'>, 'data'> & {
  * index call this same function, so the exclusion cannot drift apart.
  *
  * Drafts stay visible in `astro dev` so you can write and preview them.
+ *
+ * Shelf first, in the order categories.ts declares, then `featured`, then
+ * date — so /projects reads Tools, Games, Course instead of interleaving
+ * them, and its list, GET /api/projects and previous/next all walk the same
+ * order. Subsystems have no shelf of their own and only ever sort among
+ * their siblings.
  */
+const shelf = (p: Project) => (p.data.category ? CATEGORIES.indexOf(p.data.category) : -1);
 const byRank = (a: Project, b: Project) =>
-  b.data.featured !== a.data.featured
-    ? b.data.featured - a.data.featured
-    : b.data.date.getTime() - a.data.date.getTime();
+  shelf(a) !== shelf(b)
+    ? shelf(a) - shelf(b)
+    : b.data.featured !== a.data.featured
+      ? b.data.featured - a.data.featured
+      : b.data.date.getTime() - a.data.date.getTime();
 
 /**
  * EVERY published project, parents and subsystems alike.

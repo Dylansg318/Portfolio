@@ -40,7 +40,8 @@ const projectSchema = ({ image }: SchemaContext) =>
      * to the generated text card.
      */
     shareCard: image().optional(),
-    /** Manual ordering on the index; higher sorts first, then by date. */
+    /** Order on its shelf; higher sorts first, then by date. Listings go
+     *  shelf by shelf first (byRank in lib/content.ts). */
     featured: z.number().default(0),
 
     /**
@@ -65,7 +66,7 @@ const projectSchema = ({ image }: SchemaContext) =>
      */
     category: z.enum(CATEGORIES).optional(),
 
-    /** The name in the Work side menu and the breadcrumb, one to three
+    /** The name in the side menu and the breadcrumb, one to three
      *  words. Left out, the title is used. */
     short: z.string().max(24).optional(),
 

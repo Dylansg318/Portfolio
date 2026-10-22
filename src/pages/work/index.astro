@@ -1,6 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
-import WorkMenu from '../../components/ref/WorkMenu.astro';
+import SideMenu from '../../components/ref/SideMenu.astro';
 import Row from '../../components/ref/Row.astro';
 import Crumb from '../../components/ref/Crumb.astro';
 import Console from '../../components/ref/Console.astro';
@@ -23,7 +23,7 @@ const list = await workList();
 ---
 <Base title="Work" description="What I built at RMH3 Dental Supply, where I'm the only engineer: the ERP the company runs on, and the AI coding setup I build it with.">
   <div class="ref">
-    <WorkMenu current="/work" />
+    <SideMenu section="work" current="/work" />
     <div class="ref-main">
       <Row id="work">
         <Crumb method="GET" path="/api/work" />

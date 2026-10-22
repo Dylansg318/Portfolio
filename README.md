@@ -57,7 +57,7 @@ learned:
 
 # optional
 role: solo
-featured: 10            # higher sorts first on the index
+featured: 10            # higher sorts first on its shelf
 metrics:
   - { label: orders/day, value: "1,200" }
 links:
@@ -180,8 +180,9 @@ Work, Projects, About, Resume, then the API reference and Contact. Every page
 is built from the pieces in `src/components/ref/` — `Row` (prose left,
 response right), `Crumb` (the method badge and path above a heading),
 `Console` (the try-it box, rendered with the endpoint's real response at build
-time and made live by `src/scripts/console.ts`) and `WorkMenu` (the side menu
-inside Work, listing each piece of work and its parts).
+time and made live by `src/scripts/console.ts`) and `SideMenu` (the side menu
+inside Work and Projects, listing each piece of work and its parts, or each shelf
+and its projects).
 
 The reasoning — the palette and why it's spent the way it is, the two writing
 registers, the fixed shape of every page, the decision log, and the checklists

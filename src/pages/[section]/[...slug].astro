@@ -2,7 +2,7 @@
 import { render } from 'astro:content';
 import type { MarkdownHeading } from 'astro';
 import Base from '../../layouts/Base.astro';
-import WorkMenu from '../../components/ref/WorkMenu.astro';
+import SideMenu from '../../components/ref/SideMenu.astro';
 import Row from '../../components/ref/Row.astro';
 import Crumb from '../../components/ref/Crumb.astro';
 import Console from '../../components/ref/Console.astro';
@@ -71,7 +71,7 @@ const sections = (headings as MarkdownHeading[]).filter((h) => h.depth === 2);
   ogImage={`/og/projects/${project.id}.png`}
 >
   <div class="ref">
-    {section === 'work' && <WorkMenu current={here} />}
+    <SideMenu section={section} current={here} />
     <article class="ref-main">
       <Row id="project">
         <!-- A subsystem says what it is part of. Landing on the repricing
