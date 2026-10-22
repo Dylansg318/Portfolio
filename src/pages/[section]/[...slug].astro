@@ -2,7 +2,7 @@
 import { render } from 'astro:content';
 import type { MarkdownHeading } from 'astro';
 import Base from '../../layouts/Base.astro';
-import Rail from '../../components/ref/Rail.astro';
+import WorkMenu from '../../components/ref/WorkMenu.astro';
 import Row from '../../components/ref/Row.astro';
 import Crumb from '../../components/ref/Crumb.astro';
 import Console from '../../components/ref/Console.astro';
@@ -14,40 +14,51 @@ import Takeaway from '../../components/mdx/Takeaway.astro';
 import PlainOnly from '../../components/mdx/PlainOnly.astro';
 import EngOnly from '../../components/mdx/EngOnly.astro';
 import Cover from '../../components/ui/Cover.astro';
-import { getAllProjects, getChildren, getProjectNeighbours, statusLabel } from '../../lib/content';
+import { getAllProjects, getChildren, getProjectNeighbours, hrefOf, sectionOf, statusLabel } from '../../lib/content';
 import { projectById } from '../../lib/api';
 
 // Routes come from getAllProjects, not getProjects: subsystems are hidden from
 // LISTINGS, not from the site. The draft exclusion still gates route generation
 // here — filtering only the listing would leave drafts live at their own URL.
+// The first segment is the tab the project sits under, /work or /projects
+// (sectionOf); a subsystem sits under its parent's.
 export async function getStaticPaths() {
   const projects = await getAllProjects();
-  return projects.map((project) => ({
-    params: { slug: project.id },
-    props: { project },
-  }));
+  return projects.map((project) => {
+    const parent = projects.find((p) => p.id === project.data.parent);
+    return {
+      params: { section: sectionOf(project, parent), slug: project.id },
+      props: { project, parent },
+    };
+  });
 }
 
-const { project } = Astro.props;
+const { project, parent } = Astro.props;
 const { data } = project;
 const { Content, headings } = await render(project);
 const { prev, next } = await getProjectNeighbours(project.id);
 
 // A subsystem shows where it belongs; a parent shows what it contains.
 const all = await getAllProjects();
-const parent = data.parent ? all.find((p) => p.id === data.parent) : undefined;
 const children = await getChildren(project.id);
-const ids = all.map((p) => ({ value: p.id, label: p.id }));
+const section = sectionOf(project, parent);
+const here = hrefOf(project, parent);
+const tab = section === 'work' ? { href: '/work', label: 'Work', all: 'All work' } : { href: '/projects', label: 'Projects', all: 'All projects' };
+// The console answers from this page's own tab: GET /api/work/{id} or GET /api/projects/{id}.
+const ep = section === 'work' ? 'work-item' : 'project';
+const ids = all
+  .filter((p) => sectionOf(p, all.find((x) => x.id === p.data.parent)) === section)
+  .map((p) => ({ value: p.id, label: p.id }));
 
 // Components available inside the MDX body.
 const components = { Demo, CodeFile, Video, Figure, Takeaway, PlainOnly, EngOnly };
 
 // The responses at rest — from the same functions the Worker route calls.
-const full = await projectById(project.id);
+const full = await projectById(project.id, section);
 const contractFields = data.aiNote ? ['problem', 'unique', 'ai'] : ['problem', 'unique'];
-const contract = await projectById(project.id, contractFields);
-const learned = await projectById(project.id, ['learned']);
-const inside = children.length > 0 ? await projectById(project.id, ['subsystems']) : null;
+const contract = await projectById(project.id, section, contractFields);
+const learned = await projectById(project.id, section, ['learned']);
+const inside = children.length > 0 ? await projectById(project.id, section, ['subsystems']) : null;
 
 const playable = data.demo.kind !== 'none' && data.demo.fullscreen;
 const when = data.date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
@@ -60,7 +71,7 @@ const sections = (headings as MarkdownHeading[]).filter((h) => h.depth === 2);
   ogImage={`/og/projects/${project.id}.png`}
 >
   <div class="ref">
-    <Rail current="project" hrefs={{ project: `/projects/${project.id}` }} paths={{ project: `/api/work/${project.id}` }} />
+    {section === 'work' && <WorkMenu current={here} />}
     <article class="ref-main">
       <Row id="project">
         <!-- A subsystem says what it is part of. Landing on the repricing
@@ -69,14 +80,14 @@ const sections = (headings as MarkdownHeading[]).filter((h) => h.depth === 2);
              something larger. -->
         {parent ? (
           <nav class="back" aria-label="Breadcrumb">
-            <a href="/projects">All work</a> <span class="quiet">/</span>
-            <a href={`/projects/${parent.id}`}>{parent.data.title.split(/,| that /)[0]}</a> <span class="quiet">/</span>
-            <span class="quiet">{project.id.split('/').pop()!.replace(/-/g, ' ')}</span>
+            <a href={tab.href}>{tab.label}</a> <span class="quiet">/</span>{' '}
+            <a href={hrefOf(parent)}>{parent.data.short ?? parent.data.title}</a> <span class="quiet">/</span>{' '}
+            <span class="quiet">{data.short ?? data.title}</span>
           </nav>
         ) : (
-          <p class="back"><a href="/projects">← All work</a></p>
+          <p class="back"><a href={tab.href}>← {tab.all}</a></p>
         )}
-        <Crumb method="GET" path={`/api/work/${project.id}`} />
+        <Crumb method="GET" path={`/api/${section}/${project.id}`} />
         <h1 class="page">{data.title}</h1>
         <p class="status">
           {statusLabel[data.status]} · <time datetime={data.date.toISOString()}>{when}</time>{data.role && ` · ${data.role}`}
@@ -131,7 +142,7 @@ const sections = (headings as MarkdownHeading[]).filter((h) => h.depth === 2);
              gradient standing in for a screenshot is what makes a portfolio
              look padded. -->
 
-        <Console slot="code" id="project" endpoint="project" params={{ id: project.id }} options={{ id: ids }} body={full} />
+        <Console slot="code" id="project" endpoint={ep} params={{ id: project.id }} options={{ id: ids }} body={full} />
       </Row>
 
       <!-- THE CONTRACT: rendered identically on every project, so a reader
@@ -150,7 +161,7 @@ const sections = (headings as MarkdownHeading[]).filter((h) => h.depth === 2);
         <Console
           slot="code"
           id="contract"
-          endpoint="project"
+          endpoint={ep}
           params={{ id: project.id, fields: contractFields.join(',') }}
           options={{ id: ids }}
           body={contract}
@@ -167,7 +178,7 @@ const sections = (headings as MarkdownHeading[]).filter((h) => h.depth === 2);
           <ul class="subs">
             {children.map((child) => (
               <li>
-                <a href={`/projects/${child.id}`}>{child.data.title}</a>
+                <a href={hrefOf(child, project)}>{child.data.title}</a>
                 <p>
                   <span class="only-plain">{child.data.plainBlurb ?? child.data.blurb}</span>
                   <span class="only-eng">{child.data.blurb}</span>
@@ -178,7 +189,7 @@ const sections = (headings as MarkdownHeading[]).filter((h) => h.depth === 2);
           <Console
             slot="code"
             id="inside"
-            endpoint="project"
+            endpoint={ep}
             params={{ id: project.id, fields: 'subsystems' }}
             options={{ id: ids }}
             body={inside}
@@ -214,14 +225,14 @@ const sections = (headings as MarkdownHeading[]).filter((h) => h.depth === 2);
         </ol>
         {(prev || next) && (
           <nav class="prevnext" aria-label="More projects">
-            {prev ? <a href={`/projects/${prev.id}`}>← {prev.data.title}</a> : <span />}
-            {next && <a href={`/projects/${next.id}`}>{next.data.title} →</a>}
+            {prev ? <a href={hrefOf(prev, parent)}>← {prev.data.title}</a> : <span />}
+            {next && <a href={hrefOf(next, parent)}>{next.data.title} →</a>}
           </nav>
         )}
         <Console
           slot="code"
           id="learned"
-          endpoint="project"
+          endpoint={ep}
           params={{ id: project.id, fields: 'learned' }}
           options={{ id: ids }}
           body={learned}

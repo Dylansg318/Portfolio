@@ -186,11 +186,12 @@ so the dark column runs unbroken from the header to the footer. In the light the
 prose column is white; in the dark theme it is GitHub's near-black and the response column goes a step
 darker than it, so the two columns still read as two (§3.6).
 
-Widths: below 1024px the response stacks under its prose and the rail is a strip of
-names under the header; from 1024px prose and response sit side by side with the
-response at 24rem, so the prose keeps about sixty characters on a laptop; from 1280px
-the rail becomes a 15rem sticky column on the left and the response widens to 30rem;
-from 1536px the response is 36rem.
+Widths: below 1024px the response stacks under its prose and the header's tabs are a
+strip under the bar; from 1024px prose and response sit side by side with the response
+at 24rem, so the prose keeps about sixty characters on a laptop, and the tabs move into
+the bar; from 1280px the response widens to 30rem, the prose sits centred in what is
+left, and inside Work a 15rem side menu takes the left edge; from 1536px the response
+is 36rem.
 
 | Token | Light | Dark | Role |
 |---|---|---|---|
@@ -213,17 +214,17 @@ from 1536px the response is 36rem.
 
 | Token | Light | Dark | Role |
 |---|---|---|---|
-| `--accent` | `#5e56fb` | `#9d97ff` | The accent **as text**: links, the active rail entry's stripe, the active tab's underline, focus rings. A hair darker than the mock's `#635bff` in light so a link on the quiet fill clears 4.5:1; lightened in dark so it reads on the dark ground. |
+| `--accent` | `#5e56fb` | `#9d97ff` | The accent **as text**: links, the open header tab and its underline, the current side-menu entry's stripe, the active filter tab's underline, focus rings. A hair darker than the mock's `#635bff` in light so a link on the quiet fill clears 4.5:1; lightened in dark so it reads on the dark ground. |
 | `--accent-hover` | `#5249e6` | `#b3aeff` | Hover state of accent text. |
 | `--accent-fill` / `--accent-fill-hover` | `#5e56fb` / `#5249e6` | same | The accent **as a fill**: the primary button, Send, the skip link, a game's Start. The same in both themes because white text clears 4.5:1 on it and would not on the lightened text accent — which is why the two are two tokens. |
 | `--accent-ink` | `#ffffff` | same | Text on `--accent-fill`. |
-| `--accent-wash` | `#eeedff` | `#262c36` | Selection, the active rail entry, the active register tab (`--tab-active` is the same value). A purple wash in light; GitHub's neutral selected grey in dark, where the accent stripe carries the colour. |
+| `--accent-wash` | `#eeedff` | `#262c36` | Selection, the current side-menu entry, the active register tab (`--tab-active` is the same value). A purple wash in light; GitHub's neutral selected grey in dark, where the accent stripe carries the colour. |
 | `--get` / `--get-bg` | `#0a6b3f` / `#e2f5ec` | `#5fd39c` / `#12312a` | The GET badge. Semantic, not the accent. |
 | `--post` / `--post-bg` | `#4b43d6` / `#eeedff` | `#b4afff` / `#272b58` | The POST badge. |
 | `--ok` / `--warn` / `--danger` | `#0a6b3f` / `#8a5a00` / `#b42318` | `#4fd08f` / `#e5b04a` / `#f8817a` | Status text on the prose side. |
 
 **Method badges are the site's one decorative device**, and they decorate nothing: a
-badge says which verb a row or a rail entry is. The old eyebrow style still exists for the
+badge says which verb a row or an endpoint is. The old eyebrow style still exists for the
 help desk's chrome and is not used on a reference page.
 
 **Generated cover art is gone.** A project with no screenshot has no picture, on a card
@@ -259,8 +260,8 @@ captions 0.6875rem uppercase with `0.1em` tracking.
 |---|---|---|
 | `--container-reading` | `48rem` | The prose column's maximum width, padding included (3.5rem a side from 1280px). |
 | `--container-wide` | `80rem` | The reading-mode hint's shell; nothing else is boxed — the grid is full-bleed. |
-| `.ref` / `.rail` / `.ep` / `.ep-prose` / `.ep-code` | The grid, the endpoint rail, one row, its prose, its response | The page grammar in CSS. Every reference page is `.ref` → `.rail` + rows. The rail is the site's one navigation (§4): a page's plain name over the endpoint it is, 15rem wide from 1280px, a strip of the names below that. |
-| `--head-h` | `3.5rem` | The header's height. The rail, the sticky console and every anchor's scroll margin are measured from it, so it changes in one place. |
+| `.ref` / `.side` / `.ep` / `.ep-prose` / `.ep-code` | The grid, the Work side menu, one row, its prose, its response | The page grammar in CSS. Every reference page is `.ref` → rows; inside Work it is `.ref` → `.side` + rows, the side menu a 15rem sticky column from 1280px and absent below it. The site's one navigation is the header's tabs (§4). |
+| `--bar-h` / `--strip-h` / `--head-h` | `3.5rem` / `2.75rem` / both below 1024px, the bar alone from 1024px | The header's bar, the tab strip it grows below 1024px, and its whole height. The side menu, the sticky console, the still frame and every anchor's scroll margin are measured from `--head-h`, so it changes in one place. |
 | `.cx` | radius 8px, 1px `--code-line`, `--code-surface` | The try-it console. Bar (method, path, languages) → parameters → request → Send → response. |
 | `.ep-code .panel` | same surface as `.cx` | Anything else on the dark side: an excerpt, the write-up's map, a static response. Scoped to the column — the help desk has a `.panel` of its own. |
 | `.btn` | radius 6px, padding `0.6rem 1rem`, weight 600 | `.btn-primary` is the accent fill with a soft cast; `.btn-ghost` is a mid border. Presses down 1px. |
@@ -407,24 +408,26 @@ Slack. A demo's `/play` page uses its composed `shareCard` instead (§6).
 
 ## 4. Page grammar
 
-Every reference page is the same object: the **endpoint rail** on the left (the site's
-one navigation, in the API's own terms — six endpoints plus `GET /api`, each under the
-plain name of the page it is), then **rows**. A row is one
+Every reference page is the same object: the header with its **tabs** (the site's one
+navigation, the way an API's docs do it — Work, Projects, About, Resume, then the API
+reference and Contact), then **rows**; inside Work a **side menu** lists the section's
+pages beside them. A row is one
 endpoint: prose on the left, a try-it console on the right rendered with that endpoint's
 real response, and the prose never says a fact the console does not carry. New pages pick
 one of these shapes or add a row to this table.
 
 | Page | Rows | Chrome |
 |---|---|---|
-| `/` | `GET /api/dylan` (the name, the two-register nameplate sentence, the facts list, See the work / Resume / About me) → `GET /api/work` (one at work, one for myself, one on the side, with an excerpt of a real hook beside the console) → `GET /api/experience` (the three jobs) → `GET /api/away-from-work` (the first program, *Play here* in the side panel; the help desk) → `POST /api/contact` (what I'm looking for; the console sends). Person first, then the work, then the path, then the rest of life, then how to reach me. With JavaScript the five rows are one still frame (§3.5), with where-you-are (dots, *2 of 5 · About next*) at the foot of the prose column and, below 1024px, the response drawer. | Full |
-| `/projects` | `GET /api/work` (h1, category tabs bound to `?category=` and to the console's parameter, every top-level project as an item row with its thumbnail where one exists) → `GET /api/work/internal-erp?fields=subsystems` (Inside the ERP). | Full |
-| `/projects/<slug>` | Fixed order, every time: back link or breadcrumb → `GET /api/work/{id}` (status · date · role, `h1`, the two-register blurb, stack chips, Play / Source / External write-up, the metrics list, the cover) → `?fields=problem,unique,ai` (**The problem**, **What was unique**, **Where AI fit in**) → `?fields=subsystems` (**Inside it**, when there are parts) → the write-up body, with its own section map in the dark column → `?fields=learned` (**What I learned**, previous / next within the same set). | Full |
+| `/` | `GET /api/dylan` (the name, the two-register nameplate sentence, the facts list, See the work / Resume / About me) → `GET /api/work` (two at work, one on the side, All work and All projects, with an excerpt of a real hook beside the console) → `GET /api/experience` (the three jobs) → `GET /api/away-from-work` (the first program, *Play here* in the side panel; the help desk) → `POST /api/contact` (what I'm looking for; the console sends). Person first, then the work, then the path, then the rest of life, then how to reach me. With JavaScript the five rows are one still frame (§3.5), with where-you-are (dots, *2 of 5 · About next*) at the foot of the prose column and, below 1024px, the response drawer. | Full |
+| `/work` | What I built at my job. `GET /api/work` (h1, the ERP and the AI coding sessions as item rows) → one `GET /api/work/{id}?fields=subsystems` row per piece of work with parts, listing them (below 1280px this is how they're found; from 1280px the side menu lists them too). | Full, side menu |
+| `/projects` | Everything else. `GET /api/projects` (h1, category tabs — Tools, Games, Course — bound to `?category=` and to the console's parameter, every top-level project as an item row with its thumbnail where one exists). | Full |
+| `/work/<slug>`, `/projects/<slug>` | One route, `/[section]/[...slug]`; the section is the project's tab (`sectionOf`, a part sits with its parent), and `hrefOf` is the one place an address is built. Fixed order, every time: back link, or for a part a breadcrumb of short names (Work / The ERP / Repricing) → `GET /api/{section}/{id}` (status · date · role, `h1`, the two-register blurb, stack chips, Play / Source / External write-up, the metrics list, the cover) → `?fields=problem,unique,ai` (**The problem**, **What was unique**, **Where AI fit in**) → `?fields=subsystems` (**Inside it**, when there are parts) → the write-up body, with its own section map in the dark column → `?fields=learned` (**What I learned**, previous / next within the same set — a part's siblings, or the other projects under the same tab). | Full; under Work, the side menu with this page marked |
 | `/about` | `GET /api/experience` (the short version, the stops, the jobs bound to `?since=`, education) → `GET /api/work/internal-erp?fields=problem,unique` (What it ran on before, Who I work with) → `GET /api/dylan?fields=principles,open_to,looking_for` (How I work, Right now, Off the clock) → `GET /api/resume?fields=skills,certifications` (the toolkit, the facts, Get in touch). | Full |
-| `/resume` | One row: `GET /api/resume`. Rendered from `site.ts`; the print stylesheet hides the rail and the column and is the PDF — one page, US Letter, checked by `pdfinfo`. No phone, no street address, on the page or in the PDF. | Full, hidden in print |
+| `/resume` | One row: `GET /api/resume`. Rendered from `site.ts`; the print stylesheet hides the header and the column and is the PDF — one page, US Letter, checked by `pdfinfo`. No phone, no street address, on the page or in the PDF. | Full, hidden in print |
 | `/contact` | `POST /api/contact` (Say hello, the email, what to include; the console validates for real and hands the message to the mail app) → `GET /api/work/internal-erp?fields=problem,metrics` (the problem I solve, for the owner or office manager who is not hiring an engineer). | Full |
 | `/desk` | Help Desk mode: the whole portfolio re-served as a ticket queue. Own name, own mark, own light palette, no vendor branding. One static page, panels switched by hash; without JS the panels stack and it reads as a document. Chrome is played straight, content is not. | Bare, own router |
 | `/play/<slug>` | **The demo on its own, as a page you can send someone.** The game is the first and only thing on the first screen; the credit, the write-up link (*How it works*), the rest of the work and a Share button sit in a footer under it. Indexable, in the sitemap, and its social card is the project's real cover art. | Bare |
-| `/reference` | One row: `GET /api` (what this site answers, in both registers; every endpoint as a hairline row — its crumb, the page whose row it is, its description, its parameters with their allowed values and its source — rendered from `endpoints.ts`, the same list the console beside it returns). The rail's *Index* entry. | Full |
+| `/reference` | One row: `GET /api` (what this site answers, in both registers; every endpoint as a hairline row — its crumb, the page whose row it is, its description, its parameters with their allowed values and its source — rendered from `endpoints.ts`, the same list the console beside it returns). The header's *API reference* link (the footer's on a phone). | Full |
 | `/404` | One row: the requested path as a crumb, a short sentence, and the API's own `404 Not Found` body in the dark column. | Full |
 | `/api`, `/api/*` | Not pages: JSON, from the Worker. See §5.5. The index has a page, `/reference`. | — |
 
@@ -442,23 +445,22 @@ Recurring grammar inside pages:
 - **Rows for everything; a thumbnail only where there is a real one.** An item is a
   hairline-separated row; a project with a screenshot gets it in a 13rem column. There
   are no cards and no generated art.
-- **The same fact once per page.** The rail lists the endpoints once; the crumb above
-  each row names the one the row is. The header carries the name — where a reference
+- **The same fact once per page.** The crumb above each row names the endpoint the row
+  is; nothing else on the page repeats it. The header carries the name — where a reference
   puts its product name, and the way home from anywhere — which is the one repeat the
   home page's `h1` allows.
-- **One navigation, and it is the rail.** The header held four page links and the rail
-  held the same pages as endpoints, and a visitor could not tell which was the map. The
-  header now holds only the name and the controls (the register switch, the theme
-  toggle, *Get in touch*); the rail is the map, with each entry a page's plain name over
-  its endpoint — Home over `GET /api/dylan`, About over `GET /api/experience` — so a
-  Plain English reader and an engineer read the same list. *One project* sits indented
-  under Work and resolves `{id}` on a project page; *Index* (`GET /api`, the `/reference`
-  page) sits under a hairline. Every entry's name, method, path and page come from
-  `endpoints.ts`, so the rail, `GET /api` and `/reference` cannot disagree about what a
-  page is. Below 1280px the rail is a strip of the five page names under the header, no
-  endpoints and no hamburger: five words fit a phone, and a hamburger for five is a tap
-  the visitor should not have to make. Header labels shorten on a phone (`Dylan`,
-  `Plain` / `Tech`) rather than hide.
+- **One navigation, and it is the header's tabs.** The way an API's docs do it: the
+  name (home), the sections as tabs — Work, Projects, About, Resume — then *API
+  reference* and the one filled button, *Contact*. Each label and address comes from
+  `endpoints.ts`, so the header, `GET /api` and `/reference` cannot disagree about what
+  a page is called. The current tab is accent text over an accent underline. A side
+  menu exists only inside Work, because only Work has pages with parts: Overview, then
+  each piece of work and its parts by their `short` names, the current page marked. It
+  is a second level, not a second map of the same pages: two maps of one set of pages
+  (header links beside the rail, until 2026-09-14) were what a first look couldn't parse.
+  Below 1024px the tabs are a strip under the bar, no hamburger: five words fit a 360px
+  phone, so under 640px Contact joins the strip and *API reference* moves to the footer.
+  Header labels shorten on a phone (`Dylan`, `Plain` / `Tech`) rather than hide.
 - **Every heading level is real.** `h1` once, `h2` per row and per contract section,
   `h3` for items. The crumb is a `p`; nothing is a fake heading.
 
@@ -512,10 +514,12 @@ comment there saying what it is for. The parts that shape the site:
 
 The three ERP subsystems were top-level projects once, and the ERP itself was renamed on
 2026-09-14 — its product name meant nothing to a reader and was one more identifying
-detail in a public repository, so it is now "the internal ERP" at
-`/projects/internal-erp`. `astro.config.mjs` carries a 301 from every old path: the old
-slug, each of its six subsystems (listed by hand — Astro only accepts a dynamic redirect
-whose destination is itself a route pattern), and the three older aliases. Anything
+detail in a public repository, so it is now "the internal ERP". On 2026-10-22 everything
+built at work moved from `/projects` to `/work`, so it is at `/work/internal-erp`.
+`astro.config.mjs` carries a 301 from every old path straight to the current one, in one
+hop: the ERP, the AI coding sessions and each of their parts under `/projects`, the old
+slug and its six subsystems, and the three older aliases (listed by hand — Astro only
+accepts a dynamic redirect whose destination is itself a route pattern). Anything
 already linking to an old URL, a sent résumé, a search result, a message, must still land
 on the write-up. Moving or renaming a project means adding a redirect in the same commit.
 The old name stays in git history; that is not a leak the current tree can fix.
@@ -535,7 +539,8 @@ GitHub link points at, now that the profile is more than two repos.
 
 `/api` is a read-only JSON API over the site's own facts, served by the Worker at
 request time so a query string means something: `GET /api/dylan?view=engineer`,
-`GET /api/work?category=game`, `GET /api/work/{id}?fields=problem,learned`,
+`GET /api/work`, `GET /api/work/{id}?fields=problem,learned`,
+`GET /api/projects?category=game`, `GET /api/projects/{id}`,
 `GET /api/experience?since=2022`, `GET /api/resume?format=pdf`,
 `GET /api/away-from-work?playable=true`, and one write, `POST /api/contact`. `GET /api`
 is the index and describes itself from `src/lib/endpoints.ts` — the same list every
@@ -681,7 +686,9 @@ The reasoning for each lives as a comment next to the code. This table is the in
    `parent:` set if it is part of something already here.
 2. Frontmatter: `title` in the house shape (§2.3), `blurb` ≤160 in Engineer register,
    `plainBlurb` ≤200 in business words, `role`, `status`, `category` (what it *is*:
-   `work`, `tool`, `game` — a new kind is one line in `lib/categories.ts`), `stack`
+   `work` puts it under /work, `tool`, `game`, `course` under /projects — a new kind is
+   one line in `lib/categories.ts`), `short` if it sits under Work (its name in the side
+   menu and the breadcrumb), `stack`
    most-used first, `featured` in the current band order (§5.2), `date`.
 3. The contract: `problem`, `unique`, `learned` (with a number or a specific failure),
    `aiNote` (what was decided, verified, thrown away).
@@ -698,7 +705,8 @@ The reasoning for each lives as a comment next to the code. This table is the in
    in the same commit.
 9. Check: `npm run check` clean, `npm run build` clean, the page read once in each
    register at 390px and 1440px, every console on it showing a real response, and
-   `GET /api/work/<slug>` answering on `wrangler dev`. The social card at
+   `GET /api/work/<slug>` or `GET /api/projects/<slug>`, by its tab, answering on
+   `wrangler dev`. The social card at
    `/og/projects/<slug>.png`.
 10. If any fact on it also appears in `site.ts` or the résumé, change those too,
     regenerate the PDF, commit the PDF with the change.
@@ -893,6 +901,7 @@ reference, §11 still governs which facts may appear.
 | 2026-10-16 | **Two more tools published, the spawner brought up to date, and the résumé follows.** `code/account-switcher/` (a Claude Code profile per account, every account's usage in one list) and `code/zen-browser/` (browser tools inside Zen with the person's own logins) are copied out clean; the public switcher leaves out the command that picked the account with the most usage left, since published it reads as a way around usage limits. `code/fleet-scripts/` now carries the spawner in daily use: background sessions by default, worktrees made one at a time, an `Owns:` list per brief, a startup check, with the 26-slice run's numbers in its README. The daily-workflow page gains a capture of the Sessions panel, every name and status line replaced and blurred in the browser before capture, and `Figure` gains `narrow` so a side-panel capture shows at the width it was taken. The résumé's last ERP bullet and the fleet project line drop consequence-triggered review for the merge-back check, and the excerpt line counts sixteen modules; the PDF was regenerated and is still one page. `public/robots.txt` names the sitemap. |
 | 2026-10-16 | **Checked before the site goes to Google.** An audit read the site, the repo and its history the way a stranger who searched Dylan's name would. What it changed: the published write guard in `code/server-utils/` uses generic table names and no longer says where the agent's key is kept, and it now refuses Unicode-escaped names (`U&"\0075sers"` reads as `users` to Postgres and slips past a word match; the ERP got the same fix). `code/device-agent/` uses generic routes and headers, so its README's "endpoints sanitized" is true. The account switcher no longer reads a login token or calls Anthropic: `list` shows the usage Claude Code last saved, with its age. The QuickBooks story says "about nine times" instead of the receivables in dollars. All three ERP screenshots were retaken on the current screens: the floor plan names only the storage areas, the second storefront reads "Storefront B" instead of a blur, and the dashboard's sales-by-manufacturer table is left out. §6.2 says why: a blurred name with few possible answers can be guessed. |
 | 2026-10-22 | **An open door, not a job search.** Dylan isn't job hunting; the site is there to show the work and draw interest. The home page's facts list drops `open_to`, so nothing above the fold asks for anything; `availability` reads "Happy to talk about engineering roles" where it still appears (the desk pill, `GET /api/dylan`); the last row is headed *Get in touch.* and invites rather than asks. The target is software or product engineering, not "backend or full-stack": the ERP commits split about evenly between server and screens, so `mainly.focus` ("Mostly backend") is gone and `site.stack` lists React beside TypeScript, Node and Postgres. The résumé summary's last sentence follows and the PDF was regenerated. The four stats were left at their August figures for Dylan to decide. |
+| 2026-10-22 | **Tabs across the top; the rail goes.** Picked from an audit and a canvas of three options: the API-docs layout, with the name (home), then Work · Projects · About · Resume as tabs, and *API reference* and the one filled *Contact* button on the right. "Work" had meant three things — the rail entry that opened `/projects`, a filter tab on that page, the home page's row — and on the home page the rail's entries jumped within the page while everywhere else they opened pages. Now Work is what I built at my job (the ERP and the AI coding sessions, at `/work`, with a side menu of their parts from 1280px, by a new `short` name) and Projects is everything else (tools, games, and the CYDEO course on a new Course shelf). Write-ups live at `/work/<slug>` or `/projects/<slug>` from one route, `hrefOf` builds every address, and the ten old `/projects/…` work addresses 301 to the new ones in one hop. The API follows: `GET /api/work` lists work only, `GET /api/projects?category=` the rest, and each `{id}` endpoint answers its own tab's ids, with a 404 that names the other. Below 1024px the tabs are a strip under the bar that fits a 360px phone without fading or scrolling. Separately, the résumé PDF's two project links pointed at `localhost:4399`, the print server; they are absolute now and the PDF was regenerated. |
 
 ## 10. Parked and open
 
@@ -978,3 +987,4 @@ Design section. It is indexed by GitHub search and reachable by URL, which is th
 | 2026-10-16 | §5.4 counts sixteen excerpts; one §9 row. |
 | 2026-10-16 | Replace, don't blur, a name with few possible answers: §6.2 the redaction and never-ship bullets; one §9 row. |
 | 2026-10-22 | The target role and the open door: one §9 row. |
+| 2026-10-22 | The header's tabs and the Work side menu replace the endpoint rail: §3.1, §3.2, §3.4, §4, §5.3, §5.5, §8.1 rewritten, one §9 row. |

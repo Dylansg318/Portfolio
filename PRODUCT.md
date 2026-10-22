@@ -78,8 +78,9 @@ switch; plain is the default and is what crawlers and no-JS readers get.
   one blue-violet accent, method badges. Adopted 2026-09-14 from mockup C of three
   (the interview, release notes, API reference) after Dylan's steer that the world had
   to be the one he is moving into — software engineering — not the retail and shipping
-  one the first roll dealt. Every page is an endpoint rail plus rows, and every row's
-  console answers from a real read-only API at `/api/`.
+  one the first roll dealt. The header's tabs (Work, Projects, About, Resume) are the
+  navigation, as in an API's docs; every page is rows, and every row's console answers
+  from a real read-only API at `/api/`.
 
 ## Evidence on Hand
 

@@ -1,6 +1,5 @@
 ---
 import Base from '../layouts/Base.astro';
-import Rail from '../components/ref/Rail.astro';
 import Row from '../components/ref/Row.astro';
 import Crumb from '../components/ref/Crumb.astro';
 import Console from '../components/ref/Console.astro';
@@ -17,11 +16,10 @@ const contactAtRest = {
   subject: 'Hello from your portfolio',
   message: '(waiting for your message)',
 };
-const erp = await projectById('internal-erp', ['problem', 'metrics']);
+const erp = await projectById('internal-erp', 'work', ['problem', 'metrics']);
 ---
 <Base title="Contact" description={`Get in touch with ${site.name} — email, GitHub, resume.`}>
   <div class="ref">
-    <Rail current="contact" />
     <div class="ref-main">
       <Row id="contact">
         <Crumb method="POST" path="/api/contact" />
@@ -70,7 +68,7 @@ const erp = await projectById('internal-erp', ['problem', 'metrics']);
           That's the problem I've spent the last year solving for a dental distributor: orders
           from six websites that never agreed, prices updated by hand every morning, books that
           had to be reconciled at the end of every shift, a warehouse on pen and paper. It now
-          runs in <a href="/projects/internal-erp">one system</a>, orders have roughly doubled,
+          runs in <a href="/work/internal-erp">one system</a>, orders have roughly doubled,
           and nobody was added to operations to handle it.
         </p>
         <p class="t">
@@ -87,7 +85,7 @@ const erp = await projectById('internal-erp', ['problem', 'metrics']);
         <Console
           slot="code"
           id="erp"
-          endpoint="project"
+          endpoint="work-item"
           params={{ id: 'internal-erp', fields: 'problem,metrics' }}
           options={{ id: [{ value: 'internal-erp', label: 'internal-erp' }] }}
           body={erp}

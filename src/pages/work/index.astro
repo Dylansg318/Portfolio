@@ -1,0 +1,91 @@
+---
+import Base from '../../layouts/Base.astro';
+import WorkMenu from '../../components/ref/WorkMenu.astro';
+import Row from '../../components/ref/Row.astro';
+import Crumb from '../../components/ref/Crumb.astro';
+import Console from '../../components/ref/Console.astro';
+import Cover from '../../components/ui/Cover.astro';
+import { getChildren, getSection, hrefOf, statusLabel } from '../../lib/content';
+import { projectById, workList } from '../../lib/api';
+
+// What I built at my job, and the parts each one is written up in. Every
+// other project is on /projects.
+const work = await Promise.all(
+  (await getSection('work')).map(async (project) => {
+    const parts = await getChildren(project.id);
+    // `subsystems` is only on a record that has parts; asking for it otherwise is a 400.
+    const inside = parts.length > 0 ? await projectById(project.id, 'work', ['subsystems']) : null;
+    return { project, parts, inside };
+  }),
+);
+const ids = work.flatMap(({ project, parts }) => [project, ...parts]).map((p) => ({ value: p.id, label: p.id }));
+const list = await workList();
+---
+<Base title="Work" description="What I built at RMH3 Dental Supply, where I'm the only engineer: the ERP the company runs on, and the AI coding setup I build it with.">
+  <div class="ref">
+    <WorkMenu current="/work" />
+    <div class="ref-main">
+      <Row id="work">
+        <Crumb method="GET" path="/api/work" />
+        <h1 class="page">Work</h1>
+        <p class="lead">Everything here I built at RMH3 Dental Supply, where I'm the only engineer.</p>
+
+        <div class="items">
+          {work.map(({ project }) => {
+            const { data } = project;
+            return (
+              <article class:list={['item', data.cover && 'has-pic']}>
+                <div>
+                  <h3><a href={hrefOf(project)}>{data.title}</a></h3>
+                  <p class="status">
+                    {statusLabel[data.status]} · {data.date.getFullYear()}{data.role && ` · ${data.role}`}
+                  </p>
+                  <p class="t">
+                    <span class="only-plain">{data.plainBlurb ?? data.blurb}</span>
+                    <span class="only-eng">{data.blurb}</span>
+                  </p>
+                  <p class="more"><a href={hrefOf(project)} class="c-link">Read the project <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a></p>
+                </div>
+                {data.cover && (
+                  <div class:list={['pic', data.cover.width === data.cover.height && 'sq']}>
+                    <Cover cover={data.cover} alt={data.coverAlt ?? ''} widths={[320, 640]} sizes="(max-width: 640px) 100vw, 208px" />
+                  </div>
+                )}
+              </article>
+            );
+          })}
+        </div>
+
+        <Console slot="code" id="work" endpoint="work" body={list} />
+      </Row>
+
+      <!-- Each piece of work's parts, the same list the side menu carries.
+           Below 1280px there is no side menu, so this is how they're found. -->
+      {work.filter(({ parts }) => parts.length > 0).map(({ project, parts, inside }) => (
+        <Row id={project.id}>
+          <h2>{project.data.short ?? project.data.title}</h2>
+          <p class="t">{parts.length} parts, each written up on its own.</p>
+          <ul class="subs">
+            {parts.map((part) => (
+              <li>
+                <a href={hrefOf(part, project)}>{part.data.title}</a>
+                <p>
+                  <span class="only-plain">{part.data.plainBlurb ?? part.data.blurb}</span>
+                  <span class="only-eng">{part.data.blurb}</span>
+                </p>
+              </li>
+            ))}
+          </ul>
+          <Console
+            slot="code"
+            id={`inside-${project.id}`}
+            endpoint="work-item"
+            params={{ id: project.id, fields: 'subsystems' }}
+            options={{ id: ids }}
+            body={inside}
+          />
+        </Row>
+      ))}
+    </div>
+  </div>
+</Base>

@@ -8,8 +8,9 @@
  *
  * Nothing here imports `astro:content` — the consoles serialise an entry into
  * the page, and the client script must be able to read it without the
- * content layer.
+ * content layer. `categories.ts` imports nothing, so it is safe here.
  */
+import { CATEGORIES } from './categories';
 
 export type ParamSpec = {
   name: string;
@@ -48,16 +49,15 @@ export type Endpoint = {
   params: ParamSpec[];
   /** Which file the answer is read from — shown under the Send button. */
   source: string;
-  /** The page whose row this endpoint is: the rail's entry for it, and the
-   *  `page` each entry of `GET /api` carries. */
+  /** The page whose row this endpoint is: its label in the header and on
+   *  /reference, and the `page` each entry of `GET /api` carries. */
   page: { label: string; href: string };
 };
 
+// /projects' shelves: every category but work, which is its own tab.
 const CATEGORY = [
   { value: '', label: 'all' },
-  { value: 'work', label: 'work' },
-  { value: 'tool', label: 'tool' },
-  { value: 'game', label: 'game' },
+  ...CATEGORIES.filter((c) => c !== 'work').map((c) => ({ value: c, label: c })),
 ];
 
 export const ENDPOINTS: Endpoint[] = [
@@ -86,38 +86,66 @@ export const ENDPOINTS: Endpoint[] = [
     key: 'work',
     method: 'GET',
     path: '/api/work',
-    description: 'Every top-level project, newest and most important first. Subsystems are under their parent.',
+    description: 'What I built at my job: the ERP and the AI coding setup around it. Their parts are in each one\'s record.',
+    params: [FIELDS],
+    source: 'src/content/projects/*',
+    page: { label: 'Work', href: '/work' },
+  },
+  {
+    key: 'work-item',
+    method: 'GET',
+    path: '/api/work/{id}',
+    description: 'One piece of work in full: the contract (problem, what was unique, what I learned), the numbers, the parts.',
+    params: [
+      {
+        name: 'id',
+        type: 'select',
+        // Filled in per page: the options are the live ids.
+        options: [],
+        value: 'internal-erp',
+        description: 'An id from GET /api/work, or a part of one like internal-erp/repricing.',
+      },
+      { ...FIELDS, placeholder: 'problem,unique,learned' },
+    ],
+    source: 'src/content/projects/{id}',
+    page: { label: 'One piece of work', href: '/work/internal-erp' },
+  },
+  {
+    key: 'projects',
+    method: 'GET',
+    path: '/api/projects',
+    description: 'Everything else I built: tools, games and a course project, newest and most important first.',
     params: [
       {
         name: 'category',
         type: 'select',
         options: CATEGORY,
         value: '',
-        description: 'Filter to one shelf: work, tool or game. What the thing is, not what it was built with.',
+        description: 'Filter to one shelf: tool, game or course. What the thing is, not what it was built with.',
       },
       FIELDS,
     ],
     source: 'src/content/projects/*',
-    page: { label: 'Work', href: '/projects' },
+    page: { label: 'Projects', href: '/projects' },
   },
   {
     key: 'project',
     method: 'GET',
-    path: '/api/work/{id}',
-    description: 'One project in full: the contract (problem, what was unique, what I learned), the numbers, the parts.',
+    path: '/api/projects/{id}',
+    description: 'One project in full: the contract (problem, what was unique, what I learned), the numbers.',
     params: [
       {
         name: 'id',
         type: 'select',
-        // Filled in per page: the options are the live project ids.
+        // Filled in per page: the options are the live ids.
         options: [],
-        value: 'internal-erp',
-        description: 'A project id from GET /api/work, or a subsystem id like internal-erp/repricing.',
+        value: 'receipt-splitter',
+        description: 'An id from GET /api/projects.',
       },
       { ...FIELDS, placeholder: 'problem,unique,learned' },
     ],
     source: 'src/content/projects/{id}',
-    page: { label: 'One project', href: '/projects/internal-erp' },
+    page: { label: 'One project', href: '/projects/receipt-splitter' },
   },
   {
     key: 'experience',
@@ -209,7 +237,7 @@ export const ENDPOINTS: Endpoint[] = [
     description: "This list: every endpoint, what it takes, where the answer comes from and which page it's on.",
     params: [],
     source: 'src/lib/endpoints.ts',
-    page: { label: 'Index', href: '/reference' },
+    page: { label: 'API reference', href: '/reference' },
   },
 ];
 

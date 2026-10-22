@@ -47,7 +47,7 @@ title: Thing I Built
 blurb: One sentence, max 160 characters. Used on cards and as the meta description.
 date: 2026-08-30
 status: live            # live | archived | wip
-category: work          # work | tool | game — the tab it sits under on /projects
+category: work          # work | tool | game | course — work goes under /work, the rest under /projects
 stack: [TypeScript, Postgres]
 
 problem: What was actually wrong or needed. Not "I built an X".
@@ -175,10 +175,13 @@ The page is a prose column beside a dark response column, in a light theme and a
 one: `:root` holds the light tokens, `:root[data-theme='dark']` the overrides, and the
 toggle is in the header. The contrast gate checks both.
 
-Every page is built from the pieces in `src/components/ref/` — `Rail` (the
-endpoint list), `Row` (prose left, response right), `Crumb` (the method badge
-and path above a heading) and `Console` (the try-it box, rendered with the
-endpoint's real response at build time and made live by `src/scripts/console.ts`).
+The site's navigation is the header's tabs (`src/components/ui/Header.astro`):
+Work, Projects, About, Resume, then the API reference and Contact. Every page
+is built from the pieces in `src/components/ref/` — `Row` (prose left,
+response right), `Crumb` (the method badge and path above a heading),
+`Console` (the try-it box, rendered with the endpoint's real response at build
+time and made live by `src/scripts/console.ts`) and `WorkMenu` (the side menu
+inside Work, listing each piece of work and its parts).
 
 The reasoning — the palette and why it's spent the way it is, the two writing
 registers, the fixed shape of every page, the decision log, and the checklists
@@ -190,13 +193,15 @@ is the why.
 
 `/api` is a read-only JSON API over the same facts the pages render, served by
 the Worker at request time. `GET /api` is the index, and `/reference` is the same
-list as a page (the rail's *Index* entry). The endpoints:
+list as a page (the header's *API reference*). The endpoints:
 
 | Endpoint | Parameters | What it returns |
 |---|---|---|
 | `GET /api/dylan` | `view=plain\|engineer` | Who this is: role, employer, the one-sentence summary in either register, location, links. |
-| `GET /api/work` | `category=work\|tool\|game` | Every top-level project, as `{ category, count, items, page }`. |
-| `GET /api/work/{id}` | — | One project in full: the contract, the numbers, the parts. Subsystem ids look like `internal-erp/repricing`. |
+| `GET /api/work` | — | What I built at my job, as `{ count, items, page }`. |
+| `GET /api/work/{id}` | — | One piece of work in full: the contract, the numbers, the parts. A part's id looks like `internal-erp/repricing`. |
+| `GET /api/projects` | `category=tool\|game\|course` | Everything else, as `{ category, count, items, page }`. |
+| `GET /api/projects/{id}` | — | One project in full. Asking either `{id}` endpoint for an id from the other answers 404 and names the right one. |
 | `GET /api/experience` | `since=YYYY` | The path here, the jobs, education, certifications. |
 | `GET /api/resume` | `format=json\|html\|pdf` | The one-page résumé as data; `page` points at the format asked for. |
 | `GET /api/away-from-work` | `playable=true` | Off the clock, and the first program, still playable. |

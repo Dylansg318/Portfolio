@@ -1,5 +1,6 @@
 /**
- * The shelves the work index sorts projects onto.
+ * The shelves the projects sit on. `work` is what I built at my job and is
+ * its own top tab, /work; every other shelf is a tab on /projects.
  *
  * The index used to filter by `stack`, which grew one chip per library until
  * the row was forty tags long and nobody could use it — a reader does not come
@@ -15,7 +16,7 @@
  * content layer cannot load `astro:content`, which is why the labels do not
  * live in `lib/content.ts` with the rest.
  */
-export const CATEGORIES = ['work', 'tool', 'game'] as const;
+export const CATEGORIES = ['work', 'tool', 'game', 'course'] as const;
 
 export type Category = (typeof CATEGORIES)[number];
 
@@ -24,4 +25,5 @@ export const categoryLabel: Record<Category, string> = {
   work: 'Work',
   tool: 'Tools',
   game: 'Games',
+  course: 'Course',
 };

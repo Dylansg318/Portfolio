@@ -1,5 +1,6 @@
 ---
 title: The guardrails, extracted
+short: Guardrails
 blurb: The session-lock layer, fleet scripts, context tooling and review-agent configs behind the fleet write-up, lifted out of the private repo and sanitized.
 plainBlurb: The safety system I describe in the fleet write-up, pulled out on its own and stripped of everything company-specific — the actual traffic-cop code, cleaned up and published.
 date: 2026-09-01
@@ -65,8 +66,8 @@ All four live under [`code/`](https://github.com/Dylansg318/Portfolio/tree/main/
 in this site's repository, with their tests and the reasoning kept in the comments:
 
 - **session-lock** — the coordination layer: O_EXCL atomic locks on the shared git index, PID-liveness + TTL steal, reentrancy by session id, a cross-session broadcast inbox, and the guard hooks that block `git add -A`, `commit -a`, `--no-verify` and full-tree test runs. Every path fails open, on purpose, and the comments argue each failure mode.
-- **fleet-scripts** — spawn one terminal tab per work slice (each agent briefed, in its own worktree), reap sessions by liveness and merge state, and audit worktrees for finished-but-unmerged work, including the `git diff A...B` three-dot trap that once let finished features rot for five weeks. Slices start as background sessions by default, each worktree is made one at a time, and the [daily workflow write-up](/projects/agent-fleet/daily-workflow) covers how they get watched.
+- **fleet-scripts** — spawn one terminal tab per work slice (each agent briefed, in its own worktree), reap sessions by liveness and merge state, and audit worktrees for finished-but-unmerged work, including the `git diff A...B` three-dot trap that once let finished features rot for five weeks. Slices start as background sessions by default, each worktree is made one at a time, and the [daily workflow write-up](/work/agent-fleet/daily-workflow) covers how they get watched.
 - **ai-context-tools** — the memory index as a generated artifact (frontmatter in, index out, a check mode that fails CI on drift), and a read-only SQLite-graph visualizer that renders module architecture as one interactive map.
-- **agent-configs** — the review agents behind consequence-triggered, cross-model review, kept the way they ran until it was retired on 2026-09-25 (the [fleet write-up](/projects/agent-fleet) says why), plus the change-record planning format that replaced 900-line implementation plans with a 60–90-line decision ledger, which is still how every plan gets written.
+- **agent-configs** — the review agents behind consequence-triggered, cross-model review, kept the way they ran until it was retired on 2026-09-25 (the [fleet write-up](/work/agent-fleet) says why), plus the change-record planning format that replaced 900-line implementation plans with a 60–90-line decision ledger, which is still how every plan gets written.
 
 </EngOnly>

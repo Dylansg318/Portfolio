@@ -1,33 +1,27 @@
 ---
 import Base from '../../layouts/Base.astro';
-import Rail from '../../components/ref/Rail.astro';
 import Row from '../../components/ref/Row.astro';
 import Crumb from '../../components/ref/Crumb.astro';
 import Console from '../../components/ref/Console.astro';
 import Cover from '../../components/ui/Cover.astro';
-import { getProjects, getChildren, getAllProjects, statusLabel } from '../../lib/content';
-import { CATEGORIES, categoryLabel } from '../../lib/categories';
-import { workList, projectById } from '../../lib/api';
+import { getSection, hrefOf, statusLabel } from '../../lib/content';
+import { categoryLabel } from '../../lib/categories';
+import { PROJECT_CATEGORIES, projectList } from '../../lib/api';
 
-const projects = await getProjects();
-// Subsystems are listed once, under their parent, instead of competing with it
-// in the list. See `parent` in src/content.config.ts.
-const subsystems = await getChildren('internal-erp');
+// Everything that isn't work; the ERP and the AI sessions are on /work.
+const projects = await getSection('projects');
 // The tabs are the categories with something filed under them, in the order
 // src/lib/categories.ts declares — not the stack, which grew one chip per
 // library until the row was a keyword cloud. An empty shelf gets no tab.
-const categories = CATEGORIES.filter((c) => projects.some((p) => p.data.category === c));
-const ids = (await getAllProjects()).map((p) => ({ value: p.id, label: p.id }));
+const categories = PROJECT_CATEGORIES.filter((c) => projects.some((p) => p.data.category === c));
 
-const work = await workList();
-const inside = await projectById('internal-erp', ['subsystems']);
+const list = await projectList();
 ---
-<Base title="Work" description="Everything I've built and written up: the problem, what was non-obvious, and what came out of it.">
+<Base title="Projects" description="What I've built on my own time, written up: the problem, what was non-obvious, and what came out of it.">
   <div class="ref">
-    <Rail current="work" />
     <div class="ref-main">
-      <Row id="work">
-        <Crumb method="GET" path="/api/work" />
+      <Row id="projects">
+        <Crumb method="GET" path="/api/projects" />
         <h1 class="page">Projects, written up properly.</h1>
         <p class="lead">
           Each one says what the problem was, what was non-obvious about the approach, and what
@@ -45,13 +39,13 @@ const inside = await projectById('internal-erp', ['subsystems']);
           </nav>
         )}
 
-        <div class="items" id="work-list">
+        <div class="items" id="project-list">
           {projects.map((project) => {
             const { data } = project;
             return (
               <article class:list={['item', data.cover && 'has-pic']} data-category={data.category}>
                 <div>
-                  <h3><a href={`/projects/${project.id}`}>{data.title}</a></h3>
+                  <h3><a href={hrefOf(project)}>{data.title}</a></h3>
                   <p class="status">
                     {statusLabel[data.status]} · {data.date.getFullYear()}{data.role && ` · ${data.role}`}
                   </p>
@@ -59,7 +53,7 @@ const inside = await projectById('internal-erp', ['subsystems']);
                     <span class="only-plain">{data.plainBlurb ?? data.blurb}</span>
                     <span class="only-eng">{data.blurb}</span>
                   </p>
-                  <p class="more"><a href={`/projects/${project.id}`} class="c-link">Read the project <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a></p>
+                  <p class="more"><a href={hrefOf(project)} class="c-link">Read the project <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a></p>
                 </div>
                 {data.cover && (
                   <div class:list={['pic', data.cover.width === data.cover.height && 'sq']}>
@@ -70,39 +64,11 @@ const inside = await projectById('internal-erp', ['subsystems']);
             );
           })}
         </div>
-        <p id="work-empty" class="t" hidden>Nothing filed under this category yet.</p>
+        <p id="project-empty" class="t" hidden>Nothing filed under this category yet.</p>
 
-        <Console slot="code" id="work" endpoint="work" body={work} />
+        <Console slot="code" id="projects" endpoint="projects" body={list} />
       </Row>
 
-      {subsystems.length > 0 && (
-        <Row id="inside">
-          <h2>Inside the ERP</h2>
-          <p class="t">
-            Six parts of the ERP with write-ups of their own. They are not separate projects —
-            they are the pieces that made the whole thing work.
-          </p>
-          <ul class="subs">
-            {subsystems.map((s) => (
-              <li>
-                <a href={`/projects/${s.id}`}>{s.data.title}</a>
-                <p>
-                  <span class="only-plain">{s.data.plainBlurb ?? s.data.blurb}</span>
-                  <span class="only-eng">{s.data.blurb}</span>
-                </p>
-              </li>
-            ))}
-          </ul>
-          <Console
-            slot="code"
-            id="inside"
-            endpoint="project"
-            params={{ id: 'internal-erp', fields: 'subsystems' }}
-            options={{ id: ids }}
-            body={inside}
-          />
-        </Row>
-      )}
     </div>
   </div>
 </Base>
@@ -114,9 +80,9 @@ const inside = await projectById('internal-erp', ['subsystems']);
   document.addEventListener('astro:page-load', () => {
     const buttons = [...document.querySelectorAll<HTMLButtonElement>('[data-filter]')];
     if (buttons.length === 0) return;
-    const cards = [...document.querySelectorAll<HTMLElement>('#work-list > [data-category]')];
-    const empty = document.getElementById('work-empty');
-    const consoleEl = document.querySelector<HTMLElement>('.cx[data-key="work"]');
+    const cards = [...document.querySelectorAll<HTMLElement>('#project-list > [data-category]')];
+    const empty = document.getElementById('project-empty');
+    const consoleEl = document.querySelector<HTMLElement>('.cx[data-key="projects"]');
     const known = new Set(buttons.map((b) => b.dataset.filter!));
 
     const apply = (filter: string, { push = true, tellConsole = true } = {}) => {
@@ -140,10 +106,10 @@ const inside = await projectById('internal-erp', ['subsystems']);
 
     buttons.forEach((btn) => btn.addEventListener('click', () => apply(btn.dataset.filter!)));
 
-    // A Send on the /api/work console with a category filters the list.
+    // A Send on the /api/projects console with a category filters the list.
     const onSent = (e: Event) => {
       const d = (e as CustomEvent<{ key: string; params: Record<string, string> }>).detail;
-      if (d?.key === 'work') apply(d.params.category || 'all', { tellConsole: false });
+      if (d?.key === 'projects') apply(d.params.category || 'all', { tellConsole: false });
     };
     document.addEventListener('console:sent', onSent);
     document.addEventListener('astro:before-swap', () => document.removeEventListener('console:sent', onSent), { once: true });

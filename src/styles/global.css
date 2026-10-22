@@ -27,9 +27,12 @@
 :root {
   color-scheme: light;
 
-  /* the header's height — the rail, the sticky console and every
-     scroll-margin are measured from it */
-  --head-h: 3.5rem;
+  /* the header: its bar, the tab strip it grows below 1024px, and the
+     whole height — the sticky console, the side menu and every
+     scroll-margin are measured from --head-h (widened below) */
+  --bar-h: 3.5rem;
+  --strip-h: 2.75rem;
+  --head-h: calc(var(--bar-h) + var(--strip-h));
 
   /* the prose column */
   --bg: #ffffff;
@@ -91,6 +94,11 @@
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
   --shadow-btn: 0 1px 2px rgba(10, 37, 64, 0.12), 0 4px 12px -6px rgba(99, 91, 255, 0.5);
+}
+
+/* From 1024px the tabs sit in the bar itself, so the header is just the bar. */
+@media (min-width: 1024px) {
+  :root { --head-h: var(--bar-h); }
 }
 
 /* The dark theme: GitHub's dark neutrals — the prose column goes near-black
@@ -284,125 +292,60 @@
   .m.get { background: var(--get-bg); color: var(--get); }
   .m.post { background: var(--post-bg); color: var(--post); }
 
-  /* ---- the reference grid: rail · rows ----------------------------------
-     The rail is the site's ONE navigation: each entry is a page's plain name
-     over the endpoint that page is, so a Plain English reader and an engineer
-     both find their way without flipping the switch. Below 1280px it is a
-     strip of the names under the header and each row stacks prose over
-     response (two columns from 1024px); from 1280px it is a 15rem sticky
-     column and every row is prose beside its response, so the dark column
-     runs the height of the page. ---- */
+  /* ---- the reference grid: rows, and the Work side menu -----------------
+     The site's navigation is the header's tabs. A page is a stack of rows;
+     inside Work, where pages have parts, a side menu sits beside the rows as
+     a 15rem sticky column from 1280px (WorkMenu.astro) and is left out
+     below that, where the page lists its parts itself. ---- */
   .ref {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
   }
+  .side { display: none; }
   @media (min-width: 1280px) {
-    .ref { grid-template-columns: 15rem minmax(0, 1fr); }
-  }
-
-  .rail {
-    position: sticky;
-    top: var(--head-h);
-    z-index: 5;
-    background: var(--bg);
-    border-bottom: 1px solid var(--border);
-  }
-  .rail .cap { display: none; }
-  .rail ol {
-    display: flex;
-    gap: 0.25rem;
-    padding: 0.6rem 2.5rem 0.6rem 1.25rem;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent);
-    mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent);
-  }
-  .rail ol::-webkit-scrollbar { display: none; }
-  .rail a {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.4rem 0.7rem;
-    border-radius: 5px;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--ink-muted);
-    text-decoration: none;
-    white-space: nowrap;
-    transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
-  }
-  .rail a:hover { color: var(--ink); background: var(--surface-raised); }
-  .rail a[aria-current='true'],
-  .rail a[aria-current='page'] {
-    color: var(--ink);
-    background: var(--accent-wash);
-  }
-  /* On a project page "Work" is open (its child is the current entry). On
-     the strip, where the child is hidden, it lights like the current one. */
-  .rail a[data-open='true'] { color: var(--ink); background: var(--accent-wash); }
-  /* The strip shows names only. The endpoint under each name, the one
-     entry that is not a page (one project) and the JSON index wait for the
-     column, where there is room to say what they are. */
-  .rail .ep-ref, .rail li.sub, .rail li.idx { display: none; }
-  @media (min-width: 1280px) {
-    .rail {
+    .ref:has(> .side) { grid-template-columns: 15rem minmax(0, 1fr); }
+    .side {
+      position: sticky;
+      top: var(--head-h);
       align-self: start;
-      height: calc(100vh - var(--head-h));
-      border-bottom: 0;
-      border-right: 1px solid var(--border);
-      padding: 2.5rem 1rem 2.5rem 1.5rem;
-      overflow-y: auto;
-    }
-    .rail .cap {
       display: block;
-      font-size: 0.6875rem;
+      height: calc(100vh - var(--head-h));
+      overflow-y: auto;
+      padding: 2.5rem 1rem 2.5rem 1.5rem;
+      border-right: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .side .cap {
+      margin: 0 0 0.75rem 0.75rem;
+      font: 400 0.6875rem/1.4 var(--font-mono);
       letter-spacing: 0.12em;
       text-transform: uppercase;
       color: var(--ink-faint);
-      margin-bottom: 1rem;
     }
-    .rail ol {
-      flex-direction: column;
-      gap: 0.25rem;
-      padding: 0;
-      overflow: visible;
-      -webkit-mask-image: none;
-      mask-image: none;
+    .side a {
+      display: block;
+      margin-bottom: 1px;
+      padding: 0.4rem 0.75rem;
+      border-radius: 5px;
+      font-size: 0.9375rem;
+      line-height: 1.35;
+      color: var(--ink-muted);
+      text-decoration: none;
+      transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
     }
-    .rail li.sub, .rail li.idx { display: block; }
-    .rail li.sub { padding-left: 1rem; }
-    .rail li.idx { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border); }
-    .rail a {
-      display: grid;
-      gap: 0.2rem;
-      width: 100%;
-      padding: 0.55rem 0.75rem;
-      white-space: normal;
-    }
-    .rail a[aria-current='true'],
-    .rail a[aria-current='page'] { box-shadow: inset 2px 0 0 var(--accent); }
-    .rail a[data-open='true'] { background: transparent; }
-    .rail .ep-ref {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.45rem;
-      min-width: 0;
-      font-size: 0.75rem;
-      font-weight: 400;
-      color: var(--ink-faint);
-    }
-    .rail .ep-ref .mono { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .rail a[aria-current='true'] .ep-ref,
-    .rail a[aria-current='page'] .ep-ref { color: var(--ink-muted); }
+    .side a:hover { color: var(--ink); background: var(--surface-raised); }
+    .side a.top { margin-top: 0.9rem; font-weight: 600; color: var(--ink); }
+    .side a.sub { padding-left: 1.6rem; }
+    .side a[aria-current='page'] { color: var(--ink); font-weight: 600; background: var(--accent-wash); box-shadow: inset 2px 0 0 var(--accent); }
   }
 
   /* ---- one endpoint row: prose left, response right ---------------------
      Rows abut so the dark column is continuous down the page. ---- */
-  /* Anchors land under the sticky chrome: the header, plus the strip until
-     the rail becomes a column. */
+  /* Anchors land under the sticky header. */
   .ep {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    scroll-margin-top: calc(var(--head-h) + 3.75rem);
+    scroll-margin-top: calc(var(--head-h) + 0.5rem);
   }
   /* The response column takes only what the width can spare — at 1024px the
      prose still needs ~60 characters — and widens with the viewport. */
@@ -410,7 +353,7 @@
     .ep { grid-template-columns: minmax(0, 1fr) minmax(0, 24rem); }
   }
   @media (min-width: 1280px) {
-    .ep { grid-template-columns: minmax(0, 1fr) minmax(0, 30rem); scroll-margin-top: calc(var(--head-h) + 0.5rem); }
+    .ep { grid-template-columns: minmax(0, 1fr) minmax(0, 30rem); }
   }
   @media (min-width: 1536px) {
     .ep { grid-template-columns: minmax(0, 1fr) minmax(0, 36rem); }
@@ -424,6 +367,10 @@
   @media (min-width: 640px) { .ep-prose { padding: 3.5rem 2rem; } }
   @media (min-width: 1024px) { .ep-prose { padding: 4rem 3rem 4rem 2.5rem; } }
   @media (min-width: 1280px) { .ep-prose { padding: 4.5rem 3.5rem; } }
+  /* From 1280px a page without a side menu has more width than the reading
+     measure; the prose sits in the middle of it instead of leaving a gutter
+     against the response column. */
+  @media (min-width: 1280px) { .ep-prose { justify-self: center; width: 100%; } }
   .ep:first-child .ep-prose { border-top: 0; }
   .ep-code {
     background: var(--code-bg);
@@ -435,12 +382,10 @@
   @media (min-width: 1024px) {
     .ep-code { padding: 4rem 2rem; border-top: 1px solid var(--code-line); }
     .ep:first-child .ep-code { border-top: 0; }
-    /* Sticky under the header and, until 1280px, the strip too. */
-    .ep-code .stick { position: sticky; top: calc(var(--head-h) + 4.5rem); }
+    .ep-code .stick { position: sticky; top: calc(var(--head-h) + 1.5rem); }
   }
   @media (min-width: 1280px) {
     .ep-code { padding: 4.5rem 2.5rem; }
-    .ep-code .stick { top: calc(var(--head-h) + 1.5rem); }
   }
   /* The last row's dark side runs into the footer; a page that ends on a
      short row still shows the column reaching the bottom. */
@@ -504,6 +449,8 @@
 
   /* ---- actions and buttons ---------------------------------------------- */
   .actions { margin-top: 2.25rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.25rem; }
+  /* two or more text links on one line, e.g. All work · All projects */
+  .links { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; }
   .btn {
     display: inline-flex;
     align-items: center;
@@ -846,10 +793,6 @@
      by the rows, so a fading row never fades its background. ---- */
   .still-where, .still-drawer { display: none; }
   .still .ref { height: var(--still-h, auto); align-items: start; }
-  /* Below 1280px the rail strip is the grid's first row. Without this the
-     scroll length stretches that row, and the frame starts two thousand
-     pixels down the page. */
-  @media (max-width: 1279px) { .still .ref { grid-template-rows: auto minmax(0, 1fr); } }
   .still .ref-main {
     --resp-w: 0rem;
     position: sticky;
@@ -916,7 +859,8 @@
   }
   @media (min-width: 640px) { .still .still-where { padding-inline: 2rem; } }
   @media (min-width: 1024px) { .still .still-where { padding-inline: 2.5rem 3rem; } }
-  @media (min-width: 1280px) { .still .still-where { padding-inline: 3.5rem; } }
+  /* centred with the prose above it (.ep-prose, from 1280px) */
+  @media (min-width: 1280px) { .still .still-where { padding-inline: 3.5rem; margin-inline: auto; } }
   .still-where b { font-weight: 600; color: var(--ink); }
   .still-dots { display: inline-flex; gap: 0.4rem; }
   .still-dots i { width: 0.45rem; height: 0.45rem; border-radius: 50%; background: var(--border-mid); transition: background-color var(--dur) var(--ease), transform var(--dur) var(--ease); }
@@ -929,16 +873,6 @@
   .still-next svg { width: 0.9em; height: 0.9em; animation: still-nudge 1.8s var(--ease) 4; }
   .still-read .still-next svg { animation: none; }
   @keyframes still-nudge { 0%, 60%, 100% { transform: none; } 30% { transform: translateY(3px); } }
-
-  /* the rail entry's stripe fills as its row is read */
-  @media (min-width: 1280px) {
-    .still .rail a[href^='#'][aria-current='true'] {
-      box-shadow: inset 2px 0 0 color-mix(in srgb, var(--accent) 22%, transparent);
-      background-image: linear-gradient(var(--accent), var(--accent));
-      background-size: 2px calc(var(--read, 0) * 100%);
-      background-repeat: no-repeat;
-    }
-  }
 
   /* below 1024px the response is a drawer along the bottom of the frame */
   @media (max-width: 1023px) {
@@ -1094,7 +1028,7 @@
      tuned until `pdfinfo` reports one page — check that after any edit. */
   @media print {
     @page { size: letter; margin: 0.35in 0.5in; }
-    body > header, body > footer, .no-print, .rail, .ep-code, astro-dev-toolbar { display: none !important; }
+    body > header, body > footer, .no-print, .side, .ep-code, astro-dev-toolbar { display: none !important; }
     html { font-size: 9.3pt; color-scheme: light !important; }
     html, body { background: #fff !important; color: #000 !important; min-height: 0 !important; }
     a { color: inherit; text-decoration: none; }

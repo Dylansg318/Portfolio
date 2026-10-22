@@ -1,7 +1,7 @@
 import { site } from './site';
 import { nameplate } from './loops';
-import { CATEGORIES, type Category } from './categories';
-import { getAllProjects, getProjects, getChildren, type Project } from './content';
+import { CATEGORIES } from './categories';
+import { getAllProjects, getProjects, getSection, getChildren, hrefOf, sectionOf, type Project, type Section } from './content';
 import { ENDPOINTS } from './endpoints';
 
 /**
@@ -109,7 +109,7 @@ export function personRecord(view: View = 'plain', fields?: string[]) {
   );
 }
 
-// ----------------------------------------------------------------- /api/work
+// ------------------------------------------------- /api/work, /api/projects
 
 const year = (p: Project) => p.data.date.getFullYear();
 
@@ -148,8 +148,8 @@ export function projectRecord(p: Project, parent?: Project) {
   if (m) r.metrics = m;
   const l = linksOf(p);
   if (Object.keys(l).length > 0) r.links = l;
-  if (parent) r.parent = { id: parent.id, title: parent.data.title, page: abs(`/projects/${parent.id}`) };
-  r.page = abs(`/projects/${p.id}`);
+  if (parent) r.parent = { id: parent.id, title: parent.data.title, page: abs(hrefOf(parent)) };
+  r.page = abs(hrefOf(p, parent));
   return r;
 }
 
@@ -169,7 +169,7 @@ export function projectFullRecord(p: Project, children: Project[], parent?: Proj
       id: c.id,
       title: c.data.title,
       summary: c.data.blurb,
-      page: abs(`/projects/${c.id}`),
+      page: abs(hrefOf(c, p)),
     }));
   }
   if (p.data.cover) {
@@ -184,18 +184,27 @@ export function projectFullRecord(p: Project, children: Project[], parent?: Proj
   return r;
 }
 
-const isCategory = (v: string): v is Category => (CATEGORIES as readonly string[]).includes(v);
+/** The shelves on /projects: every category but work, which is its own tab. */
+export const PROJECT_CATEGORIES = CATEGORIES.filter((c) => c !== 'work');
 
-export async function workList(category?: string | null, fields?: string[]) {
+/** GET /api/work — what I built at my job. Each one's parts are in its own record. */
+export async function workList(fields?: string[]) {
+  const items = (await getSection('work')).map((p) => pick(projectRecord(p), fields));
+  return { count: items.length, items, page: abs('/work') };
+}
+
+/** GET /api/projects — everything else, one shelf at a time if asked. */
+export async function projectList(category?: string | null, fields?: string[]) {
   const cat = category && category !== 'all' ? category : '';
-  if (cat && !isCategory(cat)) {
+  if (cat && !(PROJECT_CATEGORIES as string[]).includes(cat)) {
     throw new ApiError(400, {
       error: 'bad_request',
-      detail: `category must be one of ${CATEGORIES.join(', ')}.`,
+      detail: `category must be one of ${PROJECT_CATEGORIES.join(', ')}.`,
     });
   }
-  const projects = (await getProjects()).filter((p) => !cat || p.data.category === cat);
-  const items = projects.map((p) => pick(projectRecord(p), fields));
+  const items = (await getSection('projects'))
+    .filter((p) => !cat || p.data.category === cat)
+    .map((p) => pick(projectRecord(p), fields));
   return {
     category: cat || 'all',
     count: items.length,
@@ -204,17 +213,23 @@ export async function workList(category?: string | null, fields?: string[]) {
   };
 }
 
-export async function projectById(id: string, fields?: string[]) {
+/** GET /api/work/{id} and GET /api/projects/{id} — one in full, from its own tab. */
+export async function projectById(id: string, section: Section, fields?: string[]) {
   const all = await getAllProjects();
   const p = all.find((x) => x.id === id);
-  if (!p) {
+  const parent = p?.data.parent ? all.find((x) => x.id === p.data.parent) : undefined;
+  if (!p || sectionOf(p, parent) !== section) {
+    const elsewhere = p && sectionOf(p, parent) !== section;
     throw new ApiError(404, {
       error: 'not_found',
-      detail: `No project with id "${id}".`,
-      hint: 'GET /api/work lists every id; a subsystem id looks like internal-erp/repricing.',
+      detail: `No ${section === 'work' ? 'work' : 'project'} with id "${id}".`,
+      hint: elsewhere
+        ? `It's under ${sectionOf(p, parent)}: GET /api/${sectionOf(p, parent)}/${id}.`
+        : section === 'work'
+          ? 'GET /api/work lists every id; a part of one looks like internal-erp/repricing.'
+          : 'GET /api/projects lists every id.',
     });
   }
-  const parent = p.data.parent ? all.find((x) => x.id === p.data.parent) : undefined;
   const children = await getChildren(p.id);
   return pick(projectFullRecord(p, children, parent), fields);
 }
@@ -306,7 +321,7 @@ export async function awayRecord(playable: boolean, fields?: string[]) {
       status: game.data.status,
       summary: game.data.blurb,
       play: abs(`/play/${game.id}`),
-      page: abs(`/projects/${game.id}`),
+      page: abs(hrefOf(game)),
     };
   }
   r.help_desk = abs('/desk');

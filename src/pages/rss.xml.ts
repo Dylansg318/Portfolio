@@ -1,7 +1,7 @@
 import rss from '@astrojs/rss';
 import type { APIContext } from 'astro';
 import { site } from '../lib/site';
-import { getProjects } from '../lib/content';
+import { getProjects, hrefOf } from '../lib/content';
 
 export async function GET(context: APIContext) {
   const projects = await getProjects();
@@ -13,7 +13,7 @@ export async function GET(context: APIContext) {
       title: p.data.title,
       description: p.data.blurb,
       pubDate: p.data.date,
-      link: `/projects/${p.id}/`,
+      link: `${hrefOf(p)}/`,
     })),
   });
 }

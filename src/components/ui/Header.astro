@@ -1,18 +1,40 @@
 ---
 import { site } from '../../lib/site';
+import { endpoint } from '../../lib/endpoints';
+
+// The tabs, Contact and the API reference are pages the endpoint list names,
+// so the header, GET /api and /reference can't disagree about what a page is
+// called. Home is the name.
+const tabs = ['work', 'projects', 'experience', 'resume'].map((k) => endpoint(k).page);
+const contact = endpoint('contact').page;
+const reference = endpoint('index').page;
+// `build.format: 'file'` makes the pathname the output file: /work.html,
+// /work/internal-erp.html. A tab is current on its page and everything under it.
+const path = Astro.url.pathname.replace(/\.html$/, '').replace(/\/index$/, '');
+const current = (href: string) => (path === href || path.startsWith(`${href}/`) ? 'page' : undefined);
 ---
-<!-- A slim reference header: the page's own colour, one hairline, the name
-     and the controls. The site's navigation is the endpoint rail beside the
-     rows, the way a reference's sidebar is its navigation — this bar stopped
-     repeating it on 2026-09-14. The name sits where a reference puts its
-     product name and is the way back to the front page from anywhere. -->
+<!-- The site's one navigation, the way an API's docs do it: the name, the
+     sections as tabs, then the API reference and the controls. Below 1024px
+     the tabs drop to a strip under the bar; under 640px Contact joins them.
+     A side menu appears only inside Work, where pages have parts
+     (WorkMenu.astro). It replaced the endpoint rail on 2026-10-22. -->
 <header class="site-head sticky top-0 z-40 border-b border-border bg-nav text-nav-ink">
   <div class="in">
     <a href="/" class="name" aria-label={`${site.name} — home`}>
       <span class="long">{site.name}</span><span class="short">{site.shortName}</span>
     </a>
 
+    <nav class="tabs" aria-label="Site">
+      {tabs.map((t) => <a href={t.href} aria-current={current(t.href)}>{t.label}</a>)}
+      <a href={contact.href} class="tab-contact" aria-current={current(contact.href)}>{contact.label}</a>
+    </nav>
+
     <div class="right">
+      <a href={reference.href} class="api" aria-current={current(reference.href)} title={reference.label}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5a2 2 0 0 0 2 2h1M16 3h1a2 2 0 0 1 2 2v5a2 2 0 0 0 2 2 2 2 0 0 0-2 2v5a2 2 0 0 1-2 2h-1" /></svg>
+        <span class="lbl">{reference.label}</span>
+      </a>
+
       <!-- Plain English ⇄ Engineer: the same pages, two registers. Default is
            plain; the choice sticks. On the reference pages both registers are
            already on screen (prose left, response right); the switch decides
@@ -39,7 +61,7 @@ import { site } from '../../lib/site';
         </svg>
       </button>
 
-      <a href="/contact" class="cta">Get in touch</a>
+      <a href={contact.href} class="cta" aria-current={current(contact.href)}>{contact.label}</a>
     </div>
   </div>
 </header>
@@ -60,19 +82,85 @@ import { site } from '../../lib/site';
 </div>
 
 <style>
+  /* One row from 1024px: name, tabs, then the right-hand controls. Below it
+     the tabs wrap to a second row of their own, the strip. Five short words
+     fit a 360px phone, so it never needs to scroll, and nothing on it is
+     faded out; it still can scroll if a label grows. --head-h is the two
+     rows together. */
   .in {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    height: var(--head-h);
+    column-gap: 1rem;
     padding-inline: 1.25rem;
   }
   @media (min-width: 640px) { .in { padding-inline: 2rem; } }
-  .name { font-size: 0.9375rem; font-weight: 600; color: var(--nav-ink); text-decoration: none; letter-spacing: -0.01em; }
+  .name { font-size: 0.9375rem; font-weight: 600; color: var(--nav-ink); text-decoration: none; letter-spacing: -0.01em; white-space: nowrap; }
   .name:hover { color: var(--accent); }
-  .right { display: flex; align-items: center; gap: 0.75rem; }
+  .right { order: 1; margin-left: auto; display: flex; align-items: center; gap: 0.75rem; height: var(--bar-h); }
   @media (min-width: 640px) { .right { gap: 1rem; } }
+  .tabs {
+    order: 2;
+    /* full bleed: the bar's padding back on both sides */
+    flex-basis: calc(100% + 2.5rem);
+    display: flex;
+    gap: 0.25rem;
+    height: var(--strip-h);
+    margin-inline: -1.25rem;
+    padding-inline: 0.75rem;
+    border-top: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  @media (min-width: 640px) { .tabs { flex-basis: calc(100% + 4rem); margin-inline: -2rem; padding-inline: 1.5rem; } }
+  .tabs a {
+    display: inline-flex;
+    align-items: center;
+    padding-inline: 0.4rem;
+    border-bottom: 2px solid transparent;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--ink-muted);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  }
+  .tabs a:hover { color: var(--ink); }
+  .tabs a[aria-current='page'] { color: var(--accent); border-bottom-color: var(--accent); }
+  /* The bar has room for Contact from 640px; under it, Contact is a tab. */
+  @media (min-width: 640px) { .tab-contact { display: none !important; } }
+  @media (min-width: 1024px) {
+    .in { flex-wrap: nowrap; column-gap: 1.75rem; height: var(--bar-h); }
+    .tabs {
+      order: 0;
+      flex-basis: auto;
+      align-self: stretch;
+      height: auto;
+      margin: 0;
+      padding: 0;
+      border-top: 0;
+      overflow: visible;
+    }
+    .tabs a { padding-inline: 0.6rem; font-size: 0.9375rem; }
+  }
+  .api {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--ink-muted);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .api:hover, .api[aria-current='page'] { color: var(--accent); }
+  .api svg { width: 1rem; height: 1rem; }
+  /* The label shows where the bar has room for it; the icon keeps its name. */
+  @media (max-width: 1279px) {
+    .api .lbl { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  }
+  @media (max-width: 639px) { .api { display: none; } }
   .seg {
     display: inline-flex;
     padding: 2px;
@@ -105,8 +193,18 @@ import { site } from '../../lib/site';
   .theme .sun { display: none; }
   :global(html[data-theme='dark']) .theme .sun { display: block; }
   :global(html[data-theme='dark']) .theme .moon { display: none; }
-  .cta { font-size: 0.9375rem; font-weight: 600; color: var(--accent); text-decoration: none; white-space: nowrap; }
-  .cta:hover { text-decoration: underline; text-underline-offset: 0.25em; }
+  .cta {
+    padding: 0.4rem 0.85rem;
+    border-radius: 6px;
+    background: var(--accent-fill);
+    color: var(--accent-ink);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color var(--dur) var(--ease);
+  }
+  .cta:hover { background: var(--accent-fill-hover); }
   @media (max-width: 639px) {
     .long { display: none; }
     .short { display: inline; }

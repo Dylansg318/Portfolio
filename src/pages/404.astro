@@ -1,6 +1,5 @@
 ---
 import Base from '../layouts/Base.astro';
-import Rail from '../components/ref/Rail.astro';
 import Row from '../components/ref/Row.astro';
 import Method from '../components/ref/Method.astro';
 import { highlight } from '../lib/console-render';
@@ -11,12 +10,11 @@ const body = {
   status: 404,
   error: 'not_found',
   detail: 'No such page.',
-  hint: 'GET /api lists every endpoint; /projects lists every write-up.',
+  hint: 'GET /api lists every endpoint; /work and /projects list every write-up.',
 };
 ---
 <Base title="Not found" noindex>
   <div class="ref">
-    <Rail />
     <div class="ref-main">
       <Row id="missing">
         <p class="crumb mono"><Method method="GET" /> <b id="missing-path">/…</b></p>
@@ -24,7 +22,7 @@ const body = {
         <p class="t">It may have been renamed, or never existed at all. The old addresses that were meant to keep working still do.</p>
         <div class="actions">
           <a href="/" class="btn btn-primary">Back home</a>
-          <a href="/projects" class="c-link">All work <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+          <a href="/work" class="c-link">All work <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
         </div>
         <div class="panel" slot="code">
           <div class="bar mono"><span><b>Response</b></span><span class="src"><span class="n">404 Not Found</span></span></div>

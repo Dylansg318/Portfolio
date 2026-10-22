@@ -16,6 +16,16 @@
 import Base from '../layouts/Base.astro';
 import { site } from '../lib/site';
 import { tickets, cannedReplies } from '../lib/desk';
+import { getAllProjects, hrefOf } from '../lib/content';
+
+// A ticket's write-up, wherever it sits (/work or /projects). An id that
+// isn't a project fails the build rather than ship a link to a 404.
+const all = await getAllProjects();
+const writeup = (id: string) => {
+  const p = all.find((x) => x.id === id);
+  if (!p) throw new Error(`desk: no project with id "${id}"`);
+  return hrefOf(p, all.find((x) => x.id === p.data.parent));
+};
 
 const description =
   'The help desk. Every project started as a request like these, describe the problem, it leaves as software. Raise a ticket.';
@@ -255,7 +265,7 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
                 </p>
                 <div class="issue-actions">
                   {t.resolution.slug && (
-                    <a class="cta cta-hot" href={`/projects/${t.resolution.slug}`}>Read the full write-up →</a>
+                    <a class="cta cta-hot" href={writeup(t.resolution.slug)}>Read the full write-up →</a>
                   )}
                   <button type="button" class="cta" data-nav="queue">← All tickets</button>
                 </div>
@@ -300,7 +310,7 @@ const prioGlyph: Record<string, { g: string; cls: string }> = {
                     )}
                   </ul>
                   {t.resolution.slug && (
-                    <a class="res-link" href={`/projects/${t.resolution.slug}`}>
+                    <a class="res-link" href={writeup(t.resolution.slug)}>
                       {t.resolution.linkLabel ?? 'READ THE CASE FILE'} →
                     </a>
                   )}

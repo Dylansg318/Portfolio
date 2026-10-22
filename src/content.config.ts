@@ -57,13 +57,17 @@ const projectSchema = ({ image }: SchemaContext) =>
     parent: z.string().optional(),
 
     /**
-     * Which shelf the work index files this under: what the thing IS, not
-     * what it was built with. The ids and their tab labels live in
-     * src/lib/categories.ts. Required on a top-level project (enforced
-     * below); a subsystem leaves it out, because it is never listed on its
-     * own and is filed wherever its parent is.
+     * Which shelf this sits on: what the thing IS, not what it was built
+     * with. `work` puts it under /work, anything else under /projects; the
+     * ids and their tab labels live in src/lib/categories.ts. Required on a
+     * top-level project (enforced below); a subsystem leaves it out, because
+     * it is never listed on its own and is filed wherever its parent is.
      */
     category: z.enum(CATEGORIES).optional(),
+
+    /** The name in the Work side menu and the breadcrumb, one to three
+     *  words. Left out, the title is used. */
+    short: z.string().max(24).optional(),
 
     // --- the contract ------------------------------------------------
     /** What was actually wrong or needed. Not "I built an X". */

@@ -1,6 +1,9 @@
 ---
 import { site } from '../../lib/site';
+import { endpoint } from '../../lib/endpoints';
 const year = new Date().getFullYear();
+// The API reference page; on a phone the header has no room for it, so this is its link.
+const reference = endpoint('index').page;
 ---
 <!-- A reference's footer: one line of who, one line of where else. The dark
      response column above it ends at this hairline. -->
@@ -14,7 +17,7 @@ const year = new Date().getFullYear();
       {site.links.github && <li><a href={site.links.github} rel="me noopener">GitHub</a></li>}
       {site.links.linkedin && <li><a href={site.links.linkedin} rel="me noopener">LinkedIn</a></li>}
       <li><a href="/rss.xml">RSS</a></li>
-      <li><a href="/api/dylan" class="mono">/api</a></li>
+      <li><a href={reference.href}>{reference.label}</a></li>
       <!-- Help desk: the same portfolio re-served as a service-management
            tool at /desk. data-astro-reload: /desk opts out of the router, so
            this crossing has to be a real navigation rather than a swap. -->

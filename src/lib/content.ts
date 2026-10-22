@@ -51,6 +51,27 @@ export async function getProjects(): Promise<Project[]> {
   return (await getAllProjects()).filter((p) => !p.data.parent);
 }
 
+/** The top-level projects under one tab. */
+export async function getSection(section: Section): Promise<Project[]> {
+  return (await getProjects()).filter((p) => sectionOf(p) === section);
+}
+
+export type Section = 'work' | 'projects';
+
+/**
+ * Which top tab a project sits under: Work is what I built at my job, Projects
+ * is everything else. A subsystem sits with its parent, so it has to be handed
+ * the parent; without one it throws rather than guess the wrong tab.
+ */
+export function sectionOf(p: Project, parent?: Project): Section {
+  const category = p.data.category ?? parent?.data.category;
+  if (!category) throw new Error(`${p.id} is a subsystem: pass its parent to sectionOf`);
+  return category === 'work' ? 'work' : 'projects';
+}
+
+/** A project's page: /work/<id> or /projects/<id>. The one place it is built. */
+export const hrefOf = (p: Project, parent?: Project) => `/${sectionOf(p, parent)}/${p.id}`;
+
 /** The subsystems of one project, in the same order a listing would use. */
 export async function getChildren(id: string): Promise<Project[]> {
   return (await getAllProjects()).filter((p) => p.data.parent === id);
@@ -60,14 +81,18 @@ export async function getChildren(id: string): Promise<Project[]> {
  * Previous/next for in-page navigation.
  *
  * Neighbours are drawn from the page's OWN set: a subsystem steps to its
- * sibling subsystems, a top-level project to other top-level projects. Mixing
- * them would walk a reader out of the ERP mid-tour with no way to tell they
- * had left it.
+ * sibling subsystems, a top-level project to the others under the same tab.
+ * Mixing them would walk a reader out of the ERP mid-tour, or from Work into
+ * Projects, with no way to tell they had left it.
  */
 export async function getProjectNeighbours(id: string) {
   const all = await getAllProjects();
   const self = all.find((p) => p.id === id);
-  const siblings = all.filter((p) => (p.data.parent ?? null) === (self?.data.parent ?? null));
+  const siblings = all.filter(
+    (p) =>
+      (p.data.parent ?? null) === (self?.data.parent ?? null) &&
+      (p.data.parent !== undefined || !self || sectionOf(p) === sectionOf(self)),
+  );
 
   const i = siblings.findIndex((p) => p.id === id);
   if (i === -1) return { prev: undefined, next: undefined };

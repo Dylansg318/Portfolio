@@ -97,7 +97,7 @@ export const site = {
   resumeProjects: [
     {
       title: 'The internal ERP',
-      href: '/projects/internal-erp',
+      href: '/work/internal-erp',
       stack: 'TypeScript, Express, React, PostgreSQL',
       blurb:
         'How the system is shaped, the rules that stopped the expensive mistakes, screenshots of it running.',
@@ -111,7 +111,7 @@ export const site = {
     },
     {
       title: 'AI coding-fleet guardrails',
-      href: '/projects/agent-fleet',
+      href: '/work/agent-fleet',
       stack: 'Claude Code, Git hooks',
       blurb:
         'Locks, hooks and a merge-back check that let 5–10 coding agents share one repository safely.',

@@ -1,6 +1,5 @@
 ---
 import Base from '../layouts/Base.astro';
-import Rail from '../components/ref/Rail.astro';
 import Row from '../components/ref/Row.astro';
 import Crumb from '../components/ref/Crumb.astro';
 import Console from '../components/ref/Console.astro';
@@ -10,8 +9,8 @@ import { resumeRecord } from '../lib/api';
 /** The résumé. One column, standard section names, contact details in the
  *  body — the shape every applicant-tracking parser reads correctly. The
  *  same markup prints to the one-page PDF at public/resume.pdf
- *  (`npm run resume:pdf`), so the page and the file can't disagree; the rail
- *  and the response column are hidden in print.
+ *  (`npm run resume:pdf`), so the page and the file can't disagree; the
+ *  header and the response column are hidden in print.
  *
  *  Things deliberately NOT here: the phone number and street address (this
  *  page and the PDF are public), and volume metrics like lines of code or
@@ -26,12 +25,14 @@ const bare = (url: string) => url.replace(/^https?:\/\/(www\.)?/, '').replace(/\
 const siteHost = bare(Astro.site?.toString() ?? '');
 // Print shows every link as an address a reader can type; screen shows a label.
 const abs = (href: string) => (href.startsWith('/') ? `${siteHost}${href}` : bare(href));
+// The link itself is absolute too: the PDF is printed from a local server, and
+// a relative link baked into it pointed every reader at localhost:4399.
+const link = (href: string) => (href.startsWith('/') ? new URL(href, Astro.site).toString() : href);
 
 const resume = resumeRecord();
 ---
 <Base title="Resume" description={`${site.name} — ${site.role}, ${site.location}. One-page résumé, also as PDF.`}>
   <div class="ref">
-    <Rail current="resume" />
     <div class="ref-main">
       <Row id="resume" class="resume">
         <Crumb method="GET" path="/api/resume" />
@@ -84,7 +85,7 @@ const resume = resumeRecord();
           <ul class="mt-2 space-y-2.5">
             {site.resumeProjects.map((p) => (
               <li>
-                <a href={p.href} class="font-semibold text-ink hover:text-accent" rel={p.href.startsWith('/') ? undefined : 'noopener'}>
+                <a href={link(p.href)} class="font-semibold text-ink hover:text-accent" rel={p.href.startsWith('/') ? undefined : 'noopener'}>
                   {p.title}
                 </a>
                 <span class="text-ink-faint"> · {p.stack}</span>

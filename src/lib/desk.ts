@@ -49,7 +49,7 @@ export type Ticket = {
   resolution: {
     headline: string;
     points: string[];
-    /** Project id under src/content/projects — becomes /projects/<slug>. */
+    /** Project id under src/content/projects; the page links to its write-up wherever it sits. */
     slug?: string;
     linkLabel?: string;
   };
@@ -146,7 +146,7 @@ export const tickets: Ticket[] = [
         'Per-product, per-vendor decisions with cooldowns and hard floors',
         'Replaced the daily manual spreadsheet process entirely',
       ],
-      slug: 'repricer',
+      slug: 'internal-erp/repricing',
       linkLabel: 'Read the full write-up',
     },
   },
@@ -194,7 +194,7 @@ export const tickets: Ticket[] = [
         'No sync job can insert or update the master. Enforced in code, not policy',
         'Manual corrections now persist instead of being overwritten',
       ],
-      slug: 'channel-sync',
+      slug: 'internal-erp/channel-sync',
       linkLabel: 'Read the full write-up',
     },
   },
@@ -237,7 +237,7 @@ export const tickets: Ticket[] = [
         'Every investigated discrepancy recorded as confirmed, refuted, or open',
         'Month-end reconciliation went from days of work to a report',
       ],
-      slug: 'quickbooks',
+      slug: 'internal-erp/quickbooks',
       linkLabel: 'Read the full write-up',
     },
   },

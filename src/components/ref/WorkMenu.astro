@@ -1,0 +1,36 @@
+---
+import { getChildren, getSection, hrefOf } from '../../lib/content';
+
+/**
+ * The side menu inside Work: an overview, then each piece of work with its
+ * parts under it, the way an API's docs list the pages of the section you're
+ * in. Only Work has one, because only Work has pages with parts; every other
+ * tab is a single page or a flat list. A column from 1280px; below that the
+ * pages list the same parts themselves and the breadcrumb leads back up.
+ *
+ * `current` is the page's own address, so the entry for it is marked.
+ */
+interface Props {
+  current: string;
+}
+const { current } = Astro.props;
+
+const groups = await Promise.all(
+  (await getSection('work')).map(async (p) => ({
+    href: hrefOf(p),
+    label: p.data.short ?? p.data.title,
+    parts: (await getChildren(p.id)).map((c) => ({ href: hrefOf(c, p), label: c.data.short ?? c.data.title })),
+  })),
+);
+const here = (href: string) => (href === current ? 'page' : undefined);
+---
+<nav class="side" aria-label="Work">
+  <p class="cap">Work</p>
+  <a href="/work" aria-current={here('/work')}>Overview</a>
+  {groups.map((g) => (
+    <>
+      <a href={g.href} class="top" aria-current={here(g.href)}>{g.label}</a>
+      {g.parts.map((c) => <a href={c.href} class="sub" aria-current={here(c.href)}>{c.label}</a>)}
+    </>
+  ))}
+</nav>

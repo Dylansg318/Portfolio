@@ -1,6 +1,5 @@
 ---
 import Base from '../layouts/Base.astro';
-import Rail from '../components/ref/Rail.astro';
 import Row from '../components/ref/Row.astro';
 import Crumb from '../components/ref/Crumb.astro';
 import Console from '../components/ref/Console.astro';
@@ -13,14 +12,13 @@ import { experienceRecord, personRecord, projectById, resumeRecord } from '../li
  * in src/lib/site.ts so the page and the endpoint read the same lines.
  */
 const experience = experienceRecord();
-const before = await projectById('internal-erp', ['problem', 'unique']);
+const before = await projectById('internal-erp', 'work', ['problem', 'unique']);
 const how = personRecord('plain', ['principles', 'open_to', 'looking_for']);
 const toolkit = resumeRecord('json', ['skills', 'certifications']);
 const startYear = (start: string) => Number(start.slice(-4));
 ---
 <Base title="About" description={`About ${site.name} — ${site.tagline}`}>
   <div class="ref">
-    <Rail current="experience" />
     <div class="ref-main">
       <Row id="path">
         <Crumb method="GET" path="/api/experience" />
@@ -29,7 +27,7 @@ const startYear = (start: string) => Number(start.slice(-4));
              this, and one concrete number beats three adjectives. -->
         <p class="lead">
           I'm the engineer at {site.employer.name}. I designed, built and run{' '}
-          <a href="/projects/internal-erp">the in-house ERP</a> that replaced off-the-shelf
+          <a href="/work/internal-erp">the in-house ERP</a> that replaced off-the-shelf
           software, a stack of spreadsheets, and an inbox somebody sorted by hand. It covers six
           sales channels and 32,000 products, and orders have roughly doubled while I've been
           here without adding anyone to operations.
@@ -114,12 +112,12 @@ const startYear = (start: string) => Number(start.slice(-4));
           So most of what I build is for people who don't write code, and more and more of it is
           tooling that lets them build too. That's a different job from writing features, and
           it's most of what I do now.{' '}
-          <a href="/projects/agent-fleet" class="c-link">How that actually works <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+          <a href="/work/agent-fleet" class="c-link">How that actually works <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
         </p>
         <Console
           slot="code"
           id="before"
-          endpoint="project"
+          endpoint="work-item"
           params={{ id: 'internal-erp', fields: 'problem,unique' }}
           options={{ id: [{ value: 'internal-erp', label: 'internal-erp' }] }}
           body={before}
@@ -139,7 +137,7 @@ const startYear = (start: string) => Number(start.slice(-4));
           Running a fleet of AI coding sessions against one codebase without them corrupting each
           other. It's mostly hooks and rules that make the dangerous operations impossible instead
           of just telling you not to.{' '}
-          <a href="/projects/agent-fleet" class="c-link">The write-up <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+          <a href="/work/agent-fleet" class="c-link">The write-up <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
         </p>
         <h2 class="mt">Off the clock</h2>
         <p class="t">

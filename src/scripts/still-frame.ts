@@ -16,7 +16,7 @@
  *     taller than the frame scrolls inside it first, so nothing is cut off),
  *     another hold, then the fade into the next row.
  *   - Letting go mid-fade settles on the nearer row; the frame never rests
- *     between two. A rail entry or an in-page link two or more rows away cuts
+ *     between two. An in-page link two or more rows away cuts
  *     to it rather than flashing through every row between.
  *   - The address follows the row (#work, #contact) with replaceState: a
  *     shared link opens on its row, and Back still leaves the page.
@@ -33,7 +33,7 @@
  *     `measure()` generates one @keyframes per prose column and per response
  *     (fade in, hold, scroll, hold, fade out, in px) and writes the row's
  *     whole life as its `animation-range`; this script keeps the model, the
- *     settle, the jumps, the address, the rail and the drawer. Without scroll-driven
+ *     settle, the jumps, the address and the drawer. Without scroll-driven
  *     animations it sets opacity and transform itself, as it always did —
  *     but only for a mouse or a trackpad, or with reduced motion, where the
  *     rows swap in a step and a beat of lag is invisible. A touch screen
@@ -86,8 +86,6 @@ function setup(): (() => void) | undefined {
   }));
   if (rows.length < 2) return;
 
-  const rail = ref.querySelector<HTMLElement>('.rail');
-  const railLinks = [...(rail?.querySelectorAll<HTMLAnchorElement>('a[href^="#"]') ?? [])];
   const where = main.querySelector<HTMLElement>('.still-where');
   const whereText = where?.querySelector<HTMLElement>('.still-next');
   const dots = [...(where?.querySelectorAll<HTMLElement>('.still-dots i') ?? [])];
@@ -96,7 +94,6 @@ function setup(): (() => void) | undefined {
 
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
   const narrow = window.matchMedia('(max-width: 1023px)');
-  const strip = window.matchMedia('(max-width: 1279px)');
   const fine = window.matchMedia('(pointer: fine)');
   const sda = typeof CSS !== 'undefined' && CSS.supports('animation-timeline: scroll()');
 
@@ -127,8 +124,8 @@ function setup(): (() => void) | undefined {
   function measure() {
     if (!on) return;
     headH = headHeight();
-    const stripH = strip.matches && rail ? rail.offsetHeight : 0;
-    root.style.setProperty('--still-top', `${headH + stripH}px`);
+    // The header, tab strip and all below 1024px: the frame pins under it.
+    root.style.setProperty('--still-top', `${headH}px`);
     const h = main!.clientHeight;
     hold = Math.round(h * 0.4);
     fade = Math.round(h * 0.55);
@@ -142,7 +139,7 @@ function setup(): (() => void) | undefined {
       return s;
     });
     total = start;
-    ref!.style.setProperty('--still-h', `${stripH + h + total}px`);
+    ref!.style.setProperty('--still-h', `${h + total}px`);
     if (css) ranges();
     render();
   }
@@ -231,7 +228,7 @@ function setup(): (() => void) | undefined {
   function render() {
     if (!on || !seg.length) return;
     const y = Math.min(position(), total);
-    const { i, local, u, t, ov } = locate(y);
+    const { i, u, t } = locate(y);
     const s = seg[i]!;
     const still = reduce.matches;
     // Out, then in: the frame empties for a beat between rows, and the
@@ -254,17 +251,10 @@ function setup(): (() => void) | undefined {
     });
 
     const now = t >= 0.5 ? i + 1 : i;
-    // The rail entry's stripe fills as the row is read.
-    const read = now === i ? clamp(local / (hold + ov + fade * 0.5)) : 0;
     const row = rows[now]!;
-    railLinks.forEach((a) => {
-      const mine = a.getAttribute('href') === `#${row.id}`;
-      a.style.setProperty('--read', mine ? String(read) : '0');
-    });
 
     if (now === active) return;
     active = now;
-    railLinks.forEach((a) => a.setAttribute('aria-current', String(a.getAttribute('href') === `#${row.id}`)));
     dots.forEach((d, k) => d.classList.toggle('on', k === now));
     if (whereText && root.dataset.game !== 'open') whereText.innerHTML = whereCopy(now);
     if (drawerLabel) drawerLabel.innerHTML = row.prose.querySelector('.crumb')?.innerHTML ?? LABELS[row.id] ?? '';
@@ -467,7 +457,6 @@ function setup(): (() => void) | undefined {
     document.addEventListener('game-panel:open', onGameOpen);
     document.addEventListener('game-panel:close', onGameClose);
     narrow.addEventListener('change', onBreakpoint);
-    strip.addEventListener('change', onBreakpoint);
     measure();
     if (root.dataset.game === 'open') onGameOpen();
   }
@@ -491,7 +480,6 @@ function setup(): (() => void) | undefined {
     document.removeEventListener('game-panel:open', onGameOpen);
     document.removeEventListener('game-panel:close', onGameClose);
     narrow.removeEventListener('change', onBreakpoint);
-    strip.removeEventListener('change', onBreakpoint);
     cancelAnimationFrame(frame);
     window.clearTimeout(settleTimer);
     touching = false;
@@ -505,7 +493,6 @@ function setup(): (() => void) | undefined {
         el.style.removeProperty('animation-range');
       }
     });
-    railLinks.forEach((a) => a.style.removeProperty('--read'));
     sheet?.remove();
     sheet = undefined;
     active = -1;

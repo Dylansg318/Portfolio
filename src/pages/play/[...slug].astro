@@ -16,7 +16,7 @@ import { getImage } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
 import Demo from '../../components/mdx/Demo.astro';
 import { site } from '../../lib/site';
-import { getProjects } from '../../lib/content';
+import { getProjects, hrefOf } from '../../lib/content';
 
 // Only projects that have a demo AND want a page for it. `fullscreen: false`
 // opts out of both the link from the write-up and the route itself — that is
@@ -91,7 +91,7 @@ const description = data.plainBlurb ?? data.blurb;
           aria-label="About this demo"
         >
           <a
-            href={`/projects/${project.id}`}
+            href={hrefOf(project)}
             class="text-ink-muted transition-colors hover:text-ink"
           >
             How it works

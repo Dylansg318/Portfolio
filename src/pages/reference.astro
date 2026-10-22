@@ -1,6 +1,5 @@
 ---
 import Base from '../layouts/Base.astro';
-import Rail from '../components/ref/Rail.astro';
 import Row from '../components/ref/Row.astro';
 import Crumb from '../components/ref/Crumb.astro';
 import Console from '../components/ref/Console.astro';
@@ -9,8 +8,8 @@ import { ENDPOINTS } from '../lib/endpoints';
 import { indexRecord } from '../lib/api';
 
 /**
- * The index as a page: one row, GET /api. The rail's Index entry used to open
- * the JSON itself, which made it the one link in the navigation that left the
+ * The index as a page: one row, GET /api. The navigation's link to it used to
+ * open the JSON itself, which made it the one link in the navigation that left the
  * site — fine in a browser that prettifies JSON, a wall of text in the rest,
  * and no way back for a reader who did not know what they had clicked.
  *
@@ -25,9 +24,8 @@ const words = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'e
 const count = (n: number) => words[n] ?? String(n);
 const cap = (w: string) => w.charAt(0).toUpperCase() + w.slice(1);
 ---
-<Base title="Index" description="Every endpoint of this site's API — what it answers, its parameters, and the page that shows the same thing in words.">
+<Base title="API reference" description="Every endpoint of this site's API — what it answers, its parameters, and the page that shows the same thing in words.">
   <div class="ref">
-    <Rail current="index" />
     <div class="ref-main">
       <Row id="index">
         <Crumb method="GET" path="/api" />
